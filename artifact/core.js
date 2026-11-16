@@ -205,25 +205,28 @@ function listingsFromText(text, spec, retailerCond = "new") {
     const price = prices.length > 1 && prices[1] / prices[0] > 0.5 && prices[1] < prices[0] ? prices[1] : prices[0];
     const key = tokens(line).join(" ") + "|" + price;
     if (seen.has(key)) continue; seen.add(key);
-    out.push({ title: line, price, cond: v.cond, storage: v.storage, evidence: snippet.join(" ⏎ ").slice(0, 260) });
+    out.push({ title: line, price, cond: v.cond, storage: v.storage, storageOk: !spec.storage || v.storage === spec.storage, evidence: snippet.join(" ⏎ ").slice(0, 260) });
   }
   return out;
 }
 
-function urlsFrom(raw, domain) {
-  const found = [];
-  for (const m of String(raw || "").matchAll(/https?:\/\/[^\s"'<>)\]]+/g)) {
-    let u = m[0].replace(/[.,;]+$/, "");
+function urlsFrom(raw, domain, origin) {
+  const found = [], text = String(raw || "");
+  for (const m of text.matchAll(/https?:\/\/[^\s"'<>)\]]+/g)) {
+    const u = m[0].replace(/[.,;]+$/, "");
     try { const h = new URL(u).hostname; if (h === domain || h.endsWith("." + domain)) found.push({ url: u, at: m.index }); } catch { /* skip */ }
+  }
+  if (origin) for (const m of text.matchAll(/(?:href\s*=\s*["']?|\bat\s+|\s)(\/[A-Za-z0-9][^\s"'<>)\]]{6,})/g)) {
+    try { found.push({ url: new URL(m[1].replace(/[.,;]+$/, ""), origin).href, at: m.index }); } catch { /* skip */ }
   }
   return found;
 }
 /** nearest URL to where `title` occurs in `raw` (read_page / find output) */
-function urlForTitle(raw, title, domain) {
-  const urls = urlsFrom(raw, domain); if (!urls.length) return null;
+function urlForTitle(raw, title, domain, origin) {
+  const urls = urlsFrom(raw, domain, origin); if (!urls.length) return null;
   const at = String(raw).indexOf(title.slice(0, 30));
   if (at < 0) return null;
-  let best = null, bd = 600;
+  let best = null, bd = 900;
   for (const u of urls) { const d = Math.abs(u.at - at); if (d < bd) { bd = d; best = u.url; } }
   return best;
 }
@@ -243,6 +246,19 @@ function priceFromProductText(text, spec) {
   return null;
 }
 
+/** is the chosen storage stated in this text (a product title) or in a URL? */
+function storageStated(spec, ...texts) {
+  if (!spec.storage) return true;
+  return texts.some(t => parseStorage(normalize(t || "")).has(spec.storage));
+}
+/** mark prices far below the median of the others: usually accessories, instalments or a different variant */
+function flagOutliers(prices) {
+  const v = prices.filter(Number.isFinite).sort((a, b) => a - b);
+  if (v.length < 3) return () => false;
+  const med = v.length % 2 ? v[(v.length - 1) / 2] : (v[v.length / 2 - 1] + v[v.length / 2]) / 2;
+  return p => p < med * 0.6;
+}
+
 function expandTemplate(tpl, q) {
   const dash = tokens(q).join("-") || encodeURIComponent(q);
   return tpl.replace("{q_path}", encodeURIComponent(q)).replace("{q_dash}", dash).replace("{q}", encodeURIComponent(q).replace(/%20/g, "+"));
@@ -250,4 +266,4 @@ function expandTemplate(tpl, q) {
 const GUESS_PATTERNS = { BE: ["/zoeken?q={q}", "/search?q={q}", "/recherche?q={q}"], NL: ["/zoeken?q={q}", "/search?q={q}", "/zoeken?query={q}"],
   FR: ["/recherche?q={q}", "/search?q={q}", "/catalogsearch/result/?q={q}"], DE: ["/suche?q={q}", "/search?q={q}", "/catalogsearch/result/?q={q}"] };
 
-if (typeof module !== "undefined") module.exports = { normalize, tokens, parsePrice, pricesInLine, judge, searchQueries, identify, listingsFromText, urlForTitle, urlsFrom, priceFromProductText, expandTemplate, looksBlocked, GUESS_PATTERNS };
+if (typeof module !== "undefined") module.exports = { storageStated, flagOutliers, parseStorage, normalize, tokens, parsePrice, pricesInLine, judge, searchQueries, identify, listingsFromText, urlForTitle, urlsFrom, priceFromProductText, expandTemplate, looksBlocked, GUESS_PATTERNS };

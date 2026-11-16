@@ -80,6 +80,20 @@ t("listingsFromText", () => {
   const out = C.listingsFromText(PAGE, spec("iPhone 15 Pro", { storage: 256 }));
   assert.deepStrictEqual(out.map(o => [o.title, o.price]), [["Apple iPhone 15 Pro 256GB Zwart", 1089], ["Apple iPhone 15 Pro 256GB Blauw", 1099]]);
 });
+t("listing without storage is flagged, not trusted", () => {
+  const out = C.listingsFromText("Apple iPhone 15 Pro Zwart\n€ 1.049,00", spec("iPhone 15 Pro", { storage: 256 }));
+  assert.strictEqual(out.length, 1); assert.strictEqual(out[0].storageOk, false);
+  assert.strictEqual(C.listingsFromText("Apple iPhone 15 Pro 256GB\n€ 1.049,00", spec("iPhone 15 Pro", { storage: 256 }))[0].storageOk, true);
+});
+t("storageStated / outliers", () => {
+  assert(C.storageStated({ storage: 256 }, "Apple iPhone 15 Pro 256GB")); assert(!C.storageStated({ storage: 256 }, "Apple iPhone 15 Pro", "https://x/iphone-15-pro"));
+  assert(C.storageStated({ storage: 256 }, "x", "https://shop/iphone-15-pro-256gb.html")); assert(C.storageStated({}, "anything"));
+  const f = C.flagOutliers([1000, 1050, 1100, 300]); assert(f(300) && !f(1000));
+});
+t("relative product links", () => {
+  const raw = `link "Apple iPhone 15 Pro 256GB Zwart" href="/product/123/apple-iphone-15-pro.html"`;
+  assert.strictEqual(C.urlForTitle(raw, "Apple iPhone 15 Pro 256GB Zwart", "coolblue.nl", "https://www.coolblue.nl"), "https://www.coolblue.nl/product/123/apple-iphone-15-pro.html");
+});
 t("urlForTitle", () => {
   const raw = `link "Apple iPhone 15 Pro 256GB Zwart" href=https://www.coolblue.nl/product/123/apple-iphone-15-pro.html\nlink "Apple iPhone 15 Pro Max" https://www.coolblue.nl/product/999/max.html`;
   assert.strictEqual(C.urlForTitle(raw, "Apple iPhone 15 Pro 256GB Zwart", "coolblue.nl"), "https://www.coolblue.nl/product/123/apple-iphone-15-pro.html");

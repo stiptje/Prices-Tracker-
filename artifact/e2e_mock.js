@@ -24,7 +24,8 @@ const MOCK = () => {
         window.__conc = (window.__conc || 0) + 1; window.__maxConc = Math.max(window.__maxConc || 0, window.__conc);
         try { await new Promise(r => setTimeout(r, 5));
         if (tool === "navigate" || tool === "preview_start") { window.__opens = (window.__opens || 0) + 1;
-          if (window.__declineAt && window.__opens === window.__declineAt) throw Object.assign(new Error("user declined"), { code: "cancelled" }); }
+          const d = window.__decline || {};
+          if ((d.at && d.at.includes(window.__opens)) || (d.from && window.__opens >= d.from && !d.off)) throw Object.assign(new Error("user declined"), { code: "cancelled" }); }
         if (tool === "preview_start") { const id = nextTab++; cur[id] = input.url; return { payload: { tabId: id, url: input.url }, content: [{ type: "text", text: "opened" }] }; }
         if (tool === "navigate") { cur[input.tabId] = input.url; return text("navigated"); }
         if (tool === "get_page_text") return text(pages(cur[input.tabId]));
