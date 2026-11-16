@@ -1,0 +1,103 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Prices Tracker</title>
+<link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+<header class="top">
+  <div class="wrap bar">
+    <h1>Prices Tracker <small>live prices · BE · FR · NL · DE</small></h1>
+    <nav>
+      <button class="tab active" data-tab="search">Search</button>
+      <button class="tab" data-tab="db">Retailer database <span id="dbCount" class="pill"></span></button>
+    </nav>
+  </div>
+</header>
+
+<div id="demoBanner" class="demo" hidden>DEMO MODE – local fake shops, these are NOT real prices.</div>
+<main class="wrap">
+<!-- ======================================================= SEARCH TAB -->
+<section id="tab-search">
+
+  <div class="card">
+    <h2><span class="step">1</span> Where should I look?</h2>
+    <div class="row" id="countryChips"></div>
+    <details class="more">
+      <summary>Filters &amp; shop selection <span id="selSummary" class="muted"></span></summary>
+      <div class="filters">
+        <fieldset><legend>Shop type</legend><div id="kindBoxes"></div>
+          <p class="hint">Telecom operators are off by default: their device prices are often tied to a subscription.</p></fieldset>
+        <fieldset><legend>Options</legend>
+          <label class="chk"><input type="checkbox" id="optEU" checked> Include European storefronts of non-European groups
+            <span class="hint">(Amazon.xx, Apple, Samsung, Google, eBay …). Shops located outside Europe that only ship to Europe are never included.</span></label>
+          <label class="chk"><input type="checkbox" id="optRefurb"> Also show refurbished / used offers
+            <span class="hint">Off = new devices only (refurbished-only shops are skipped).</span></label>
+          <label class="chk"><input type="checkbox" id="optUnver"> Also show listing-only prices
+            <span class="hint">Prices seen on a search page that could not be confirmed on the product page. Off = verified prices only.</span></label>
+        </fieldset>
+        <fieldset class="wide"><legend>Individual shops <button class="link" id="allShops">all</button> · <button class="link" id="noShops">none</button></legend>
+          <div id="shopList" class="shoplist"></div></fieldset>
+      </div>
+    </details>
+  </div>
+
+  <div class="card">
+    <h2><span class="step">2</span> What are you looking for?</h2>
+    <form id="idForm" class="row">
+      <input id="q" type="search" placeholder="e.g. iphone 15 pro, galaxy s24 ultra, pixel 9, SM-S928B …" autocomplete="off" autofocus>
+      <button class="primary" type="submit">Identify</button>
+    </form>
+    <div id="candidates"></div>
+    <div id="confirm" hidden></div>
+  </div>
+
+  <div id="resultsCard" class="card" hidden>
+    <div class="row between">
+      <h2><span class="step">3</span> Live prices <span id="resTitle" class="muted"></span></h2>
+      <div class="row"><span id="progress" class="muted"></span><button id="cancelBtn" class="ghost" hidden>Stop</button></div>
+    </div>
+    <div class="bar-outer"><div id="bar"></div></div>
+    <p class="hint">Every price below was read from the shop's own product page at the moment shown. Nothing is cached. Use “Re-check” to read it again right now.</p>
+    <div class="tablewrap"><table id="resTable"><thead><tr>
+      <th>#</th><th class="num">Price</th><th>Shop</th><th>Product as listed</th><th>Condition</th><th>Stock</th><th>Read at</th><th></th></tr></thead><tbody></tbody></table></div>
+    <p id="noRes" class="empty" hidden></p>
+    <details class="more" id="logBox"><summary>Shop-by-shop log <span id="logSummary" class="muted"></span></summary>
+      <table id="logTable"><thead><tr><th>Shop</th><th>Country</th><th>Status</th><th>Details</th><th class="num">Time</th></tr></thead><tbody></tbody></table></details>
+  </div>
+</section>
+
+<!-- ======================================================= DATABASE TAB -->
+<section id="tab-db" hidden>
+  <div class="card">
+    <div class="row between">
+      <h2>Retailer database</h2>
+      <div class="row">
+        <a class="btn" href="/api/retailers.csv">Export CSV</a>
+        <button id="verifyBtn" class="btn">Verify shown shops live</button>
+        <label class="chk inline"><input type="checkbox" id="verifyDiscover"> also find search URLs</label>
+      </div>
+    </div>
+    <p class="hint" id="dbNote"></p>
+    <div class="row filtersrow">
+      <input id="dbFilter" type="search" placeholder="filter by name / domain / group …">
+      <select id="dbCountry"><option value="">All countries</option></select>
+      <select id="dbKind"><option value="">All types</option></select>
+      <select id="dbStatus"><option value="">Any status</option><option>unverified</option><option>online</option><option>blocked</option><option>unreachable</option><option>redirected</option></select>
+    </div>
+    <div id="verifyProg" class="muted"></div>
+    <div class="tablewrap"><table id="dbTable"><thead><tr>
+      <th>Shop</th><th>Country</th><th>Type</th><th>Website</th><th>HQ / basis</th><th>Search URL</th><th>Status</th><th>Checked</th></tr></thead><tbody></tbody></table></div>
+  </div>
+  <div class="card"><h3>Excluded: not based in Europe</h3>
+    <p class="hint">These shops only ship into Europe from outside it, so they are never searched and cannot be added (the loader rejects them).</p>
+    <div id="excluded" class="chips"></div></div>
+</section>
+</main>
+
+<footer class="wrap muted small">Prices are read live from each shop. Marketplaces (bol, Amazon, eBay, Cdiscount …) show the featured offer, which can differ from the lowest third-party price.</footer>
+<script src="/static/app.js"></script>
+</body>
+</html>

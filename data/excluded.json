@@ -1,0 +1,132 @@
+{
+ "policy": "Stores located outside Europe that only ship to Europe are never included.",
+ "excluded": [
+  {
+   "name": "AliExpress",
+   "domains": [
+    "aliexpress.com",
+    "aliexpress.us"
+   ],
+   "reason": "Alibaba Group, China – cross-border shipper"
+  },
+  {
+   "name": "Temu",
+   "domains": [
+    "temu.com"
+   ],
+   "reason": "PDD Holdings, China-linked – ships from China"
+  },
+  {
+   "name": "Banggood",
+   "domains": [
+    "banggood.com"
+   ],
+   "reason": "Based in China – cross-border shipper"
+  },
+  {
+   "name": "Geekbuying",
+   "domains": [
+    "geekbuying.com"
+   ],
+   "reason": "Based in China – cross-border shipper"
+  },
+  {
+   "name": "Gshopper",
+   "domains": [
+    "gshopper.com"
+   ],
+   "reason": "Based in China – cross-border shipper"
+  },
+  {
+   "name": "GearBest",
+   "domains": [
+    "gearbest.com"
+   ],
+   "reason": "Based in China – cross-border shipper (defunct)"
+  },
+  {
+   "name": "DHgate",
+   "domains": [
+    "dhgate.com"
+   ],
+   "reason": "Based in China – cross-border shipper"
+  },
+  {
+   "name": "TomTop",
+   "domains": [
+    "tomtop.com"
+   ],
+   "reason": "Based in China – cross-border shipper"
+  },
+  {
+   "name": "LightInTheBox",
+   "domains": [
+    "lightinthebox.com"
+   ],
+   "reason": "Based in China – cross-border shipper"
+  },
+  {
+   "name": "Tinydeal",
+   "domains": [
+    "tinydeal.com"
+   ],
+   "reason": "Based in China – cross-border shipper"
+  },
+  {
+   "name": "Cafago",
+   "domains": [
+    "cafago.com"
+   ],
+   "reason": "Based in China – cross-border shipper"
+  },
+  {
+   "name": "Shein",
+   "domains": [
+    "shein.com"
+   ],
+   "reason": "Based in Singapore/China – cross-border shipper"
+  },
+  {
+   "name": "Wish",
+   "domains": [
+    "wish.com"
+   ],
+   "reason": "Based in the US – cross-border shipper"
+  },
+  {
+   "name": "Newegg",
+   "domains": [
+    "newegg.com"
+   ],
+   "reason": "Based in the US – cross-border shipper"
+  },
+  {
+   "name": "B&H Photo",
+   "domains": [
+    "bhphotovideo.com"
+   ],
+   "reason": "Based in the US – cross-border shipper"
+  },
+  {
+   "name": "Walmart",
+   "domains": [
+    "walmart.com"
+   ],
+   "reason": "Based in the US – no European storefront"
+  },
+  {
+   "name": "Best Buy",
+   "domains": [
+    "bestbuy.com"
+   ],
+   "reason": "Based in the US – no European storefront"
+  },
+  {
+   "name": "Ubuy",
+   "domains": [
+    "ubuy.com"
+   ],
+   "reason": "Based outside Europe – cross-border shipper"
+  }
+ ]
+}

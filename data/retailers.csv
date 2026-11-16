@@ -1,0 +1,151 @@
+id,name,country,website,domain,kind,group,hq_country,entity_basis,condition,search_url,search_confidence,status,last_checked,notes
+coolblue-be,Coolblue,BE,https://www.coolblue.be/nl,coolblue.be,online_electronics,Coolblue,NL,headquartered,new,https://www.coolblue.be/nl/zoeken?query={q},known,unverified,,
+mediamarkt-be,MediaMarkt,BE,https://www.mediamarkt.be/nl,mediamarkt.be,electronics_chain,MediaMarktSaturn (Ceconomy),DE,headquartered,new,https://www.mediamarkt.be/nl/search.html?query={q},known,unverified,,
+krefel-be,Krefel,BE,https://www.krefel.be/nl,krefel.be,electronics_chain,,BE,headquartered,new,,unknown,unverified,,
+vandenborre-be,Vanden Borre,BE,https://www.vandenborre.be/,vandenborre.be,electronics_chain,Fnac Darty,FR,headquartered,new,,unknown,unverified,,Belgian chain owned by Fnac Darty
+bol-be,bol,BE,https://www.bol.com/be/nl/,bol.com,marketplace,bol,NL,headquartered,new,https://www.bol.com/be/nl/s/?searchtext={q},known,unverified,,Marketplace: price shown is the featured offer
+fnac-be,Fnac,BE,https://www.fnac.be/,fnac.be,electronics_chain,Fnac Darty,FR,headquartered,new,https://www.fnac.be/SearchResult/ResultList.aspx?Search={q},known,unverified,,
+amazon-be,Amazon.com.be,BE,https://www.amazon.com.be/,amazon.com.be,marketplace,Amazon,US,eu_subsidiary,new,https://www.amazon.com.be/s?k={q},known,unverified,,Operated by Amazon EU S.à r.l. (Luxembourg); featured offer shown
+alternate-be,Alternate,BE,https://www.alternate.be/,alternate.be,computer_specialist,Alternate,DE,headquartered,new,https://www.alternate.be/listing.xhtml?q={q},known,unverified,,
+ldlc-be,LDLC Belgique,BE,https://www.ldlc.be/,ldlc.be,computer_specialist,LDLC,FR,headquartered,new,,unknown,unverified,,
+carrefour-be,Carrefour Belgium,BE,https://www.carrefour.eu/nl,carrefour.eu,general_retail,Carrefour,FR,headquartered,new,,unknown,unverified,,
+proximus-be,Proximus,BE,https://www.proximus.be/,proximus.be,telecom_operator,,BE,headquartered,new,,unknown,unverified,,
+orange-be,Orange Belgium,BE,https://www.orange.be/,orange.be,telecom_operator,Orange,BE,headquartered,new,,unknown,unverified,,
+telenet-be,Telenet,BE,https://www.telenet.be/,telenet.be,telecom_operator,Liberty Global,BE,headquartered,new,,unknown,unverified,,
+base-be,BASE,BE,https://www.base.be/,base.be,telecom_operator,Telenet,BE,headquartered,new,,unknown,unverified,,
+mobilevikings-be,Mobile Vikings,BE,https://mobilevikings.be/,mobilevikings.be,telecom_operator,Telenet,BE,headquartered,new,,unknown,unverified,,
+backmarket-be,Back Market,BE,https://www.backmarket.be/nl-be,backmarket.be,refurbished,Back Market,FR,headquartered,refurbished,https://www.backmarket.be/nl-be/search?q={q},known,unverified,,
+swappie-be,Swappie,BE,https://swappie.com/be-nl/,swappie.com,refurbished,Swappie,FI,headquartered,refurbished,,unknown,unverified,,
+refurbed-be,refurbed,BE,https://www.refurbed.be/,refurbed.be,refurbished,refurbed,AT,headquartered,refurbished,,unknown,unverified,,
+apple-be,Apple Store,BE,https://www.apple.com/be-nl/,apple.com,brand_store,Apple,US,eu_subsidiary,new,https://www.apple.com/be-nl/search/{q_path}?src=serp,known,unverified,,Apple pages are not schema.org-annotated; results may be unavailable
+samsung-be,Samsung Shop,BE,https://www.samsung.com/be/,samsung.com,brand_store,Samsung,KR,eu_subsidiary,new,https://www.samsung.com/be/search/?searchvalue={q},known,unverified,,
+xiaomi-be,Xiaomi Store,BE,https://www.mi.com/be/,mi.com,brand_store,Xiaomi,CN,eu_subsidiary,new,,unknown,unverified,,Local EU storefront
+oneplus-be,OnePlus Store,BE,https://www.oneplus.com/be,oneplus.com,brand_store,OnePlus,CN,eu_subsidiary,new,,unknown,unverified,,Local EU storefront
+google-be,Google Store,BE,https://store.google.com/be,store.google.com,brand_store,Google,US,eu_subsidiary,new,,unknown,unverified,,
+fairphone-be,Fairphone Shop,BE,https://shop.fairphone.com/be,fairphone.com,brand_store,Fairphone,NL,headquartered,new,,unknown,unverified,,
+honor-be,Honor,BE,https://www.honor.com/be/,honor.com,brand_store,Honor,CN,eu_subsidiary,new,,unknown,unverified,,Local EU storefront
+ebay-be,eBay Belgium,BE,https://www.ebay.be/,ebay.be,marketplace,eBay,US,eu_subsidiary,new,https://www.ebay.be/sch/i.php?_nkw={q},known,unverified,,Marketplace; many private sellers and used items
+fnac-fr,Fnac,FR,https://www.fnac.com/,fnac.com,electronics_chain,Fnac Darty,FR,headquartered,new,https://www.fnac.com/SearchResult/ResultList.aspx?Search={q},known,unverified,,
+darty-fr,Darty,FR,https://www.darty.com/,darty.com,electronics_chain,Fnac Darty,FR,headquartered,new,https://www.darty.com/nav/recherche?text={q},known,unverified,,
+boulanger-fr,Boulanger,FR,https://www.boulanger.com/,boulanger.com,electronics_chain,,FR,headquartered,new,https://www.boulanger.com/resultats?tr={q},known,unverified,,
+cdiscount-fr,Cdiscount,FR,https://www.cdiscount.com/,cdiscount.com,marketplace,Casino,FR,headquartered,new,https://www.cdiscount.com/search/10/{q_dash}.html,known,unverified,,
+amazon-fr,Amazon.fr,FR,https://www.amazon.fr/,amazon.fr,marketplace,Amazon,US,eu_subsidiary,new,https://www.amazon.fr/s?k={q},known,unverified,,Operated by Amazon EU S.à r.l.; featured offer shown
+rakuten-fr,Rakuten France,FR,https://fr.shopping.rakuten.com/,rakuten.com,marketplace,Rakuten,JP,eu_subsidiary,new,https://fr.shopping.rakuten.com/search/{q_path},known,unverified,,"Rakuten France SAS, Paris; marketplace"
+ldlc-fr,LDLC,FR,https://www.ldlc.com/,ldlc.com,computer_specialist,LDLC,FR,headquartered,new,https://www.ldlc.com/recherche/{q_path}/,known,unverified,,
+materiel-net,Materiel.net,FR,https://www.materiel.net/,materiel.net,computer_specialist,LDLC,FR,headquartered,new,https://www.materiel.net/recherche/{q_path}/,known,unverified,,
+rueducommerce-fr,Rue du Commerce,FR,https://www.rueducommerce.fr/,rueducommerce.fr,online_electronics,,FR,headquartered,new,,unknown,unverified,,
+grosbill-fr,Grosbill,FR,https://www.grosbill.com/,grosbill.com,computer_specialist,,FR,headquartered,new,,unknown,unverified,,
+topachat-fr,TopAchat,FR,https://www.topachat.com/,topachat.com,computer_specialist,,FR,headquartered,new,,unknown,unverified,,
+cybertek-fr,Cybertek,FR,https://www.cybertek.fr/,cybertek.fr,computer_specialist,,FR,headquartered,new,,unknown,unverified,,
+ubaldi-fr,Ubaldi,FR,https://www.ubaldi.com/,ubaldi.com,online_electronics,,FR,headquartered,new,,unknown,unverified,,
+sonvideo-fr,Son-Vidéo.com,FR,https://www.son-video.com/,son-video.com,online_electronics,,FR,headquartered,new,,unknown,unverified,,
+electrodepot-fr,Electro Dépôt,FR,https://www.electrodepot.fr/,electrodepot.fr,electronics_chain,,FR,headquartered,new,https://www.electrodepot.fr/catalogsearch/result/?q={q},known,unverified,,
+but-fr,BUT,FR,https://www.but.fr/,but.fr,general_retail,,FR,headquartered,new,,unknown,unverified,,
+conforama-fr,Conforama,FR,https://www.conforama.fr/,conforama.fr,general_retail,,FR,headquartered,new,,unknown,unverified,,
+auchan-fr,Auchan,FR,https://www.auchan.fr/,auchan.fr,general_retail,,FR,headquartered,new,https://www.auchan.fr/recherche?text={q},known,unverified,,
+carrefour-fr,Carrefour,FR,https://www.carrefour.fr/,carrefour.fr,general_retail,Carrefour,FR,headquartered,new,https://www.carrefour.fr/s?q={q},known,unverified,,
+leclerc-fr,E.Leclerc,FR,https://www.e.leclerc/,e.leclerc,general_retail,,FR,headquartered,new,https://www.e.leclerc/recherche?q={q},known,unverified,,
+cultura-fr,Cultura,FR,https://www.cultura.com/,cultura.com,general_retail,,FR,headquartered,new,https://www.cultura.com/catalogsearch/result/?q={q},known,unverified,,
+conrad-fr,Conrad France,FR,https://www.conrad.fr/,conrad.fr,computer_specialist,Conrad,DE,headquartered,new,,unknown,unverified,,
+orange-fr,Orange,FR,https://boutique.orange.fr/,orange.fr,telecom_operator,Orange,FR,headquartered,new,,unknown,unverified,,
+sfr-fr,SFR,FR,https://www.sfr.fr/,sfr.fr,telecom_operator,Altice France,FR,headquartered,new,,unknown,unverified,,
+bouygues-fr,Bouygues Telecom,FR,https://www.bouyguestelecom.fr/,bouyguestelecom.fr,telecom_operator,,FR,headquartered,new,,unknown,unverified,,
+free-fr,Free Mobile,FR,https://mobile.free.fr/,free.fr,telecom_operator,Iliad,FR,headquartered,new,,unknown,unverified,,
+laposte-mobile-fr,La Poste Mobile,FR,https://www.lapostemobile.fr/,lapostemobile.fr,telecom_operator,,FR,headquartered,new,,unknown,unverified,,
+backmarket-fr,Back Market,FR,https://www.backmarket.fr/fr-fr,backmarket.fr,refurbished,Back Market,FR,headquartered,refurbished,https://www.backmarket.fr/fr-fr/search?q={q},known,unverified,,
+certideal-fr,Certideal,FR,https://www.certideal.com/,certideal.com,refurbished,,FR,headquartered,refurbished,,unknown,unverified,,
+swappie-fr,Swappie,FR,https://swappie.com/fr/,swappie.com,refurbished,Swappie,FI,headquartered,refurbished,,unknown,unverified,,
+refurbed-fr,refurbed,FR,https://www.refurbed.fr/,refurbed.fr,refurbished,refurbed,AT,headquartered,refurbished,,unknown,unverified,,
+apple-fr,Apple Store,FR,https://www.apple.com/fr/,apple.com,brand_store,Apple,US,eu_subsidiary,new,https://www.apple.com/fr/search/{q_path}?src=serp,known,unverified,,Apple pages are not schema.org-annotated; results may be unavailable
+samsung-fr,Samsung Shop,FR,https://www.samsung.com/fr/,samsung.com,brand_store,Samsung,KR,eu_subsidiary,new,https://www.samsung.com/fr/search/?searchvalue={q},known,unverified,,
+xiaomi-fr,Xiaomi Store,FR,https://www.mi.com/fr/,mi.com,brand_store,Xiaomi,CN,eu_subsidiary,new,,unknown,unverified,,Local EU storefront
+oneplus-fr,OnePlus Store,FR,https://www.oneplus.com/fr,oneplus.com,brand_store,OnePlus,CN,eu_subsidiary,new,,unknown,unverified,,Local EU storefront
+google-fr,Google Store,FR,https://store.google.com/fr,store.google.com,brand_store,Google,US,eu_subsidiary,new,,unknown,unverified,,
+fairphone-fr,Fairphone Shop,FR,https://shop.fairphone.com/fr,fairphone.com,brand_store,Fairphone,NL,headquartered,new,,unknown,unverified,,
+motorola-fr,Motorola,FR,https://www.motorola.fr/,motorola.fr,brand_store,Lenovo/Motorola,US,eu_subsidiary,new,,unknown,unverified,,Local EU storefront
+honor-fr,Honor,FR,https://www.honor.com/fr/,honor.com,brand_store,Honor,CN,eu_subsidiary,new,,unknown,unverified,,Local EU storefront
+huawei-fr,Huawei,FR,https://consumer.huawei.com/fr/,huawei.com,brand_store,Huawei,CN,eu_subsidiary,new,,unknown,unverified,,Local EU storefront
+ebay-fr,eBay France,FR,https://www.ebay.fr/,ebay.fr,marketplace,eBay,US,eu_subsidiary,new,https://www.ebay.fr/sch/i.php?_nkw={q},known,unverified,,Marketplace; many private sellers and used items
+coolblue-nl,Coolblue,NL,https://www.coolblue.nl/,coolblue.nl,online_electronics,Coolblue,NL,headquartered,new,https://www.coolblue.nl/zoeken?query={q},known,unverified,,
+bol-nl,bol,NL,https://www.bol.com/nl/nl/,bol.com,marketplace,bol,NL,headquartered,new,https://www.bol.com/nl/nl/s/?searchtext={q},known,unverified,,Marketplace: price shown is the featured offer
+mediamarkt-nl,MediaMarkt,NL,https://www.mediamarkt.nl/,mediamarkt.nl,electronics_chain,MediaMarktSaturn (Ceconomy),DE,headquartered,new,https://www.mediamarkt.nl/nl/search.html?query={q},known,unverified,,
+amazon-nl,Amazon.nl,NL,https://www.amazon.nl/,amazon.nl,marketplace,Amazon,US,eu_subsidiary,new,https://www.amazon.nl/s?k={q},known,unverified,,Operated by Amazon EU S.à r.l.; featured offer shown
+bcc-nl,BCC,NL,https://www.bcc.nl/,bcc.nl,electronics_chain,,NL,headquartered,new,,unknown,unverified,,
+expert-nl,Expert,NL,https://www.expert.nl/,expert.nl,electronics_chain,,NL,headquartered,new,,unknown,unverified,,
+wehkamp-nl,Wehkamp,NL,https://www.wehkamp.nl/,wehkamp.nl,general_retail,,NL,headquartered,new,,unknown,unverified,,
+alternate-nl,Alternate,NL,https://www.alternate.nl/,alternate.nl,computer_specialist,Alternate,DE,headquartered,new,https://www.alternate.nl/listing.xhtml?q={q},known,unverified,,
+azerty-nl,Azerty,NL,https://azerty.nl/,azerty.nl,computer_specialist,,NL,headquartered,new,,unknown,unverified,,
+megekko-nl,Megekko,NL,https://www.megekko.nl/,megekko.nl,computer_specialist,,NL,headquartered,new,,unknown,unverified,,
+paradigit-nl,Paradigit,NL,https://www.paradigit.nl/,paradigit.nl,electronics_chain,,NL,headquartered,new,,unknown,unverified,,
+belsimpel-nl,Belsimpel,NL,https://www.belsimpel.nl/,belsimpel.nl,online_electronics,,NL,headquartered,new,,unknown,unverified,,Phone specialist; shows device price with and without subscription
+salland-nl,Salland Electro,NL,https://www.sallandelectro.nl/,sallandelectro.nl,online_electronics,,NL,headquartered,new,,unknown,unverified,,
+coolshop-nl,Coolshop,NL,https://www.coolshop.nl/,coolshop.nl,online_electronics,Coolshop,DK,headquartered,new,,unknown,unverified,,
+computeruniverse-nl,Computeruniverse,NL,https://www.computeruniverse.net/nl,computeruniverse.net,computer_specialist,Computeruniverse,DE,headquartered,new,,unknown,unverified,,
+kpn-nl,KPN,NL,https://www.kpn.com/,kpn.com,telecom_operator,,NL,headquartered,new,,unknown,unverified,,
+vodafoneziggo-nl,Vodafone (VodafoneZiggo),NL,https://www.vodafone.nl/,vodafone.nl,telecom_operator,,NL,headquartered,new,,unknown,unverified,,
+odido-nl,Odido,NL,https://www.odido.nl/,odido.nl,telecom_operator,,NL,headquartered,new,,unknown,unverified,,
+gomibo-nl,Gomibo,NL,https://www.gomibo.nl/,gomibo.nl,refurbished,,NL,headquartered,refurbished,,unknown,unverified,,
+backmarket-nl,Back Market,NL,https://www.backmarket.nl/nl-nl,backmarket.nl,refurbished,Back Market,FR,headquartered,refurbished,https://www.backmarket.nl/nl-nl/search?q={q},known,unverified,,
+swappie-nl,Swappie,NL,https://swappie.com/nl/,swappie.com,refurbished,Swappie,FI,headquartered,refurbished,,unknown,unverified,,
+refurbed-nl,refurbed,NL,https://www.refurbed.nl/,refurbed.nl,refurbished,refurbed,AT,headquartered,refurbished,,unknown,unverified,,
+apple-nl,Apple Store,NL,https://www.apple.com/nl/,apple.com,brand_store,Apple,US,eu_subsidiary,new,https://www.apple.com/nl/search/{q_path}?src=serp,known,unverified,,Apple pages are not schema.org-annotated; results may be unavailable
+samsung-nl,Samsung Shop,NL,https://www.samsung.com/nl/,samsung.com,brand_store,Samsung,KR,eu_subsidiary,new,https://www.samsung.com/nl/search/?searchvalue={q},known,unverified,,
+xiaomi-nl,Xiaomi Store,NL,https://www.mi.com/nl/,mi.com,brand_store,Xiaomi,CN,eu_subsidiary,new,,unknown,unverified,,Local EU storefront
+oneplus-nl,OnePlus Store,NL,https://www.oneplus.com/nl,oneplus.com,brand_store,OnePlus,CN,eu_subsidiary,new,,unknown,unverified,,Local EU storefront
+google-nl,Google Store,NL,https://store.google.com/nl,store.google.com,brand_store,Google,US,eu_subsidiary,new,,unknown,unverified,,
+fairphone-nl,Fairphone Shop,NL,https://shop.fairphone.com/nl,fairphone.com,brand_store,Fairphone,NL,headquartered,new,,unknown,unverified,,
+motorola-nl,Motorola,NL,https://www.motorola.nl/,motorola.nl,brand_store,Lenovo/Motorola,US,eu_subsidiary,new,,unknown,unverified,,Local EU storefront
+honor-nl,Honor,NL,https://www.honor.com/nl/,honor.com,brand_store,Honor,CN,eu_subsidiary,new,,unknown,unverified,,Local EU storefront
+huawei-nl,Huawei,NL,https://consumer.huawei.com/nl/,huawei.com,brand_store,Huawei,CN,eu_subsidiary,new,,unknown,unverified,,Local EU storefront
+ebay-nl,eBay Netherlands,NL,https://www.ebay.nl/,ebay.nl,marketplace,eBay,US,eu_subsidiary,new,https://www.ebay.nl/sch/i.php?_nkw={q},known,unverified,,Marketplace; many private sellers and used items
+mediamarkt-de,MediaMarkt,DE,https://www.mediamarkt.de/,mediamarkt.de,electronics_chain,MediaMarktSaturn (Ceconomy),DE,headquartered,new,https://www.mediamarkt.de/de/search.html?query={q},known,unverified,,
+saturn-de,Saturn,DE,https://www.saturn.de/,saturn.de,electronics_chain,MediaMarktSaturn (Ceconomy),DE,headquartered,new,https://www.saturn.de/de/search.html?query={q},known,unverified,,
+amazon-de,Amazon.de,DE,https://www.amazon.de/,amazon.de,marketplace,Amazon,US,eu_subsidiary,new,https://www.amazon.de/s?k={q},known,unverified,,Operated by Amazon EU S.à r.l.; featured offer shown
+otto-de,OTTO,DE,https://www.otto.de/,otto.de,general_retail,Otto Group,DE,headquartered,new,https://www.otto.de/suche/{q_path}/,known,unverified,,
+notebooksbilliger-de,notebooksbilliger.de,DE,https://www.notebooksbilliger.de/,notebooksbilliger.de,computer_specialist,,DE,headquartered,new,https://www.notebooksbilliger.de/produkte/{q_path},known,unverified,,
+cyberport-de,Cyberport,DE,https://www.cyberport.de/,cyberport.de,computer_specialist,,DE,headquartered,new,,unknown,unverified,,
+alternate-de,Alternate,DE,https://www.alternate.de/,alternate.de,computer_specialist,Alternate,DE,headquartered,new,https://www.alternate.de/listing.xhtml?q={q},known,unverified,,
+mindfactory-de,Mindfactory,DE,https://www.mindfactory.de/,mindfactory.de,computer_specialist,,DE,headquartered,new,https://www.mindfactory.de/search_result.php?search_query={q},known,unverified,,
+computeruniverse-de,Computeruniverse,DE,https://www.computeruniverse.net/de,computeruniverse.net,computer_specialist,Computeruniverse,DE,headquartered,new,https://www.computeruniverse.net/de/search?query={q},known,unverified,,
+caseking-de,Caseking,DE,https://www.caseking.de/,caseking.de,computer_specialist,,DE,headquartered,new,https://www.caseking.de/search?sSearch={q},known,unverified,,
+jacob-de,Jacob Elektronik,DE,https://www.jacob.de/,jacob.de,computer_specialist,,DE,headquartered,new,,unknown,unverified,,
+arlt-de,ARLT Computer,DE,https://www.arlt.com/,arlt.com,computer_specialist,,DE,headquartered,new,,unknown,unverified,,
+conrad-de,Conrad Electronic,DE,https://www.conrad.de/,conrad.de,computer_specialist,Conrad,DE,headquartered,new,https://www.conrad.de/de/search.html?search={q},known,unverified,,
+expert-de,expert,DE,https://www.expert.de/,expert.de,electronics_chain,,DE,headquartered,new,,unknown,unverified,,
+euronics-de,EURONICS,DE,https://www.euronics.de/,euronics.de,electronics_chain,,DE,headquartered,new,,unknown,unverified,,
+medimax-de,MEDIMAX,DE,https://www.medimax.de/,medimax.de,electronics_chain,ElectronicPartner,DE,headquartered,new,,unknown,unverified,,
+kaufland-de,Kaufland.de,DE,https://www.kaufland.de/,kaufland.de,marketplace,Schwarz Gruppe,DE,headquartered,new,https://www.kaufland.de/s/?search_value={q},known,unverified,,Marketplace + own range; featured offer shown
+lidl-de,Lidl,DE,https://www.lidl.de/,lidl.de,general_retail,Schwarz Gruppe,DE,headquartered,new,https://www.lidl.de/q/search?q={q},known,unverified,,
+tchibo-de,Tchibo,DE,https://www.tchibo.de/,tchibo.de,general_retail,,DE,headquartered,new,,unknown,unverified,,
+netto-de,Netto Online,DE,https://www.netto-online.de/,netto-online.de,general_retail,,DE,headquartered,new,,unknown,unverified,,
+reichelt-de,reichelt elektronik,DE,https://www.reichelt.de/,reichelt.de,computer_specialist,,DE,headquartered,new,,unknown,unverified,,
+pearl-de,PEARL,DE,https://www.pearl.de/,pearl.de,online_electronics,,DE,headquartered,new,,unknown,unverified,,
+medion-de,MEDION Shop,DE,https://www.medion.com/de/shop/,medion.com,brand_store,,DE,headquartered,new,,unknown,unverified,,"Brand store (Lenovo group); mostly laptops/TV, some phones"
+elektroshopwagner-de,Elektroshop Wagner,DE,https://www.elektroshop-wagner.de/,elektroshop-wagner.de,online_electronics,,DE,headquartered,new,,unknown,unverified,,
+proshop-de,Proshop,DE,https://www.proshop.de/,proshop.de,computer_specialist,Proshop,DK,headquartered,new,,unknown,unverified,,
+coolshop-de,Coolshop,DE,https://www.coolshop.de/,coolshop.de,online_electronics,Coolshop,DK,headquartered,new,,unknown,unverified,,
+coolblue-de,Coolblue,DE,https://www.coolblue.de/,coolblue.de,online_electronics,Coolblue,NL,headquartered,new,,unknown,unverified,,
+galaxus-de,Galaxus,DE,https://www.galaxus.de/,galaxus.de,online_electronics,Digitec Galaxus (Migros),CH,headquartered,new,https://www.galaxus.de/de/search?q={q},known,unverified,,
+telekom-de,Telekom Shop,DE,https://www.telekom.de/,telekom.de,telecom_operator,Deutsche Telekom,DE,headquartered,new,,unknown,unverified,,
+vodafone-de,Vodafone,DE,https://www.vodafone.de/,vodafone.de,telecom_operator,Vodafone,GB,headquartered,new,,unknown,unverified,,
+o2-de,O2 (Telefónica),DE,https://www.o2online.de/,o2online.de,telecom_operator,Telefónica,ES,headquartered,new,,unknown,unverified,,
+1und1-de,1&1,DE,https://www.1und1.de/,1und1.de,telecom_operator,United Internet,DE,headquartered,new,,unknown,unverified,,
+congstar-de,congstar,DE,https://www.congstar.de/,congstar.de,telecom_operator,Deutsche Telekom,DE,headquartered,new,,unknown,unverified,,
+mobilcom-de,mobilcom-debitel,DE,https://www.mobilcom-debitel.de/,mobilcom-debitel.de,telecom_operator,freenet,DE,headquartered,new,,unknown,unverified,,
+klarmobil-de,klarmobil,DE,https://www.klarmobil.de/,klarmobil.de,telecom_operator,freenet,DE,headquartered,new,,unknown,unverified,,
+sparhandy-de,sparhandy,DE,https://www.sparhandy.de/,sparhandy.de,online_electronics,,DE,headquartered,new,,unknown,unverified,,Phone specialist; shows device price with and without contract
+handyflash-de,Handyflash,DE,https://www.handyflash.de/,handyflash.de,online_electronics,,DE,headquartered,new,,unknown,unverified,,
+rebuy-de,rebuy,DE,https://www.rebuy.de/,rebuy.de,refurbished,rebuy,DE,headquartered,refurbished,,unknown,unverified,,Re-commerce: used & refurbished
+backmarket-de,Back Market,DE,https://www.backmarket.de/de-de,backmarket.de,refurbished,Back Market,FR,headquartered,refurbished,https://www.backmarket.de/de-de/search?q={q},known,unverified,,
+swappie-de,Swappie,DE,https://swappie.com/de/,swappie.com,refurbished,Swappie,FI,headquartered,refurbished,,unknown,unverified,,
+refurbed-de,refurbed,DE,https://www.refurbed.de/,refurbed.de,refurbished,refurbed,AT,headquartered,refurbished,,unknown,unverified,,
+apple-de,Apple Store,DE,https://www.apple.com/de/,apple.com,brand_store,Apple,US,eu_subsidiary,new,https://www.apple.com/de/search/{q_path}?src=serp,known,unverified,,Apple pages are not schema.org-annotated; results may be unavailable
+samsung-de,Samsung Shop,DE,https://www.samsung.com/de/,samsung.com,brand_store,Samsung,KR,eu_subsidiary,new,https://www.samsung.com/de/search/?searchvalue={q},known,unverified,,
+xiaomi-de,Xiaomi Store,DE,https://www.mi.com/de/,mi.com,brand_store,Xiaomi,CN,eu_subsidiary,new,,unknown,unverified,,Local EU storefront
+oneplus-de,OnePlus Store,DE,https://www.oneplus.com/de,oneplus.com,brand_store,OnePlus,CN,eu_subsidiary,new,,unknown,unverified,,Local EU storefront
+google-de,Google Store,DE,https://store.google.com/de,store.google.com,brand_store,Google,US,eu_subsidiary,new,,unknown,unverified,,
+fairphone-de,Fairphone Shop,DE,https://shop.fairphone.com/de,fairphone.com,brand_store,Fairphone,NL,headquartered,new,,unknown,unverified,,
+motorola-de,Motorola,DE,https://www.motorola.de/,motorola.de,brand_store,Lenovo/Motorola,US,eu_subsidiary,new,,unknown,unverified,,Local EU storefront
+honor-de,Honor,DE,https://www.honor.com/de/,honor.com,brand_store,Honor,CN,eu_subsidiary,new,,unknown,unverified,,Local EU storefront
+huawei-de,Huawei,DE,https://consumer.huawei.com/de/,huawei.com,brand_store,Huawei,CN,eu_subsidiary,new,,unknown,unverified,,Local EU storefront
+ebay-de,eBay Germany,DE,https://www.ebay.de/,ebay.de,marketplace,eBay,US,eu_subsidiary,new,https://www.ebay.de/sch/i.php?_nkw={q},known,unverified,,Marketplace; many private sellers and used items

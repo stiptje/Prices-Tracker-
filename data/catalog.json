@@ -1,0 +1,2727 @@
+{
+ "note": "Models listed are ones known to exist; absence is harmless – custom text can always be searched.",
+ "products": [
+  {
+   "id": "apple-iphone-11",
+   "brand": "Apple",
+   "name": "iPhone 11",
+   "aliases": [
+    "Apple iPhone 11"
+   ],
+   "model_numbers": [],
+   "storage_gb": [
+    64,
+    128,
+    256
+   ],
+   "year": 2019,
+   "category": "smartphone",
+   "allow_words": []
+  },
+  {
+   "id": "apple-iphone-11-pro",
+   "brand": "Apple",
+   "name": "iPhone 11 Pro",
+   "aliases": [
+    "Apple iPhone 11 Pro"
+   ],
+   "model_numbers": [],
+   "storage_gb": [
+    64,
+    256,
+    512
+   ],
+   "year": 2019,
+   "category": "smartphone",
+   "allow_words": []
+  },
+  {
+   "id": "apple-iphone-11-pro-max",
+   "brand": "Apple",
+   "name": "iPhone 11 Pro Max",
+   "aliases": [
+    "Apple iPhone 11 Pro Max"
+   ],
+   "model_numbers": [],
+   "storage_gb": [
+    64,
+    256,
+    512
+   ],
+   "year": 2019,
+   "category": "smartphone",
+   "allow_words": []
+  },
+  {
+   "id": "apple-iphone-12-mini",
+   "brand": "Apple",
+   "name": "iPhone 12 mini",
+   "aliases": [
+    "Apple iPhone 12 mini"
+   ],
+   "model_numbers": [],
+   "storage_gb": [
+    64,
+    128,
+    256
+   ],
+   "year": 2020,
+   "category": "smartphone",
+   "allow_words": []
+  },
+  {
+   "id": "apple-iphone-12",
+   "brand": "Apple",
+   "name": "iPhone 12",
+   "aliases": [
+    "Apple iPhone 12"
+   ],
+   "model_numbers": [],
+   "storage_gb": [
+    64,
+    128,
+    256
+   ],
+   "year": 2020,
+   "category": "smartphone",
+   "allow_words": []
+  },
+  {
+   "id": "apple-iphone-12-pro",
+   "brand": "Apple",
+   "name": "iPhone 12 Pro",
+   "aliases": [
+    "Apple iPhone 12 Pro"
+   ],
+   "model_numbers": [],
+   "storage_gb": [
+    128,
+    256,
+    512
+   ],
+   "year": 2020,
+   "category": "smartphone",
+   "allow_words": []
+  },
+  {
+   "id": "apple-iphone-12-pro-max",
+   "brand": "Apple",
+   "name": "iPhone 12 Pro Max",
+   "aliases": [
+    "Apple iPhone 12 Pro Max"
+   ],
+   "model_numbers": [],
+   "storage_gb": [
+    128,
+    256,
+    512
+   ],
+   "year": 2020,
+   "category": "smartphone",
+   "allow_words": []
+  },
+  {
+   "id": "apple-iphone-13-mini",
+   "brand": "Apple",
+   "name": "iPhone 13 mini",
+   "aliases": [
+    "Apple iPhone 13 mini"
+   ],
+   "model_numbers": [],
+   "storage_gb": [
+    128,
+    256,
+    512
+   ],
+   "year": 2021,
+   "category": "smartphone",
+   "allow_words": []
+  },
+  {
+   "id": "apple-iphone-13",
+   "brand": "Apple",
+   "name": "iPhone 13",
+   "aliases": [
+    "Apple iPhone 13"
+   ],
+   "model_numbers": [],
+   "storage_gb": [
+    128,
+    256,
+    512
+   ],
+   "year": 2021,
+   "category": "smartphone",
+   "allow_words": []
+  },
+  {
+   "id": "apple-iphone-13-pro",
+   "brand": "Apple",
+   "name": "iPhone 13 Pro",
+   "aliases": [
+    "Apple iPhone 13 Pro"
+   ],
+   "model_numbers": [],
+   "storage_gb": [
+    128,
+    256,
+    512,
+    1024
+   ],
+   "year": 2021,
+   "category": "smartphone",
+   "allow_words": []
+  },
+  {
+   "id": "apple-iphone-13-pro-max",
+   "brand": "Apple",
+   "name": "iPhone 13 Pro Max",
+   "aliases": [
+    "Apple iPhone 13 Pro Max"
+   ],
+   "model_numbers": [],
+   "storage_gb": [
+    128,
+    256,
+    512,
+    1024
+   ],
+   "year": 2021,
+   "category": "smartphone",
+   "allow_words": []
+  },
+  {
+   "id": "apple-iphone-14",
+   "brand": "Apple",
+   "name": "iPhone 14",
+   "aliases": [
+    "Apple iPhone 14"
+   ],
+   "model_numbers": [],
+   "storage_gb": [
+    128,
+    256,
+    512
+   ],
+   "year": 2022,
+   "category": "smartphone",
+   "allow_words": []
+  },
+  {
+   "id": "apple-iphone-14-plus",
+   "brand": "Apple",
+   "name": "iPhone 14 Plus",
+   "aliases": [
+    "Apple iPhone 14 Plus"
+   ],
+   "model_numbers": [],
+   "storage_gb": [
+    128,
+    256,
+    512
+   ],
+   "year": 2022,
+   "category": "smartphone",
+   "allow_words": []
+  },
+  {
+   "id": "apple-iphone-14-pro",
+   "brand": "Apple",
+   "name": "iPhone 14 Pro",
+   "aliases": [
+    "Apple iPhone 14 Pro"
+   ],
+   "model_numbers": [],
+   "storage_gb": [
+    128,
+    256,
+    512,
+    1024
+   ],
+   "year": 2022,
+   "category": "smartphone",
+   "allow_words": []
+  },
+  {
+   "id": "apple-iphone-14-pro-max",
+   "brand": "Apple",
+   "name": "iPhone 14 Pro Max",
+   "aliases": [
+    "Apple iPhone 14 Pro Max"
+   ],
+   "model_numbers": [],
+   "storage_gb": [
+    128,
+    256,
+    512,
+    1024
+   ],
+   "year": 2022,
+   "category": "smartphone",
+   "allow_words": []
+  },
+  {
+   "id": "apple-iphone-15",
+   "brand": "Apple",
+   "name": "iPhone 15",
+   "aliases": [
+    "Apple iPhone 15"
+   ],
+   "model_numbers": [],
+   "storage_gb": [
+    128,
+    256,
+    512
+   ],
+   "year": 2023,
+   "category": "smartphone",
+   "allow_words": []
+  },
+  {
+   "id": "apple-iphone-15-plus",
+   "brand": "Apple",
+   "name": "iPhone 15 Plus",
+   "aliases": [
+    "Apple iPhone 15 Plus"
+   ],
+   "model_numbers": [],
+   "storage_gb": [
+    128,
+    256,
+    512
+   ],
+   "year": 2023,
+   "category": "smartphone",
+   "allow_words": []
+  },
+  {
+   "id": "apple-iphone-15-pro",
+   "brand": "Apple",
+   "name": "iPhone 15 Pro",
+   "aliases": [
+    "Apple iPhone 15 Pro"
+   ],
+   "model_numbers": [],
+   "storage_gb": [
+    128,
+    256,
+    512,
+    1024
+   ],
+   "year": 2023,
+   "category": "smartphone",
+   "allow_words": []
+  },
+  {
+   "id": "apple-iphone-15-pro-max",
+   "brand": "Apple",
+   "name": "iPhone 15 Pro Max",
+   "aliases": [
+    "Apple iPhone 15 Pro Max"
+   ],
+   "model_numbers": [],
+   "storage_gb": [
+    256,
+    512,
+    1024
+   ],
+   "year": 2023,
+   "category": "smartphone",
+   "allow_words": []
+  },
+  {
+   "id": "apple-iphone-16e",
+   "brand": "Apple",
+   "name": "iPhone 16e",
+   "aliases": [
+    "Apple iPhone 16e"
+   ],
+   "model_numbers": [],
+   "storage_gb": [
+    128,
+    256,
+    512
+   ],
+   "year": 2025,
+   "category": "smartphone",
+   "allow_words": []
+  },
+  {
+   "id": "apple-iphone-16",
+   "brand": "Apple",
+   "name": "iPhone 16",
+   "aliases": [
+    "Apple iPhone 16"
+   ],
+   "model_numbers": [],
+   "storage_gb": [
+    128,
+    256,
+    512
+   ],
+   "year": 2024,
+   "category": "smartphone",
+   "allow_words": []
+  },
+  {
+   "id": "apple-iphone-16-plus",
+   "brand": "Apple",
+   "name": "iPhone 16 Plus",
+   "aliases": [
+    "Apple iPhone 16 Plus"
+   ],
+   "model_numbers": [],
+   "storage_gb": [
+    128,
+    256,
+    512
+   ],
+   "year": 2024,
+   "category": "smartphone",
+   "allow_words": []
+  },
+  {
+   "id": "apple-iphone-16-pro",
+   "brand": "Apple",
+   "name": "iPhone 16 Pro",
+   "aliases": [
+    "Apple iPhone 16 Pro"
+   ],
+   "model_numbers": [],
+   "storage_gb": [
+    128,
+    256,
+    512,
+    1024
+   ],
+   "year": 2024,
+   "category": "smartphone",
+   "allow_words": []
+  },
+  {
+   "id": "apple-iphone-16-pro-max",
+   "brand": "Apple",
+   "name": "iPhone 16 Pro Max",
+   "aliases": [
+    "Apple iPhone 16 Pro Max"
+   ],
+   "model_numbers": [],
+   "storage_gb": [
+    256,
+    512,
+    1024
+   ],
+   "year": 2024,
+   "category": "smartphone",
+   "allow_words": []
+  },
+  {
+   "id": "apple-iphone-17",
+   "brand": "Apple",
+   "name": "iPhone 17",
+   "aliases": [
+    "Apple iPhone 17"
+   ],
+   "model_numbers": [],
+   "storage_gb": [
+    256,
+    512
+   ],
+   "year": 2025,
+   "category": "smartphone",
+   "allow_words": []
+  },
+  {
+   "id": "apple-iphone-air",
+   "brand": "Apple",
+   "name": "iPhone Air",
+   "aliases": [
+    "Apple iPhone Air"
+   ],
+   "model_numbers": [],
+   "storage_gb": [
+    256,
+    512,
+    1024
+   ],
+   "year": 2025,
+   "category": "smartphone",
+   "allow_words": []
+  },
+  {
+   "id": "apple-iphone-17-pro",
+   "brand": "Apple",
+   "name": "iPhone 17 Pro",
+   "aliases": [
+    "Apple iPhone 17 Pro"
+   ],
+   "model_numbers": [],
+   "storage_gb": [
+    256,
+    512,
+    1024
+   ],
+   "year": 2025,
+   "category": "smartphone",
+   "allow_words": []
+  },
+  {
+   "id": "apple-iphone-17-pro-max",
+   "brand": "Apple",
+   "name": "iPhone 17 Pro Max",
+   "aliases": [
+    "Apple iPhone 17 Pro Max"
+   ],
+   "model_numbers": [],
+   "storage_gb": [
+    256,
+    512,
+    1024,
+    2048
+   ],
+   "year": 2025,
+   "category": "smartphone",
+   "allow_words": []
+  },
+  {
+   "id": "apple-iphone-se-2020",
+   "brand": "Apple",
+   "name": "iPhone SE (2020)",
+   "aliases": [
+    "iPhone SE 2020",
+    "iPhone SE 2nd generation",
+    "iPhone SE (2e generatie)"
+   ],
+   "model_numbers": [],
+   "storage_gb": [
+    64,
+    128,
+    256
+   ],
+   "year": 2020,
+   "category": "smartphone",
+   "allow_words": []
+  },
+  {
+   "id": "apple-iphone-se-2022",
+   "brand": "Apple",
+   "name": "iPhone SE (2022)",
+   "aliases": [
+    "iPhone SE 2022",
+    "iPhone SE 3",
+    "iPhone SE (3rd generation)",
+    "iPhone SE (3e generatie)",
+    "iPhone SE (3. Generation)"
+   ],
+   "model_numbers": [],
+   "storage_gb": [
+    64,
+    128,
+    256
+   ],
+   "year": 2022,
+   "category": "smartphone",
+   "allow_words": []
+  },
+  {
+   "id": "samsung-galaxy-s21",
+   "brand": "Samsung",
+   "name": "Galaxy S21",
+   "aliases": [
+    "Samsung Galaxy S21",
+    "Samsung Galaxy S21 5G",
+    "S21"
+   ],
+   "model_numbers": [
+    "SM-G991B"
+   ],
+   "storage_gb": [
+    128,
+    256
+   ],
+   "year": 2021,
+   "category": "smartphone",
+   "allow_words": []
+  },
+  {
+   "id": "samsung-galaxy-s21plus",
+   "brand": "Samsung",
+   "name": "Galaxy S21+",
+   "aliases": [
+    "Samsung Galaxy S21+",
+    "Samsung Galaxy S21+ 5G",
+    "S21 Plus"
+   ],
+   "model_numbers": [
+    "SM-G996B"
+   ],
+   "storage_gb": [
+    128,
+    256
+   ],
+   "year": 2021,
+   "category": "smartphone",
+   "allow_words": []
+  },
+  {
+   "id": "samsung-galaxy-s21-ultra",
+   "brand": "Samsung",
+   "name": "Galaxy S21 Ultra",
+   "aliases": [
+    "Samsung Galaxy S21 Ultra",
+    "Samsung Galaxy S21 Ultra 5G",
+    "S21 Ultra"
+   ],
+   "model_numbers": [
+    "SM-G998B"
+   ],
+   "storage_gb": [
+    128,
+    256,
+    512
+   ],
+   "year": 2021,
+   "category": "smartphone",
+   "allow_words": []
+  },
+  {
+   "id": "samsung-galaxy-s21-fe",
+   "brand": "Samsung",
+   "name": "Galaxy S21 FE",
+   "aliases": [
+    "Samsung Galaxy S21 FE",
+    "Samsung Galaxy S21 FE 5G",
+    "S21 FE"
+   ],
+   "model_numbers": [
+    "SM-G990B"
+   ],
+   "storage_gb": [
+    128,
+    256
+   ],
+   "year": 2022,
+   "category": "smartphone",
+   "allow_words": []
+  },
+  {
+   "id": "samsung-galaxy-s22",
+   "brand": "Samsung",
+   "name": "Galaxy S22",
+   "aliases": [
+    "Samsung Galaxy S22",
+    "Samsung Galaxy S22 5G",
+    "S22"
+   ],
+   "model_numbers": [
+    "SM-S901B"
+   ],
+   "storage_gb": [
+    128,
+    256
+   ],
+   "year": 2022,
+   "category": "smartphone",
+   "allow_words": []
+  },
+  {
+   "id": "samsung-galaxy-s22plus",
+   "brand": "Samsung",
+   "name": "Galaxy S22+",
+   "aliases": [
+    "Samsung Galaxy S22+",
+    "Samsung Galaxy S22+ 5G",
+    "S22 Plus"
+   ],
+   "model_numbers": [
+    "SM-S906B"
+   ],
+   "storage_gb": [
+    128,
+    256
+   ],
+   "year": 2022,
+   "category": "smartphone",
+   "allow_words": []
+  },
+  {
+   "id": "samsung-galaxy-s22-ultra",
+   "brand": "Samsung",
+   "name": "Galaxy S22 Ultra",
+   "aliases": [
+    "Samsung Galaxy S22 Ultra",
+    "Samsung Galaxy S22 Ultra 5G",
+    "S22 Ultra"
+   ],
+   "model_numbers": [
+    "SM-S908B"
+   ],
+   "storage_gb": [
+    128,
+    256,
+    512,
+    1024
+   ],
+   "year": 2022,
+   "category": "smartphone",
+   "allow_words": []
+  },
+  {
+   "id": "samsung-galaxy-s23",
+   "brand": "Samsung",
+   "name": "Galaxy S23",
+   "aliases": [
+    "Samsung Galaxy S23",
+    "Samsung Galaxy S23 5G",
+    "S23"
+   ],
+   "model_numbers": [
+    "SM-S911B"
+   ],
+   "storage_gb": [
+    128,
+    256,
+    512
+   ],
+   "year": 2023,
+   "category": "smartphone",
+   "allow_words": []
+  },
+  {
+   "id": "samsung-galaxy-s23plus",
+   "brand": "Samsung",
+   "name": "Galaxy S23+",
+   "aliases": [
+    "Samsung Galaxy S23+",
+    "Samsung Galaxy S23+ 5G",
+    "S23 Plus"
+   ],
+   "model_numbers": [
+    "SM-S916B"
+   ],
+   "storage_gb": [
+    256,
+    512
+   ],
+   "year": 2023,
+   "category": "smartphone",
+   "allow_words": []
+  },
+  {
+   "id": "samsung-galaxy-s23-ultra",
+   "brand": "Samsung",
+   "name": "Galaxy S23 Ultra",
+   "aliases": [
+    "Samsung Galaxy S23 Ultra",
+    "Samsung Galaxy S23 Ultra 5G",
+    "S23 Ultra"
+   ],
+   "model_numbers": [
+    "SM-S918B"
+   ],
+   "storage_gb": [
+    256,
+    512,
+    1024
+   ],
+   "year": 2023,
+   "category": "smartphone",
+   "allow_words": []
+  },
+  {
+   "id": "samsung-galaxy-s23-fe",
+   "brand": "Samsung",
+   "name": "Galaxy S23 FE",
+   "aliases": [
+    "Samsung Galaxy S23 FE",
+    "Samsung Galaxy S23 FE 5G",
+    "S23 FE"
+   ],
+   "model_numbers": [
+    "SM-S711B"
+   ],
+   "storage_gb": [
+    128,
+    256
+   ],
+   "year": 2023,
+   "category": "smartphone",
+   "allow_words": []
+  },
+  {
+   "id": "samsung-galaxy-s24",
+   "brand": "Samsung",
+   "name": "Galaxy S24",
+   "aliases": [
+    "Samsung Galaxy S24",
+    "Samsung Galaxy S24 5G",
+    "S24"
+   ],
+   "model_numbers": [
+    "SM-S921B"
+   ],
+   "storage_gb": [
+    128,
+    256,
+    512
+   ],
+   "year": 2024,
+   "category": "smartphone",
+   "allow_words": []
+  },
+  {
+   "id": "samsung-galaxy-s24plus",
+   "brand": "Samsung",
+   "name": "Galaxy S24+",
+   "aliases": [
+    "Samsung Galaxy S24+",
+    "Samsung Galaxy S24+ 5G",
+    "S24 Plus"
+   ],
+   "model_numbers": [
+    "SM-S926B"
+   ],
+   "storage_gb": [
+    256,
+    512
+   ],
+   "year": 2024,
+   "category": "smartphone",
+   "allow_words": []
+  },
+  {
+   "id": "samsung-galaxy-s24-ultra",
+   "brand": "Samsung",
+   "name": "Galaxy S24 Ultra",
+   "aliases": [
+    "Samsung Galaxy S24 Ultra",
+    "Samsung Galaxy S24 Ultra 5G",
+    "S24 Ultra"
+   ],
+   "model_numbers": [
+    "SM-S928B"
+   ],
+   "storage_gb": [
+    256,
+    512,
+    1024
+   ],
+   "year": 2024,
+   "category": "smartphone",
+   "allow_words": []
+  },
+  {
+   "id": "samsung-galaxy-s24-fe",
+   "brand": "Samsung",
+   "name": "Galaxy S24 FE",
+   "aliases": [
+    "Samsung Galaxy S24 FE",
+    "Samsung Galaxy S24 FE 5G",
+    "S24 FE"
+   ],
+   "model_numbers": [
+    "SM-S721B"
+   ],
+   "storage_gb": [
+    128,
+    256,
+    512
+   ],
+   "year": 2024,
+   "category": "smartphone",
+   "allow_words": []
+  },
+  {
+   "id": "samsung-galaxy-s25",
+   "brand": "Samsung",
+   "name": "Galaxy S25",
+   "aliases": [
+    "Samsung Galaxy S25",
+    "Samsung Galaxy S25 5G",
+    "S25"
+   ],
+   "model_numbers": [
+    "SM-S931B"
+   ],
+   "storage_gb": [
+    128,
+    256,
+    512
+   ],
+   "year": 2025,
+   "category": "smartphone",
+   "allow_words": []
+  },
+  {
+   "id": "samsung-galaxy-s25plus",
+   "brand": "Samsung",
+   "name": "Galaxy S25+",
+   "aliases": [
+    "Samsung Galaxy S25+",
+    "Samsung Galaxy S25+ 5G",
+    "S25 Plus"
+   ],
+   "model_numbers": [
+    "SM-S936B"
+   ],
+   "storage_gb": [
+    256,
+    512
+   ],
+   "year": 2025,
+   "category": "smartphone",
+   "allow_words": []
+  },
+  {
+   "id": "samsung-galaxy-s25-ultra",
+   "brand": "Samsung",
+   "name": "Galaxy S25 Ultra",
+   "aliases": [
+    "Samsung Galaxy S25 Ultra",
+    "Samsung Galaxy S25 Ultra 5G",
+    "S25 Ultra"
+   ],
+   "model_numbers": [
+    "SM-S938B"
+   ],
+   "storage_gb": [
+    256,
+    512,
+    1024
+   ],
+   "year": 2025,
+   "category": "smartphone",
+   "allow_words": []
+  },
+  {
+   "id": "samsung-galaxy-s25-edge",
+   "brand": "Samsung",
+   "name": "Galaxy S25 Edge",
+   "aliases": [
+    "Samsung Galaxy S25 Edge",
+    "Samsung Galaxy S25 Edge 5G",
+    "S25 Edge"
+   ],
+   "model_numbers": [
+    "SM-S937B"
+   ],
+   "storage_gb": [
+    256,
+    512
+   ],
+   "year": 2025,
+   "category": "smartphone",
+   "allow_words": []
+  },
+  {
+   "id": "samsung-galaxy-s25-fe",
+   "brand": "Samsung",
+   "name": "Galaxy S25 FE",
+   "aliases": [
+    "Samsung Galaxy S25 FE",
+    "Samsung Galaxy S25 FE 5G",
+    "S25 FE"
+   ],
+   "model_numbers": [
+    "SM-S731B"
+   ],
+   "storage_gb": [
+    128,
+    256,
+    512
+   ],
+   "year": 2025,
+   "category": "smartphone",
+   "allow_words": []
+  },
+  {
+   "id": "samsung-galaxy-z-fold5",
+   "brand": "Samsung",
+   "name": "Galaxy Z Fold5",
+   "aliases": [
+    "Samsung Galaxy Z Fold5",
+    "Samsung Galaxy Z Fold5 5G",
+    "Z Fold5"
+   ],
+   "model_numbers": [],
+   "storage_gb": [
+    256,
+    512,
+    1024
+   ],
+   "year": 2023,
+   "category": "smartphone",
+   "allow_words": []
+  },
+  {
+   "id": "samsung-galaxy-z-flip5",
+   "brand": "Samsung",
+   "name": "Galaxy Z Flip5",
+   "aliases": [
+    "Samsung Galaxy Z Flip5",
+    "Samsung Galaxy Z Flip5 5G",
+    "Z Flip5"
+   ],
+   "model_numbers": [],
+   "storage_gb": [
+    256,
+    512
+   ],
+   "year": 2023,
+   "category": "smartphone",
+   "allow_words": []
+  },
+  {
+   "id": "samsung-galaxy-z-fold6",
+   "brand": "Samsung",
+   "name": "Galaxy Z Fold6",
+   "aliases": [
+    "Samsung Galaxy Z Fold6",
+    "Samsung Galaxy Z Fold6 5G",
+    "Z Fold6"
+   ],
+   "model_numbers": [],
+   "storage_gb": [
+    256,
+    512,
+    1024
+   ],
+   "year": 2024,
+   "category": "smartphone",
+   "allow_words": []
+  },
+  {
+   "id": "samsung-galaxy-z-flip6",
+   "brand": "Samsung",
+   "name": "Galaxy Z Flip6",
+   "aliases": [
+    "Samsung Galaxy Z Flip6",
+    "Samsung Galaxy Z Flip6 5G",
+    "Z Flip6"
+   ],
+   "model_numbers": [],
+   "storage_gb": [
+    256,
+    512
+   ],
+   "year": 2024,
+   "category": "smartphone",
+   "allow_words": []
+  },
+  {
+   "id": "samsung-galaxy-z-fold7",
+   "brand": "Samsung",
+   "name": "Galaxy Z Fold7",
+   "aliases": [
+    "Samsung Galaxy Z Fold7",
+    "Samsung Galaxy Z Fold7 5G",
+    "Z Fold7"
+   ],
+   "model_numbers": [],
+   "storage_gb": [
+    256,
+    512,
+    1024
+   ],
+   "year": 2025,
+   "category": "smartphone",
+   "allow_words": []
+  },
+  {
+   "id": "samsung-galaxy-z-flip7",
+   "brand": "Samsung",
+   "name": "Galaxy Z Flip7",
+   "aliases": [
+    "Samsung Galaxy Z Flip7",
+    "Samsung Galaxy Z Flip7 5G",
+    "Z Flip7"
+   ],
+   "model_numbers": [],
+   "storage_gb": [
+    256,
+    512
+   ],
+   "year": 2025,
+   "category": "smartphone",
+   "allow_words": []
+  },
+  {
+   "id": "samsung-galaxy-z-flip7-fe",
+   "brand": "Samsung",
+   "name": "Galaxy Z Flip7 FE",
+   "aliases": [
+    "Samsung Galaxy Z Flip7 FE",
+    "Samsung Galaxy Z Flip7 FE 5G",
+    "Z Flip7 FE"
+   ],
+   "model_numbers": [],
+   "storage_gb": [
+    128,
+    256
+   ],
+   "year": 2025,
+   "category": "smartphone",
+   "allow_words": []
+  },
+  {
+   "id": "samsung-galaxy-a15",
+   "brand": "Samsung",
+   "name": "Galaxy A15",
+   "aliases": [
+    "Samsung Galaxy A15",
+    "Samsung Galaxy A15 5G",
+    "Galaxy A15 5G"
+   ],
+   "model_numbers": [],
+   "storage_gb": [
+    128,
+    256
+   ],
+   "year": 2023,
+   "category": "smartphone",
+   "allow_words": []
+  },
+  {
+   "id": "samsung-galaxy-a16",
+   "brand": "Samsung",
+   "name": "Galaxy A16",
+   "aliases": [
+    "Samsung Galaxy A16",
+    "Samsung Galaxy A16 5G",
+    "Galaxy A16 5G"
+   ],
+   "model_numbers": [],
+   "storage_gb": [
+    128,
+    256
+   ],
+   "year": 2024,
+   "category": "smartphone",
+   "allow_words": []
+  },
+  {
+   "id": "samsung-galaxy-a25",
+   "brand": "Samsung",
+   "name": "Galaxy A25",
+   "aliases": [
+    "Samsung Galaxy A25",
+    "Samsung Galaxy A25 5G",
+    "Galaxy A25 5G"
+   ],
+   "model_numbers": [],
+   "storage_gb": [
+    128,
+    256
+   ],
+   "year": 2024,
+   "category": "smartphone",
+   "allow_words": []
+  },
+  {
+   "id": "samsung-galaxy-a26",
+   "brand": "Samsung",
+   "name": "Galaxy A26",
+   "aliases": [
+    "Samsung Galaxy A26",
+    "Samsung Galaxy A26 5G",
+    "Galaxy A26 5G"
+   ],
+   "model_numbers": [],
+   "storage_gb": [
+    128,
+    256
+   ],
+   "year": 2025,
+   "category": "smartphone",
+   "allow_words": []
+  },
+  {
+   "id": "samsung-galaxy-a34",
+   "brand": "Samsung",
+   "name": "Galaxy A34",
+   "aliases": [
+    "Samsung Galaxy A34",
+    "Samsung Galaxy A34 5G",
+    "Galaxy A34 5G"
+   ],
+   "model_numbers": [],
+   "storage_gb": [
+    128,
+    256
+   ],
+   "year": 2023,
+   "category": "smartphone",
+   "allow_words": []
+  },
+  {
+   "id": "samsung-galaxy-a35",
+   "brand": "Samsung",
+   "name": "Galaxy A35",
+   "aliases": [
+    "Samsung Galaxy A35",
+    "Samsung Galaxy A35 5G",
+    "Galaxy A35 5G"
+   ],
+   "model_numbers": [],
+   "storage_gb": [
+    128,
+    256
+   ],
+   "year": 2024,
+   "category": "smartphone",
+   "allow_words": []
+  },
+  {
+   "id": "samsung-galaxy-a36",
+   "brand": "Samsung",
+   "name": "Galaxy A36",
+   "aliases": [
+    "Samsung Galaxy A36",
+    "Samsung Galaxy A36 5G",
+    "Galaxy A36 5G"
+   ],
+   "model_numbers": [],
+   "storage_gb": [
+    128,
+    256
+   ],
+   "year": 2025,
+   "category": "smartphone",
+   "allow_words": []
+  },
+  {
+   "id": "samsung-galaxy-a54",
+   "brand": "Samsung",
+   "name": "Galaxy A54",
+   "aliases": [
+    "Samsung Galaxy A54",
+    "Samsung Galaxy A54 5G",
+    "Galaxy A54 5G"
+   ],
+   "model_numbers": [],
+   "storage_gb": [
+    128,
+    256
+   ],
+   "year": 2023,
+   "category": "smartphone",
+   "allow_words": []
+  },
+  {
+   "id": "samsung-galaxy-a55",
+   "brand": "Samsung",
+   "name": "Galaxy A55",
+   "aliases": [
+    "Samsung Galaxy A55",
+    "Samsung Galaxy A55 5G",
+    "Galaxy A55 5G"
+   ],
+   "model_numbers": [],
+   "storage_gb": [
+    128,
+    256
+   ],
+   "year": 2024,
+   "category": "smartphone",
+   "allow_words": []
+  },
+  {
+   "id": "samsung-galaxy-a56",
+   "brand": "Samsung",
+   "name": "Galaxy A56",
+   "aliases": [
+    "Samsung Galaxy A56",
+    "Samsung Galaxy A56 5G",
+    "Galaxy A56 5G"
+   ],
+   "model_numbers": [],
+   "storage_gb": [
+    128,
+    256
+   ],
+   "year": 2025,
+   "category": "smartphone",
+   "allow_words": []
+  },
+  {
+   "id": "google-pixel-6a",
+   "brand": "Google",
+   "name": "Pixel 6a",
+   "aliases": [
+    "Google Pixel 6a"
+   ],
+   "model_numbers": [],
+   "storage_gb": [
+    128
+   ],
+   "year": 2022,
+   "category": "smartphone",
+   "allow_words": []
+  },
+  {
+   "id": "google-pixel-7",
+   "brand": "Google",
+   "name": "Pixel 7",
+   "aliases": [
+    "Google Pixel 7"
+   ],
+   "model_numbers": [],
+   "storage_gb": [
+    128,
+    256
+   ],
+   "year": 2022,
+   "category": "smartphone",
+   "allow_words": []
+  },
+  {
+   "id": "google-pixel-7-pro",
+   "brand": "Google",
+   "name": "Pixel 7 Pro",
+   "aliases": [
+    "Google Pixel 7 Pro"
+   ],
+   "model_numbers": [],
+   "storage_gb": [
+    128,
+    256,
+    512
+   ],
+   "year": 2022,
+   "category": "smartphone",
+   "allow_words": []
+  },
+  {
+   "id": "google-pixel-7a",
+   "brand": "Google",
+   "name": "Pixel 7a",
+   "aliases": [
+    "Google Pixel 7a"
+   ],
+   "model_numbers": [],
+   "storage_gb": [
+    128
+   ],
+   "year": 2023,
+   "category": "smartphone",
+   "allow_words": []
+  },
+  {
+   "id": "google-pixel-8",
+   "brand": "Google",
+   "name": "Pixel 8",
+   "aliases": [
+    "Google Pixel 8"
+   ],
+   "model_numbers": [],
+   "storage_gb": [
+    128,
+    256
+   ],
+   "year": 2023,
+   "category": "smartphone",
+   "allow_words": []
+  },
+  {
+   "id": "google-pixel-8-pro",
+   "brand": "Google",
+   "name": "Pixel 8 Pro",
+   "aliases": [
+    "Google Pixel 8 Pro"
+   ],
+   "model_numbers": [],
+   "storage_gb": [
+    128,
+    256,
+    512,
+    1024
+   ],
+   "year": 2023,
+   "category": "smartphone",
+   "allow_words": []
+  },
+  {
+   "id": "google-pixel-8a",
+   "brand": "Google",
+   "name": "Pixel 8a",
+   "aliases": [
+    "Google Pixel 8a"
+   ],
+   "model_numbers": [],
+   "storage_gb": [
+    128,
+    256
+   ],
+   "year": 2024,
+   "category": "smartphone",
+   "allow_words": []
+  },
+  {
+   "id": "google-pixel-9",
+   "brand": "Google",
+   "name": "Pixel 9",
+   "aliases": [
+    "Google Pixel 9"
+   ],
+   "model_numbers": [],
+   "storage_gb": [
+    128,
+    256
+   ],
+   "year": 2024,
+   "category": "smartphone",
+   "allow_words": []
+  },
+  {
+   "id": "google-pixel-9-pro",
+   "brand": "Google",
+   "name": "Pixel 9 Pro",
+   "aliases": [
+    "Google Pixel 9 Pro"
+   ],
+   "model_numbers": [],
+   "storage_gb": [
+    128,
+    256,
+    512,
+    1024
+   ],
+   "year": 2024,
+   "category": "smartphone",
+   "allow_words": []
+  },
+  {
+   "id": "google-pixel-9-pro-xl",
+   "brand": "Google",
+   "name": "Pixel 9 Pro XL",
+   "aliases": [
+    "Google Pixel 9 Pro XL"
+   ],
+   "model_numbers": [],
+   "storage_gb": [
+    128,
+    256,
+    512,
+    1024
+   ],
+   "year": 2024,
+   "category": "smartphone",
+   "allow_words": []
+  },
+  {
+   "id": "google-pixel-9-pro-fold",
+   "brand": "Google",
+   "name": "Pixel 9 Pro Fold",
+   "aliases": [
+    "Google Pixel 9 Pro Fold"
+   ],
+   "model_numbers": [],
+   "storage_gb": [
+    256,
+    512
+   ],
+   "year": 2024,
+   "category": "smartphone",
+   "allow_words": []
+  },
+  {
+   "id": "google-pixel-9a",
+   "brand": "Google",
+   "name": "Pixel 9a",
+   "aliases": [
+    "Google Pixel 9a"
+   ],
+   "model_numbers": [],
+   "storage_gb": [
+    128,
+    256
+   ],
+   "year": 2025,
+   "category": "smartphone",
+   "allow_words": []
+  },
+  {
+   "id": "google-pixel-10",
+   "brand": "Google",
+   "name": "Pixel 10",
+   "aliases": [
+    "Google Pixel 10"
+   ],
+   "model_numbers": [],
+   "storage_gb": [
+    128,
+    256
+   ],
+   "year": 2025,
+   "category": "smartphone",
+   "allow_words": []
+  },
+  {
+   "id": "google-pixel-10-pro",
+   "brand": "Google",
+   "name": "Pixel 10 Pro",
+   "aliases": [
+    "Google Pixel 10 Pro"
+   ],
+   "model_numbers": [],
+   "storage_gb": [
+    128,
+    256,
+    512,
+    1024
+   ],
+   "year": 2025,
+   "category": "smartphone",
+   "allow_words": []
+  },
+  {
+   "id": "google-pixel-10-pro-xl",
+   "brand": "Google",
+   "name": "Pixel 10 Pro XL",
+   "aliases": [
+    "Google Pixel 10 Pro XL"
+   ],
+   "model_numbers": [],
+   "storage_gb": [
+    256,
+    512,
+    1024
+   ],
+   "year": 2025,
+   "category": "smartphone",
+   "allow_words": []
+  },
+  {
+   "id": "google-pixel-10-pro-fold",
+   "brand": "Google",
+   "name": "Pixel 10 Pro Fold",
+   "aliases": [
+    "Google Pixel 10 Pro Fold"
+   ],
+   "model_numbers": [],
+   "storage_gb": [
+    256,
+    512,
+    1024
+   ],
+   "year": 2025,
+   "category": "smartphone",
+   "allow_words": []
+  },
+  {
+   "id": "xiaomi-xiaomi-13t",
+   "brand": "Xiaomi",
+   "name": "Xiaomi 13T",
+   "aliases": [
+    "Xiaomi 13T 5G"
+   ],
+   "model_numbers": [],
+   "storage_gb": [
+    128,
+    256,
+    512
+   ],
+   "year": 2023,
+   "category": "smartphone",
+   "allow_words": []
+  },
+  {
+   "id": "xiaomi-xiaomi-13t-pro",
+   "brand": "Xiaomi",
+   "name": "Xiaomi 13T Pro",
+   "aliases": [
+    "Xiaomi 13T Pro 5G"
+   ],
+   "model_numbers": [],
+   "storage_gb": [
+    128,
+    256,
+    512
+   ],
+   "year": 2023,
+   "category": "smartphone",
+   "allow_words": []
+  },
+  {
+   "id": "xiaomi-xiaomi-14",
+   "brand": "Xiaomi",
+   "name": "Xiaomi 14",
+   "aliases": [
+    "Xiaomi 14 5G"
+   ],
+   "model_numbers": [],
+   "storage_gb": [
+    128,
+    256,
+    512
+   ],
+   "year": 2024,
+   "category": "smartphone",
+   "allow_words": []
+  },
+  {
+   "id": "xiaomi-xiaomi-14t",
+   "brand": "Xiaomi",
+   "name": "Xiaomi 14T",
+   "aliases": [
+    "Xiaomi 14T 5G"
+   ],
+   "model_numbers": [],
+   "storage_gb": [
+    128,
+    256,
+    512
+   ],
+   "year": 2024,
+   "category": "smartphone",
+   "allow_words": []
+  },
+  {
+   "id": "xiaomi-xiaomi-14t-pro",
+   "brand": "Xiaomi",
+   "name": "Xiaomi 14T Pro",
+   "aliases": [
+    "Xiaomi 14T Pro 5G"
+   ],
+   "model_numbers": [],
+   "storage_gb": [
+    128,
+    256,
+    512
+   ],
+   "year": 2024,
+   "category": "smartphone",
+   "allow_words": []
+  },
+  {
+   "id": "xiaomi-xiaomi-14-ultra",
+   "brand": "Xiaomi",
+   "name": "Xiaomi 14 Ultra",
+   "aliases": [
+    "Xiaomi 14 Ultra 5G"
+   ],
+   "model_numbers": [],
+   "storage_gb": [
+    128,
+    256,
+    512
+   ],
+   "year": 2024,
+   "category": "smartphone",
+   "allow_words": []
+  },
+  {
+   "id": "xiaomi-xiaomi-15",
+   "brand": "Xiaomi",
+   "name": "Xiaomi 15",
+   "aliases": [
+    "Xiaomi 15 5G"
+   ],
+   "model_numbers": [],
+   "storage_gb": [
+    128,
+    256,
+    512
+   ],
+   "year": 2025,
+   "category": "smartphone",
+   "allow_words": []
+  },
+  {
+   "id": "xiaomi-xiaomi-15-ultra",
+   "brand": "Xiaomi",
+   "name": "Xiaomi 15 Ultra",
+   "aliases": [
+    "Xiaomi 15 Ultra 5G"
+   ],
+   "model_numbers": [],
+   "storage_gb": [
+    128,
+    256,
+    512
+   ],
+   "year": 2025,
+   "category": "smartphone",
+   "allow_words": []
+  },
+  {
+   "id": "xiaomi-xiaomi-15t",
+   "brand": "Xiaomi",
+   "name": "Xiaomi 15T",
+   "aliases": [
+    "Xiaomi 15T 5G"
+   ],
+   "model_numbers": [],
+   "storage_gb": [
+    128,
+    256,
+    512
+   ],
+   "year": 2025,
+   "category": "smartphone",
+   "allow_words": []
+  },
+  {
+   "id": "xiaomi-xiaomi-15t-pro",
+   "brand": "Xiaomi",
+   "name": "Xiaomi 15T Pro",
+   "aliases": [
+    "Xiaomi 15T Pro 5G"
+   ],
+   "model_numbers": [],
+   "storage_gb": [
+    128,
+    256,
+    512
+   ],
+   "year": 2025,
+   "category": "smartphone",
+   "allow_words": []
+  },
+  {
+   "id": "xiaomi-redmi-note-13",
+   "brand": "Xiaomi",
+   "name": "Redmi Note 13",
+   "aliases": [
+    "Redmi Note 13 5G",
+    "Xiaomi Redmi Note 13"
+   ],
+   "model_numbers": [],
+   "storage_gb": [
+    128,
+    256,
+    512
+   ],
+   "year": 2024,
+   "category": "smartphone",
+   "allow_words": []
+  },
+  {
+   "id": "xiaomi-redmi-note-13-pro",
+   "brand": "Xiaomi",
+   "name": "Redmi Note 13 Pro",
+   "aliases": [
+    "Redmi Note 13 Pro 5G",
+    "Xiaomi Redmi Note 13 Pro"
+   ],
+   "model_numbers": [],
+   "storage_gb": [
+    128,
+    256,
+    512
+   ],
+   "year": 2024,
+   "category": "smartphone",
+   "allow_words": []
+  },
+  {
+   "id": "xiaomi-redmi-note-13-proplus",
+   "brand": "Xiaomi",
+   "name": "Redmi Note 13 Pro+",
+   "aliases": [
+    "Redmi Note 13 Pro+ 5G",
+    "Xiaomi Redmi Note 13 Pro+"
+   ],
+   "model_numbers": [],
+   "storage_gb": [
+    128,
+    256,
+    512
+   ],
+   "year": 2024,
+   "category": "smartphone",
+   "allow_words": []
+  },
+  {
+   "id": "xiaomi-redmi-note-14",
+   "brand": "Xiaomi",
+   "name": "Redmi Note 14",
+   "aliases": [
+    "Redmi Note 14 5G",
+    "Xiaomi Redmi Note 14"
+   ],
+   "model_numbers": [],
+   "storage_gb": [
+    128,
+    256,
+    512
+   ],
+   "year": 2025,
+   "category": "smartphone",
+   "allow_words": []
+  },
+  {
+   "id": "xiaomi-redmi-note-14-pro",
+   "brand": "Xiaomi",
+   "name": "Redmi Note 14 Pro",
+   "aliases": [
+    "Redmi Note 14 Pro 5G",
+    "Xiaomi Redmi Note 14 Pro"
+   ],
+   "model_numbers": [],
+   "storage_gb": [
+    128,
+    256,
+    512
+   ],
+   "year": 2025,
+   "category": "smartphone",
+   "allow_words": []
+  },
+  {
+   "id": "xiaomi-redmi-note-14-proplus",
+   "brand": "Xiaomi",
+   "name": "Redmi Note 14 Pro+",
+   "aliases": [
+    "Redmi Note 14 Pro+ 5G",
+    "Xiaomi Redmi Note 14 Pro+"
+   ],
+   "model_numbers": [],
+   "storage_gb": [
+    128,
+    256,
+    512
+   ],
+   "year": 2025,
+   "category": "smartphone",
+   "allow_words": []
+  },
+  {
+   "id": "xiaomi-poco-f6",
+   "brand": "Xiaomi",
+   "name": "POCO F6",
+   "aliases": [
+    "POCO F6 5G",
+    "Xiaomi POCO F6"
+   ],
+   "model_numbers": [],
+   "storage_gb": [
+    128,
+    256,
+    512
+   ],
+   "year": 2024,
+   "category": "smartphone",
+   "allow_words": []
+  },
+  {
+   "id": "xiaomi-poco-f6-pro",
+   "brand": "Xiaomi",
+   "name": "POCO F6 Pro",
+   "aliases": [
+    "POCO F6 Pro 5G",
+    "Xiaomi POCO F6 Pro"
+   ],
+   "model_numbers": [],
+   "storage_gb": [
+    128,
+    256,
+    512
+   ],
+   "year": 2024,
+   "category": "smartphone",
+   "allow_words": []
+  },
+  {
+   "id": "xiaomi-poco-x6-pro",
+   "brand": "Xiaomi",
+   "name": "POCO X6 Pro",
+   "aliases": [
+    "POCO X6 Pro 5G",
+    "Xiaomi POCO X6 Pro"
+   ],
+   "model_numbers": [],
+   "storage_gb": [
+    128,
+    256,
+    512
+   ],
+   "year": 2024,
+   "category": "smartphone",
+   "allow_words": []
+  },
+  {
+   "id": "xiaomi-poco-f7-pro",
+   "brand": "Xiaomi",
+   "name": "POCO F7 Pro",
+   "aliases": [
+    "POCO F7 Pro 5G",
+    "Xiaomi POCO F7 Pro"
+   ],
+   "model_numbers": [],
+   "storage_gb": [
+    128,
+    256,
+    512
+   ],
+   "year": 2025,
+   "category": "smartphone",
+   "allow_words": []
+  },
+  {
+   "id": "xiaomi-poco-x7-pro",
+   "brand": "Xiaomi",
+   "name": "POCO X7 Pro",
+   "aliases": [
+    "POCO X7 Pro 5G",
+    "Xiaomi POCO X7 Pro"
+   ],
+   "model_numbers": [],
+   "storage_gb": [
+    128,
+    256,
+    512
+   ],
+   "year": 2025,
+   "category": "smartphone",
+   "allow_words": []
+  },
+  {
+   "id": "oneplus-oneplus-11",
+   "brand": "OnePlus",
+   "name": "OnePlus 11",
+   "aliases": [
+    "OnePlus 11 5G"
+   ],
+   "model_numbers": [],
+   "storage_gb": [
+    128,
+    256,
+    512
+   ],
+   "year": 2023,
+   "category": "smartphone",
+   "allow_words": []
+  },
+  {
+   "id": "oneplus-oneplus-12",
+   "brand": "OnePlus",
+   "name": "OnePlus 12",
+   "aliases": [
+    "OnePlus 12 5G"
+   ],
+   "model_numbers": [],
+   "storage_gb": [
+    128,
+    256,
+    512
+   ],
+   "year": 2024,
+   "category": "smartphone",
+   "allow_words": []
+  },
+  {
+   "id": "oneplus-oneplus-12r",
+   "brand": "OnePlus",
+   "name": "OnePlus 12R",
+   "aliases": [
+    "OnePlus 12R 5G"
+   ],
+   "model_numbers": [],
+   "storage_gb": [
+    128,
+    256,
+    512
+   ],
+   "year": 2024,
+   "category": "smartphone",
+   "allow_words": []
+  },
+  {
+   "id": "oneplus-oneplus-13",
+   "brand": "OnePlus",
+   "name": "OnePlus 13",
+   "aliases": [
+    "OnePlus 13 5G"
+   ],
+   "model_numbers": [],
+   "storage_gb": [
+    128,
+    256,
+    512
+   ],
+   "year": 2025,
+   "category": "smartphone",
+   "allow_words": []
+  },
+  {
+   "id": "oneplus-oneplus-13r",
+   "brand": "OnePlus",
+   "name": "OnePlus 13R",
+   "aliases": [
+    "OnePlus 13R 5G"
+   ],
+   "model_numbers": [],
+   "storage_gb": [
+    128,
+    256,
+    512
+   ],
+   "year": 2025,
+   "category": "smartphone",
+   "allow_words": []
+  },
+  {
+   "id": "oneplus-oneplus-nord-4",
+   "brand": "OnePlus",
+   "name": "OnePlus Nord 4",
+   "aliases": [
+    "OnePlus Nord 4 5G"
+   ],
+   "model_numbers": [],
+   "storage_gb": [
+    128,
+    256,
+    512
+   ],
+   "year": 2024,
+   "category": "smartphone",
+   "allow_words": []
+  },
+  {
+   "id": "oneplus-oneplus-nord-5",
+   "brand": "OnePlus",
+   "name": "OnePlus Nord 5",
+   "aliases": [
+    "OnePlus Nord 5 5G"
+   ],
+   "model_numbers": [],
+   "storage_gb": [
+    128,
+    256,
+    512
+   ],
+   "year": 2025,
+   "category": "smartphone",
+   "allow_words": []
+  },
+  {
+   "id": "nothing-nothing-phone-1",
+   "brand": "Nothing",
+   "name": "Nothing Phone (1)",
+   "aliases": [
+    "Nothing Phone 1"
+   ],
+   "model_numbers": [],
+   "storage_gb": [
+    128,
+    256,
+    512
+   ],
+   "year": 2022,
+   "category": "smartphone",
+   "allow_words": []
+  },
+  {
+   "id": "nothing-nothing-phone-2",
+   "brand": "Nothing",
+   "name": "Nothing Phone (2)",
+   "aliases": [
+    "Nothing Phone 2"
+   ],
+   "model_numbers": [],
+   "storage_gb": [
+    128,
+    256,
+    512
+   ],
+   "year": 2023,
+   "category": "smartphone",
+   "allow_words": []
+  },
+  {
+   "id": "nothing-nothing-phone-2a",
+   "brand": "Nothing",
+   "name": "Nothing Phone (2a)",
+   "aliases": [
+    "Nothing Phone 2a"
+   ],
+   "model_numbers": [],
+   "storage_gb": [
+    128,
+    256,
+    512
+   ],
+   "year": 2024,
+   "category": "smartphone",
+   "allow_words": []
+  },
+  {
+   "id": "nothing-nothing-phone-2a-plus",
+   "brand": "Nothing",
+   "name": "Nothing Phone (2a) Plus",
+   "aliases": [
+    "Nothing Phone 2a Plus"
+   ],
+   "model_numbers": [],
+   "storage_gb": [
+    128,
+    256,
+    512
+   ],
+   "year": 2024,
+   "category": "smartphone",
+   "allow_words": []
+  },
+  {
+   "id": "nothing-nothing-phone-3a",
+   "brand": "Nothing",
+   "name": "Nothing Phone (3a)",
+   "aliases": [
+    "Nothing Phone 3a"
+   ],
+   "model_numbers": [],
+   "storage_gb": [
+    128,
+    256,
+    512
+   ],
+   "year": 2025,
+   "category": "smartphone",
+   "allow_words": []
+  },
+  {
+   "id": "nothing-nothing-phone-3a-pro",
+   "brand": "Nothing",
+   "name": "Nothing Phone (3a) Pro",
+   "aliases": [
+    "Nothing Phone 3a Pro"
+   ],
+   "model_numbers": [],
+   "storage_gb": [
+    128,
+    256,
+    512
+   ],
+   "year": 2025,
+   "category": "smartphone",
+   "allow_words": []
+  },
+  {
+   "id": "nothing-nothing-phone-3",
+   "brand": "Nothing",
+   "name": "Nothing Phone (3)",
+   "aliases": [
+    "Nothing Phone 3"
+   ],
+   "model_numbers": [],
+   "storage_gb": [
+    128,
+    256,
+    512
+   ],
+   "year": 2025,
+   "category": "smartphone",
+   "allow_words": []
+  },
+  {
+   "id": "nothing-cmf-phone-1",
+   "brand": "Nothing",
+   "name": "CMF Phone 1",
+   "aliases": [],
+   "model_numbers": [],
+   "storage_gb": [
+    128,
+    256,
+    512
+   ],
+   "year": 2024,
+   "category": "smartphone",
+   "allow_words": []
+  },
+  {
+   "id": "nothing-cmf-phone-2-pro",
+   "brand": "Nothing",
+   "name": "CMF Phone 2 Pro",
+   "aliases": [],
+   "model_numbers": [],
+   "storage_gb": [
+    128,
+    256,
+    512
+   ],
+   "year": 2025,
+   "category": "smartphone",
+   "allow_words": []
+  },
+  {
+   "id": "motorola-razr-40",
+   "brand": "Motorola",
+   "name": "razr 40",
+   "aliases": [
+    "Motorola razr 40",
+    "Motorola razr 40 5G"
+   ],
+   "model_numbers": [],
+   "storage_gb": [
+    128,
+    256,
+    512
+   ],
+   "year": 2023,
+   "category": "smartphone",
+   "allow_words": []
+  },
+  {
+   "id": "motorola-razr-50",
+   "brand": "Motorola",
+   "name": "razr 50",
+   "aliases": [
+    "Motorola razr 50",
+    "Motorola razr 50 5G"
+   ],
+   "model_numbers": [],
+   "storage_gb": [
+    128,
+    256,
+    512
+   ],
+   "year": 2024,
+   "category": "smartphone",
+   "allow_words": []
+  },
+  {
+   "id": "motorola-razr-50-ultra",
+   "brand": "Motorola",
+   "name": "razr 50 ultra",
+   "aliases": [
+    "Motorola razr 50 ultra",
+    "Motorola razr 50 ultra 5G"
+   ],
+   "model_numbers": [],
+   "storage_gb": [
+    128,
+    256,
+    512
+   ],
+   "year": 2024,
+   "category": "smartphone",
+   "allow_words": []
+  },
+  {
+   "id": "motorola-razr-60",
+   "brand": "Motorola",
+   "name": "razr 60",
+   "aliases": [
+    "Motorola razr 60",
+    "Motorola razr 60 5G"
+   ],
+   "model_numbers": [],
+   "storage_gb": [
+    128,
+    256,
+    512
+   ],
+   "year": 2025,
+   "category": "smartphone",
+   "allow_words": []
+  },
+  {
+   "id": "motorola-razr-60-ultra",
+   "brand": "Motorola",
+   "name": "razr 60 ultra",
+   "aliases": [
+    "Motorola razr 60 ultra",
+    "Motorola razr 60 ultra 5G"
+   ],
+   "model_numbers": [],
+   "storage_gb": [
+    128,
+    256,
+    512
+   ],
+   "year": 2025,
+   "category": "smartphone",
+   "allow_words": []
+  },
+  {
+   "id": "motorola-edge-50-neo",
+   "brand": "Motorola",
+   "name": "edge 50 neo",
+   "aliases": [
+    "Motorola edge 50 neo",
+    "Motorola edge 50 neo 5G"
+   ],
+   "model_numbers": [],
+   "storage_gb": [
+    128,
+    256,
+    512
+   ],
+   "year": 2024,
+   "category": "smartphone",
+   "allow_words": []
+  },
+  {
+   "id": "motorola-edge-50-pro",
+   "brand": "Motorola",
+   "name": "edge 50 pro",
+   "aliases": [
+    "Motorola edge 50 pro",
+    "Motorola edge 50 pro 5G"
+   ],
+   "model_numbers": [],
+   "storage_gb": [
+    128,
+    256,
+    512
+   ],
+   "year": 2024,
+   "category": "smartphone",
+   "allow_words": []
+  },
+  {
+   "id": "motorola-moto-g85",
+   "brand": "Motorola",
+   "name": "moto g85",
+   "aliases": [
+    "Motorola moto g85",
+    "Motorola moto g85 5G"
+   ],
+   "model_numbers": [],
+   "storage_gb": [
+    128,
+    256,
+    512
+   ],
+   "year": 2024,
+   "category": "smartphone",
+   "allow_words": []
+  },
+  {
+   "id": "motorola-moto-g55",
+   "brand": "Motorola",
+   "name": "moto g55",
+   "aliases": [
+    "Motorola moto g55",
+    "Motorola moto g55 5G"
+   ],
+   "model_numbers": [],
+   "storage_gb": [
+    128,
+    256,
+    512
+   ],
+   "year": 2024,
+   "category": "smartphone",
+   "allow_words": []
+  },
+  {
+   "id": "fairphone-fairphone-4",
+   "brand": "Fairphone",
+   "name": "Fairphone 4",
+   "aliases": [],
+   "model_numbers": [],
+   "storage_gb": [
+    128,
+    256
+   ],
+   "year": 2021,
+   "category": "smartphone",
+   "allow_words": []
+  },
+  {
+   "id": "fairphone-fairphone-5",
+   "brand": "Fairphone",
+   "name": "Fairphone 5",
+   "aliases": [],
+   "model_numbers": [],
+   "storage_gb": [
+    256
+   ],
+   "year": 2023,
+   "category": "smartphone",
+   "allow_words": []
+  },
+  {
+   "id": "fairphone-fairphone-gen.-6",
+   "brand": "Fairphone",
+   "name": "Fairphone (Gen. 6)",
+   "aliases": [
+    "Fairphone 6"
+   ],
+   "model_numbers": [],
+   "storage_gb": [
+    256
+   ],
+   "year": 2025,
+   "category": "smartphone",
+   "allow_words": []
+  },
+  {
+   "id": "sony-xperia-1-v",
+   "brand": "Sony",
+   "name": "Xperia 1 V",
+   "aliases": [
+    "Sony Xperia 1 V"
+   ],
+   "model_numbers": [],
+   "storage_gb": [
+    128,
+    256,
+    512
+   ],
+   "year": 2023,
+   "category": "smartphone",
+   "allow_words": []
+  },
+  {
+   "id": "sony-xperia-1-vi",
+   "brand": "Sony",
+   "name": "Xperia 1 VI",
+   "aliases": [
+    "Sony Xperia 1 VI"
+   ],
+   "model_numbers": [],
+   "storage_gb": [
+    128,
+    256,
+    512
+   ],
+   "year": 2024,
+   "category": "smartphone",
+   "allow_words": []
+  },
+  {
+   "id": "sony-xperia-1-vii",
+   "brand": "Sony",
+   "name": "Xperia 1 VII",
+   "aliases": [
+    "Sony Xperia 1 VII"
+   ],
+   "model_numbers": [],
+   "storage_gb": [
+    128,
+    256,
+    512
+   ],
+   "year": 2025,
+   "category": "smartphone",
+   "allow_words": []
+  },
+  {
+   "id": "sony-xperia-5-v",
+   "brand": "Sony",
+   "name": "Xperia 5 V",
+   "aliases": [
+    "Sony Xperia 5 V"
+   ],
+   "model_numbers": [],
+   "storage_gb": [
+    128,
+    256,
+    512
+   ],
+   "year": 2023,
+   "category": "smartphone",
+   "allow_words": []
+  },
+  {
+   "id": "sony-xperia-10-v",
+   "brand": "Sony",
+   "name": "Xperia 10 V",
+   "aliases": [
+    "Sony Xperia 10 V"
+   ],
+   "model_numbers": [],
+   "storage_gb": [
+    128,
+    256,
+    512
+   ],
+   "year": 2023,
+   "category": "smartphone",
+   "allow_words": []
+  },
+  {
+   "id": "sony-xperia-10-vi",
+   "brand": "Sony",
+   "name": "Xperia 10 VI",
+   "aliases": [
+    "Sony Xperia 10 VI"
+   ],
+   "model_numbers": [],
+   "storage_gb": [
+    128,
+    256,
+    512
+   ],
+   "year": 2024,
+   "category": "smartphone",
+   "allow_words": []
+  },
+  {
+   "id": "honor-honor-magic6-pro",
+   "brand": "Honor",
+   "name": "Honor Magic6 Pro",
+   "aliases": [
+    "Magic6 Pro"
+   ],
+   "model_numbers": [],
+   "storage_gb": [
+    256,
+    512
+   ],
+   "year": 2024,
+   "category": "smartphone",
+   "allow_words": []
+  },
+  {
+   "id": "honor-honor-magic7-pro",
+   "brand": "Honor",
+   "name": "Honor Magic7 Pro",
+   "aliases": [
+    "Magic7 Pro"
+   ],
+   "model_numbers": [],
+   "storage_gb": [
+    256,
+    512
+   ],
+   "year": 2025,
+   "category": "smartphone",
+   "allow_words": []
+  },
+  {
+   "id": "honor-honor-200",
+   "brand": "Honor",
+   "name": "Honor 200",
+   "aliases": [],
+   "model_numbers": [],
+   "storage_gb": [
+    256,
+    512
+   ],
+   "year": 2024,
+   "category": "smartphone",
+   "allow_words": []
+  },
+  {
+   "id": "honor-honor-200-pro",
+   "brand": "Honor",
+   "name": "Honor 200 Pro",
+   "aliases": [],
+   "model_numbers": [],
+   "storage_gb": [
+    256,
+    512
+   ],
+   "year": 2024,
+   "category": "smartphone",
+   "allow_words": []
+  },
+  {
+   "id": "honor-honor-400",
+   "brand": "Honor",
+   "name": "Honor 400",
+   "aliases": [],
+   "model_numbers": [],
+   "storage_gb": [
+    256,
+    512
+   ],
+   "year": 2025,
+   "category": "smartphone",
+   "allow_words": []
+  },
+  {
+   "id": "honor-honor-400-pro",
+   "brand": "Honor",
+   "name": "Honor 400 Pro",
+   "aliases": [],
+   "model_numbers": [],
+   "storage_gb": [
+    256,
+    512
+   ],
+   "year": 2025,
+   "category": "smartphone",
+   "allow_words": []
+  },
+  {
+   "id": "oppo-oppo-find-x8",
+   "brand": "OPPO",
+   "name": "OPPO Find X8",
+   "aliases": [
+    "Find X8"
+   ],
+   "model_numbers": [],
+   "storage_gb": [
+    256,
+    512
+   ],
+   "year": 2024,
+   "category": "smartphone",
+   "allow_words": []
+  },
+  {
+   "id": "oppo-oppo-find-x8-pro",
+   "brand": "OPPO",
+   "name": "OPPO Find X8 Pro",
+   "aliases": [
+    "Find X8 Pro"
+   ],
+   "model_numbers": [],
+   "storage_gb": [
+    256,
+    512
+   ],
+   "year": 2024,
+   "category": "smartphone",
+   "allow_words": []
+  },
+  {
+   "id": "asus-zenfone-11-ultra",
+   "brand": "Asus",
+   "name": "Zenfone 11 Ultra",
+   "aliases": [
+    "Asus Zenfone 11 Ultra",
+    "ASUS Zenfone 11 Ultra 5G"
+   ],
+   "model_numbers": [],
+   "storage_gb": [
+    256,
+    512
+   ],
+   "year": 2024,
+   "category": "smartphone",
+   "allow_words": []
+  },
+  {
+   "id": "apple-airpods-pro-2nd-generation",
+   "brand": "Apple",
+   "name": "AirPods Pro (2nd generation)",
+   "aliases": [
+    "AirPods Pro 2",
+    "Apple AirPods Pro 2",
+    "AirPods Pro 2e generatie",
+    "AirPods Pro (2. Generation)"
+   ],
+   "model_numbers": [],
+   "storage_gb": [],
+   "year": 2022,
+   "category": "earbuds",
+   "allow_words": [
+    "case",
+    "charging",
+    "magsafe",
+    "usb",
+    "c"
+   ]
+  },
+  {
+   "id": "apple-airpods-4",
+   "brand": "Apple",
+   "name": "AirPods 4",
+   "aliases": [
+    "Apple AirPods 4",
+    "AirPods (4th generation)"
+   ],
+   "model_numbers": [],
+   "storage_gb": [],
+   "year": 2024,
+   "category": "earbuds",
+   "allow_words": [
+    "case",
+    "charging",
+    "magsafe",
+    "usb",
+    "c"
+   ]
+  },
+  {
+   "id": "samsung-galaxy-buds3-pro",
+   "brand": "Samsung",
+   "name": "Galaxy Buds3 Pro",
+   "aliases": [
+    "Samsung Galaxy Buds3 Pro",
+    "Galaxy Buds 3 Pro"
+   ],
+   "model_numbers": [],
+   "storage_gb": [],
+   "year": 2024,
+   "category": "earbuds",
+   "allow_words": [
+    "case",
+    "charging"
+   ]
+  },
+  {
+   "id": "sony-wh-1000xm5",
+   "brand": "Sony",
+   "name": "WH-1000XM5",
+   "aliases": [
+    "Sony WH-1000XM5",
+    "WH1000XM5"
+   ],
+   "model_numbers": [],
+   "storage_gb": [],
+   "year": 2022,
+   "category": "headphones",
+   "allow_words": []
+  },
+  {
+   "id": "sony-wh-1000xm6",
+   "brand": "Sony",
+   "name": "WH-1000XM6",
+   "aliases": [
+    "Sony WH-1000XM6",
+    "WH1000XM6"
+   ],
+   "model_numbers": [],
+   "storage_gb": [],
+   "year": 2025,
+   "category": "headphones",
+   "allow_words": []
+  },
+  {
+   "id": "apple-apple-watch-series-10",
+   "brand": "Apple",
+   "name": "Apple Watch Series 10",
+   "aliases": [
+    "Apple Watch S10"
+   ],
+   "model_numbers": [],
+   "storage_gb": [],
+   "year": 2024,
+   "category": "smartwatch",
+   "allow_words": [
+    "band",
+    "strap"
+   ]
+  },
+  {
+   "id": "apple-ipad-10th-generation",
+   "brand": "Apple",
+   "name": "iPad (10th generation)",
+   "aliases": [
+    "iPad 10",
+    "Apple iPad 10th generation",
+    "iPad 10e generatie",
+    "iPad 10. Generation"
+   ],
+   "model_numbers": [],
+   "storage_gb": [
+    64,
+    256
+   ],
+   "year": 2022,
+   "category": "tablet",
+   "allow_words": []
+  },
+  {
+   "id": "sony-playstation-5-slim",
+   "brand": "Sony",
+   "name": "PlayStation 5 Slim",
+   "aliases": [
+    "PS5 Slim",
+    "Sony PlayStation 5 Slim"
+   ],
+   "model_numbers": [],
+   "storage_gb": [],
+   "year": 2023,
+   "category": "console",
+   "allow_words": []
+  }
+ ]
+}
