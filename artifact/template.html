@@ -1,0 +1,547 @@
+<title>Prices Tracker</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@500;700&display=swap">
+<style>
+/* Layout: a three-step instrument panel – where / what / live readings – with a shop-by-shop log underneath.
+   Palette: cool graphite neutrals, one signal-blue accent, green reserved for "read live just now". */
+:root{
+  --bg:#f3f5f8; --surface:#ffffff; --raised:#eef1f6; --ink:#12161e; --muted:#586172; --line:#d9dee7;
+  --accent:#2a55f5; --accent-ink:#ffffff; --accent-soft:#e6ecff;
+  --live:#0c7d46; --live-soft:#dff4e8; --warn:#8f5b00; --warn-soft:#fff0cf; --bad:#b3261e; --bad-soft:#fde6e3;
+  --font:'Inter',system-ui,-apple-system,'Segoe UI',Roboto,sans-serif; --display:'Space Grotesk','Inter',system-ui,sans-serif;
+  --mono:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#0d1015; --surface:#151a21; --raised:#1c222b; --ink:#e7ebf1; --muted:#97a1b2; --line:#272e39;
+  --accent:#7ea3ff; --accent-ink:#0a1020; --accent-soft:#1a2644;
+  --live:#52d68d; --live-soft:#12301f; --warn:#f0b84d; --warn-soft:#352711; --bad:#ff8c82; --bad-soft:#3b1b19; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#0d1015; --surface:#151a21; --raised:#1c222b; --ink:#e7ebf1; --muted:#97a1b2; --line:#272e39;
+  --accent:#7ea3ff; --accent-ink:#0a1020; --accent-soft:#1a2644;
+  --live:#52d68d; --live-soft:#12301f; --warn:#f0b84d; --warn-soft:#352711; --bad:#ff8c82; --bad-soft:#3b1b19; color-scheme:dark}
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+body{background:var(--bg);color:var(--ink);font:14.5px/1.5 var(--font)}
+.wrap{max-width:1160px;margin:0 auto;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+header.top{background:var(--surface);border-bottom:1px solid var(--line);position:sticky;top:env(safe-area-inset-top,0px);z-index:5}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:10;background:var(--surface)}
+.bar{display:flex;align-items:center;gap:12px 20px;flex-wrap:wrap;padding-block:10px}
+h1{font:700 19px/1.2 var(--display);margin:0;letter-spacing:-.01em}
+h1 small{font:400 12.5px var(--font);color:var(--muted);margin-left:8px;letter-spacing:0}
+h2{font:700 16px/1.3 var(--display);margin:0 0 10px;text-wrap:balance}
+h3{font:600 14px var(--font);margin:0 0 4px}
+nav{display:flex;gap:2px;margin-left:auto}
+.tab{background:none;border:0;padding:7px 12px;border-radius:8px;color:var(--muted);font:500 14px var(--font);cursor:pointer}
+.tab[aria-selected="true"]{background:var(--raised);color:var(--ink)}
+button,.btn{font:500 14px var(--font);border-radius:8px;border:1px solid var(--line);background:var(--surface);color:var(--ink);padding:8px 13px;cursor:pointer;text-decoration:none;display:inline-block}
+button:hover,.btn:hover{border-color:var(--accent)}
+button:focus-visible,input:focus-visible,select:focus-visible,summary:focus-visible,a:focus-visible,.pick:focus-visible,.chipbtn:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+button.primary{background:var(--accent);color:var(--accent-ink);border-color:var(--accent);font-weight:600}
+button:disabled{opacity:.5;cursor:default}
+button.link{border:0;background:none;color:var(--accent);padding:0}
+button.sm,.btn.sm{padding:3px 9px;font-size:12.5px}
+input[type=search],input[type=text],select{flex:1;min-width:0;padding:9px 11px;border-radius:8px;border:1px solid var(--line);background:var(--bg);color:var(--ink);font:inherit}
+a{color:var(--accent)}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:16px;margin-block:14px}
+.row{display:flex;gap:8px 10px;align-items:center;flex-wrap:wrap}.between{justify-content:space-between}
+.col{min-width:0}
+.step{display:inline-grid;place-items:center;width:21px;height:21px;border-radius:50%;background:var(--accent);color:var(--accent-ink);font:700 12px var(--font);margin-right:6px}
+.muted{color:var(--muted)}.small{font-size:12.5px}.hint{color:var(--muted);font-size:12.5px;margin:3px 0}
+.pill{display:inline-flex;align-items:center;gap:6px;border-radius:999px;padding:3px 10px;font-size:12.5px;font-weight:500;background:var(--raised);color:var(--muted)}
+.pill i{width:8px;height:8px;border-radius:50%;background:var(--muted);display:inline-block}
+.pill.ok{background:var(--live-soft);color:var(--live)}.pill.ok i{background:var(--live)}
+.pill.warn{background:var(--warn-soft);color:var(--warn)}.pill.warn i{background:var(--warn)}
+.pill.bad{background:var(--bad-soft);color:var(--bad)}.pill.bad i{background:var(--bad)}
+.chipbtn{padding:7px 13px;border-radius:999px;border:1px solid var(--line);background:var(--raised);cursor:pointer;user-select:none;font-weight:500}
+.chipbtn[aria-pressed="true"]{background:var(--accent);color:var(--accent-ink);border-color:var(--accent)}
+.chipbtn small{opacity:.75;margin-left:4px;font-weight:400}
+details.more{margin-top:10px}details.more>summary{cursor:pointer;color:var(--accent);font-weight:500}
+.filters{display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:12px;margin-top:10px}
+fieldset{border:1px solid var(--line);border-radius:8px;padding:8px 12px;margin:0;min-width:0}
+legend{font-weight:600;font-size:12.5px;padding:0 4px}
+fieldset.wide{grid-column:1/-1}
+label.chk{display:block;margin:4px 0;cursor:pointer}label.chk .hint{display:block;margin-left:22px}
+.shoplist{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:2px 12px;max-height:250px;overflow:auto}
+.shoplist label{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-size:13px}
+.cc{display:inline-block;min-width:25px;text-align:center;font:700 10.5px var(--font);padding:1px 4px;border-radius:5px;background:var(--raised);color:var(--muted);margin-right:5px;letter-spacing:.03em}
+.cands{display:grid;gap:8px;margin-top:10px}
+.cand{border:1px solid var(--line);border-radius:10px;padding:9px 12px;cursor:pointer;display:flex;gap:10px;align-items:flex-start;background:var(--surface);text-align:left;width:100%;font:inherit;color:inherit}
+.cand:hover{border-color:var(--accent)}.cand[aria-pressed="true"]{border-color:var(--accent);background:var(--accent-soft)}
+.cand b{display:block;font-weight:600}.cand .meta{color:var(--muted);font-size:12.5px}.cand .conf{margin-left:auto;font-size:12px;color:var(--muted);white-space:nowrap}
+.confirm{margin-top:12px;border:1px solid var(--accent);border-radius:10px;padding:14px;background:var(--accent-soft)}
+.chips{display:flex;flex-wrap:wrap;gap:6px;margin:6px 0}
+.chip{background:var(--raised);border-radius:999px;padding:2px 10px;font-size:12.5px;display:inline-flex;gap:6px;align-items:center}
+.chip button{border:0;background:none;padding:0;color:var(--muted);font-size:15px;line-height:1}
+.chip.good{background:var(--live-soft);color:var(--live)}.chip.warn{background:var(--warn-soft);color:var(--warn)}.chip.bad{background:var(--bad-soft);color:var(--bad)}
+.pick{padding:5px 12px;border-radius:8px;border:1px solid var(--line);background:var(--surface);cursor:pointer;font-weight:500}
+.pick[aria-pressed="true"]{background:var(--accent);color:var(--accent-ink);border-color:var(--accent)}
+.qlist{font:12.5px var(--mono);background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:6px 10px;margin:6px 0}
+.meter{height:5px;background:var(--raised);border-radius:3px;overflow:hidden;margin:8px 0}.meter>div{height:100%;width:0;background:var(--accent);transition:width .25s}
+.tablewrap{overflow-x:auto;max-width:100%}
+table{width:100%;border-collapse:collapse;font-size:13.5px}
+th,td{padding:8px 9px;border-bottom:1px solid var(--line);text-align:left;vertical-align:top}
+th{font:600 11px var(--font);text-transform:uppercase;letter-spacing:.06em;color:var(--muted);white-space:nowrap}
+td.num,th.num{text-align:right;font-variant-numeric:tabular-nums}
+tr.best td{background:var(--accent-soft)}
+.price{font:700 17px var(--display);font-variant-numeric:tabular-nums;white-space:nowrap}
+.badge{display:inline-block;font-size:11px;border-radius:5px;padding:1px 6px;white-space:nowrap;font-weight:500}
+.badge.live{background:var(--live-soft);color:var(--live)}.badge.list{background:var(--warn-soft);color:var(--warn)}
+.empty{padding:16px;text-align:center;color:var(--muted)}
+.st{font-weight:600}.st.ok,.st.online{color:var(--live)}.st.no_match,.st.unverified{color:var(--muted)}.st.blocked,.st.timeout,.st.error,.st.offline,.st.nosearch{color:var(--bad)}
+.banner{border-radius:10px;padding:10px 12px;margin-block:12px;background:var(--warn-soft);color:var(--ink);border:1px solid var(--warn)}
+.banner b{color:var(--warn)}
+.notice{background:var(--raised);border-radius:8px;padding:8px 12px;font-size:13px}
+pre.diag{font:12px/1.45 var(--mono);white-space:pre-wrap;word-break:break-word;background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:8px;max-height:260px;overflow:auto;margin:6px 0}
+code{font:12px var(--mono);word-break:break-all}
+.links{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:6px 12px;margin-top:8px}
+.links a{display:block;padding:7px 10px;border:1px solid var(--line);border-radius:8px;text-decoration:none;color:var(--ink);background:var(--surface);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.links a:hover{border-color:var(--accent)}
+footer{padding-block:10px 40px}
+@media (max-width:640px){.price{font-size:15px}th,td{padding:6px}nav{margin-left:0}}
+@media (prefers-reduced-motion:reduce){.meter>div{transition:none}}
+</style>
+
+<header class="top"><div class="wrap bar">
+  <h1>Prices Tracker <small>live prices · BE · FR · NL · DE</small></h1>
+  <span id="bridge" class="pill"><i></i><span>checking live connection…</span></span>
+  <nav role="tablist">
+    <button class="tab" role="tab" data-tab="search" aria-selected="true">Search</button>
+    <button class="tab" role="tab" data-tab="db" aria-selected="false">Retailer database <span id="dbCount" class="pill"></span></button>
+  </nav>
+</div></header>
+
+<main class="wrap">
+<div id="bridgeNote" hidden></div>
+
+<section id="tab-search">
+  <div class="card">
+    <h2><span class="step">1</span>Where should I look?</h2>
+    <div class="row" id="countryChips"></div>
+    <details class="more"><summary>Filters &amp; shop selection <span id="selSummary" class="muted"></span></summary>
+      <div class="filters">
+        <fieldset><legend>Shop type</legend><div id="kindBoxes"></div>
+          <p class="hint">Telecom operators are off by default: their device prices are often tied to a subscription.</p></fieldset>
+        <fieldset><legend>Options</legend>
+          <label class="chk"><input type="checkbox" id="optEU" checked> Include European storefronts of non-European groups
+            <span class="hint">Amazon.xx, Apple, Samsung, Google, eBay … Shops outside Europe that only ship in are never included.</span></label>
+          <label class="chk"><input type="checkbox" id="optRefurb"> Also show refurbished / used
+            <span class="hint">Off = new devices only; refurbished-only shops are skipped.</span></label>
+          <label class="chk"><input type="checkbox" id="optClaude" checked> Let Claude read pages my pattern matching cannot
+            <span class="hint">Only prices literally present on the page are accepted.</span></label>
+          <label class="chk"><input type="checkbox" id="optAll"> Try every alternate name at every shop
+            <span class="hint">Slower. Off = stop at the first name that finds the model.</span></label>
+        </fieldset>
+        <fieldset class="wide"><legend>Individual shops <button class="link" id="allShops">all</button> · <button class="link" id="noShops">none</button></legend>
+          <div id="shopList" class="shoplist"></div></fieldset>
+      </div>
+    </details>
+  </div>
+
+  <div class="card">
+    <h2><span class="step">2</span>What are you looking for?</h2>
+    <form id="idForm" class="row"><input id="q" type="search" placeholder="e.g. iphone 15 pro, galaxy s24 ultra, pixel 9, SM-S928B …" autocomplete="off" aria-label="Product keywords">
+      <button class="primary" type="submit">Identify</button></form>
+    <div id="candidates"></div>
+    <div id="confirm" hidden></div>
+  </div>
+
+  <div id="resultsCard" class="card" hidden>
+    <div class="row between"><h2><span class="step">3</span>Live prices <span id="resTitle" class="muted"></span></h2>
+      <div class="row"><span id="progress" class="muted small"></span><button id="stopBtn" class="sm" hidden>Stop</button></div></div>
+    <div class="meter"><div id="bar"></div></div>
+    <p class="hint">Each price was read from the shop's own page in your built-in browser at the time shown. Nothing is stored or reused between searches.</p>
+    <div class="tablewrap"><table id="resTable"><thead><tr><th>#</th><th class="num">Price</th><th>Shop</th><th>Product as listed</th><th>Condition</th><th>Read</th><th></th></tr></thead><tbody></tbody></table></div>
+    <p id="noRes" class="empty" hidden></p>
+    <div id="manual" hidden></div>
+    <details class="more" id="logBox"><summary>Shop-by-shop log <span id="logSummary" class="muted"></span></summary>
+      <div class="tablewrap"><table id="logTable"><thead><tr><th>Shop</th><th>Status</th><th>Details</th><th class="num">Time</th><th></th></tr></thead><tbody></tbody></table></div></details>
+    <details class="more"><summary>Diagnostics (browser tool calls)</summary>
+      <p class="hint">The last calls to the built-in browser and what came back. Useful if a shop reads wrong.</p><pre class="diag" id="diag">no calls yet</pre></details>
+  </div>
+</section>
+
+<section id="tab-db" hidden>
+  <div class="card">
+    <div class="row between"><h2>Retailer database</h2>
+      <div class="row"><button id="csvBtn">Export CSV</button><button id="checkBtn">Check shown shops</button></div></div>
+    <p class="hint" id="dbNote"></p>
+    <div class="row"><input id="dbFilter" type="search" placeholder="filter by name / domain / group …" aria-label="Filter shops">
+      <select id="dbCountry" aria-label="Country"><option value="">All countries</option></select>
+      <select id="dbKind" aria-label="Type"><option value="">All types</option></select></div>
+    <p id="dbProg" class="muted small"></p>
+    <div class="tablewrap"><table id="dbTable"><thead><tr><th>Shop</th><th>Country</th><th>Type</th><th>Website</th><th>HQ / basis</th><th>Check</th></tr></thead><tbody></tbody></table></div>
+  </div>
+  <div class="card"><h3>Excluded: not based in Europe</h3>
+    <p class="hint">These only ship into Europe from outside it, so they are never searched.</p><div id="excluded" class="chips"></div></div>
+</section>
+</main>
+<footer class="wrap muted small">Marketplaces (bol, Amazon, eBay, Cdiscount …) show the featured offer, which can differ from the lowest third-party price. Respect each shop's terms of use.</footer>
+
+<script>
+/*CORE*/
+</script>
+<script>
+"use strict";
+const RETAILERS = /*RETAILERS*/[];
+const CATALOG = /*CATALOG*/[];
+const EXCLUDED = /*EXCLUDED*/[];
+const KINDS = { electronics_chain: "Electronics chain", online_electronics: "Online electronics shop", computer_specialist: "Computer / IT specialist", marketplace: "Marketplace",
+  general_retail: "Hypermarket / department store", telecom_operator: "Telecom operator", brand_store: "Brand store", refurbished: "Refurbished specialist" };
+const COUNTRIES = { BE: "Belgium", FR: "France", NL: "Netherlands", DE: "Germany" };
+const DEFAULT_OFF = new Set(["telecom_operator"]);
+const SERVER = "host:claude_browser";
+const $ = (s, el = document) => el.querySelector(s), $$ = (s, el = document) => [...el.querySelectorAll(s)];
+const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+const eur = new Intl.NumberFormat(undefined, { style: "currency", currency: "EUR" });
+const clock = ms => new Date(ms).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit", second: "2-digit" });
+const sleep = ms => new Promise(r => setTimeout(r, ms));
+const lsGet = (k, d) => { try { const v = localStorage.getItem(k); return v ? JSON.parse(v) : d; } catch { return d; } };
+const lsSet = (k, v) => { try { localStorage.setItem(k, JSON.stringify(v)); } catch { /* storage unavailable */ } };
+
+const S = { countries: new Set(lsGet("pt.countries", Object.keys(COUNTRIES))), kinds: new Set(Object.keys(KINDS).filter(k => !DEFAULT_OFF.has(k))), shops: new Set(),
+  cand: null, storage: null, aliases: [], models: [], results: new Map(), reports: new Map(), done: 0, total: 0, running: false, cancel: false, spec: null, opts: null,
+  discovered: lsGet("pt.discovered", {}), checks: lsGet("pt.checks", {}), sample: null, downloads: null };
+
+/* ============================================================ browser bridge */
+const diag = [];
+function logDiag(tool, input, outcome) {
+  diag.unshift(`${new Date().toLocaleTimeString()}  ${tool} ${JSON.stringify(input).slice(0, 140)}\n   → ${outcome}`); diag.length = Math.min(diag.length, 30);
+  const el = $("#diag"); if (el) el.textContent = diag.join("\n");
+}
+const Bridge = {
+  mcp: null, state: "checking", tools: [],
+  async init() {
+    try { this.mcp = await window.claude?.use?.("mcp"); } catch { this.mcp = null; }
+    if (!this.mcp) { this.state = "none"; return; }
+    try {
+      const l = await this.mcp.listTools(SERVER);
+      const s = (l.servers || []).find(x => x.server === SERVER);
+      if (!s || !s.tools?.length) { this.state = "nohost"; return; }
+      this.tools = s.tools.map(t => t.name); this.state = "ready";
+    } catch (e) { this.state = e?.code === "server_not_connected" ? "nohost" : "error"; this.err = e; }
+  },
+  async call(tool, input) {
+    try {
+      const r = await this.mcp.callTool(SERVER, tool, input, { cache: false, signal: AbortSignal.timeout(60000) });
+      logDiag(tool, input, `ok · ${resText(r).length} chars · ${resText(r).slice(0, 90).replace(/\s+/g, " ")}`);
+      return r;
+    } catch (e) { logDiag(tool, input, `ERROR ${e?.code || ""} ${String(e?.message || e).slice(0, 160)}`); throw e; }
+  },
+};
+function resText(r) {
+  if (!r) return "";
+  const p = r.payload;
+  if (typeof p === "string") return p;
+  const parts = (r.content || []).filter(b => b && b.type === "text").map(b => b.text);
+  const joined = parts.join("\n");
+  if (p && typeof p === "object") {                                  // {text:"…"} / {content:"…"} style payloads
+    const strs = []; (function walk(o) { if (typeof o === "string") strs.push(o); else if (o && typeof o === "object") Object.values(o).forEach(walk); })(p);
+    const longest = strs.sort((a, b) => b.length - a.length)[0];
+    if (longest && longest.length > joined.length * 0.5) return longest;
+  }
+  return joined;
+}
+function findTabId(r) {
+  let found;
+  (function walk(o) { if (found != null || !o || typeof o !== "object") return;
+    for (const [k, v] of Object.entries(o)) { if (/^tab_?id$/i.test(k) && (typeof v === "number" || typeof v === "string")) { found = v; return; } walk(v); } })(r?.payload ?? r?.structuredContent);
+  if (found != null) return found;
+  const m = /tab[\s_-]?id\D{0,6}(\d+)/i.exec(resText(r)); return m ? +m[1] : null;
+}
+class Tab {
+  constructor() { this.id = null; }
+  async open(url) {
+    if (this.id == null) { const r = await Bridge.call("preview_start", { url }); this.id = findTabId(r); return; }
+    try { await Bridge.call("navigate", { url, tabId: this.id }); }
+    catch (e) { if (e?.code === "tool_error" || e?.code === "bad_request") { const r = await Bridge.call("preview_start", { url }); const id = findTabId(r); if (id != null) this.id = id; } else throw e; }
+  }
+  async text() {
+    let t = "";
+    for (let i = 0; i < 4; i++) {
+      t = resText(await Bridge.call("get_page_text", this.id != null ? { tabId: this.id } : {}));
+      if (t.length > 600 || looksBlocked(t)) break;
+      await sleep(1500);                                              // JavaScript-rendered results need a moment
+    }
+    return t;
+  }
+  async structure() { try { return resText(await Bridge.call("read_page", this.id != null ? { tabId: this.id } : {})); } catch { return ""; } }
+}
+
+/* ============================================================ shop selection UI */
+const shopsById = Object.fromEntries(RETAILERS.map(r => [r.id, r]));
+function renderCountryChips() {
+  $("#countryChips").innerHTML = Object.entries(COUNTRIES).map(([c, n]) => `<button class="chipbtn" aria-pressed="${S.countries.has(c)}" data-c="${c}">${n} <small>${RETAILERS.filter(r => r.cc === c).length} shops</small></button>`).join("");
+  $$("#countryChips .chipbtn").forEach(el => el.onclick = () => { const c = el.dataset.c; S.countries.has(c) ? S.countries.delete(c) : S.countries.add(c); lsSet("pt.countries", [...S.countries]); renderCountryChips(); renderShopList(); });
+}
+function renderKinds() {
+  $("#kindBoxes").innerHTML = Object.entries(KINDS).map(([k, n]) => `<label class="chk"><input type="checkbox" data-k="${k}" ${S.kinds.has(k) ? "checked" : ""}> ${esc(n)}</label>`).join("");
+  $$("#kindBoxes input").forEach(el => el.onchange = () => { el.checked ? S.kinds.add(el.dataset.k) : S.kinds.delete(el.dataset.k); renderShopList(); });
+}
+const visibleShops = () => RETAILERS.filter(r => S.countries.has(r.cc) && S.kinds.has(r.kind) && ($("#optEU").checked || r.basis === "h") && ($("#optRefurb").checked || r.cond !== "refurbished"));
+function renderShopList(keep) {
+  const vis = visibleShops();
+  S.shops = keep ? new Set([...S.shops].filter(id => vis.some(r => r.id === id))) : new Set(vis.map(r => r.id));
+  $("#shopList").innerHTML = vis.map(r => `<label title="${esc(r.web)}"><input type="checkbox" data-id="${r.id}" ${S.shops.has(r.id) ? "checked" : ""}> <span class="cc">${r.cc}</span>${esc(r.name)}</label>`).join("");
+  $$("#shopList input").forEach(el => el.onchange = () => { el.checked ? S.shops.add(el.dataset.id) : S.shops.delete(el.dataset.id); updSummary(); });
+  updSummary();
+}
+function updSummary() { const n = S.shops.size; $("#selSummary").textContent = `· ${n} shop${n === 1 ? "" : "s"} selected`; const b = $("#goBtn"); if (b) b.disabled = !n || S.running; }
+
+/* ============================================================ identify → confirm */
+const currentSpec = () => ({ name: S.cand.name, brand: S.cand.brand || "", aliases: [...S.aliases], models: [...S.models], allow: S.cand.allow || [], storage: S.storage || null, refurb: $("#optRefurb").checked });
+async function onIdentify(e) {
+  e.preventDefault();
+  const q = $("#q").value.trim(); if (!q) return;
+  const c = identify(q, CATALOG);
+  S.cands = c; S.cand = null; $("#confirm").hidden = true;
+  const weak = !c.some(x => x.kind === "catalog" && x.confidence >= 0.9);
+  $("#candidates").innerHTML = `<p class="hint">Which one do you mean?</p><div class="cands" id="candList"></div>` +
+    (S.sample && weak ? `<p class="row"><button id="askClaude" class="sm">Ask Claude for more candidates</button><span class="hint" id="askNote"></span></p>` : "");
+  drawCands();
+  if (c[0].kind === "catalog" && c[0].confidence >= 0.99) pickCand(0);
+  $("#askClaude")?.addEventListener("click", askClaude);
+}
+function drawCands() {
+  $("#candList").innerHTML = S.cands.map((x, i) => `<button type="button" class="cand" data-i="${i}" aria-pressed="${S.cand === x}"><span><b>${esc(x.display)}</b>
+    <span class="meta">${[x.category !== "custom" ? x.category : "", x.year || "", x.kind === "ai" ? "suggested by Claude – please check" : ""].filter(Boolean).join(" · ")}${x.models?.length ? " · model no. " + esc(x.models.join(", ")) : ""}</span></span>
+    <span class="conf">${x.kind === "custom" ? "exactly as typed" : x.kind === "ai" ? "AI" : Math.round(x.confidence * 100) + "% match"}</span></button>`).join("");
+  $$("#candList .cand").forEach(el => el.onclick = () => pickCand(+el.dataset.i));
+}
+function pickCand(i) { S.cand = S.cands[i]; S.storage = null; S.aliases = [...(S.cand.aliases || [])]; S.models = [...(S.cand.models || [])]; drawCands(); renderConfirm(); }
+async function askClaude() {
+  const b = $("#askClaude"), note = $("#askNote"); b.disabled = true; note.textContent = "asking…";
+  try {
+    const out = await S.sample.json(`You identify consumer electronics for a European price comparison tool. The user typed: "${$("#q").value.trim().slice(0, 150)}". Reply with only a JSON array (max 4) of products that really exist, each {"brand":"","name":"exact retail model name without the brand","year":2024,"category":"smartphone","aliases":["names shops also use"],"model_numbers":["only if certain"],"storage_gb":[128,256]}.`, { modelTier: "quick" });
+    const add = (Array.isArray(out) ? out : []).filter(o => o?.name).slice(0, 4).map(o => ({ kind: "ai", id: "ai-" + o.name, confidence: 0.5, display: `${o.brand || ""} ${o.name}`.trim(), brand: o.brand || "", name: String(o.name), year: o.year || null,
+      category: o.category || "", storage: (o.storage_gb || []).filter(Number.isFinite), aliases: (o.aliases || []).map(String).slice(0, 6), models: (o.model_numbers || []).map(String).slice(0, 4), allow: [] }));
+    const custom = S.cands.filter(x => x.kind === "custom"); S.cands = [...S.cands.filter(x => x.kind !== "custom"), ...add, ...custom]; drawCands(); note.textContent = add.length ? "" : "Claude had no further suggestions.";
+  } catch (e) { note.textContent = e?.code === "not_granted" ? "Not allowed in this view." : "Claude could not answer right now."; b.disabled = false; }
+}
+function previewQueries() { return searchQueries({ name: S.cand.name, brand: S.cand.brand, aliases: S.aliases, models: S.models }, 4); }
+function renderConfirm() {
+  const c = S.cand, box = $("#confirm"); box.hidden = false; box.className = "confirm";
+  box.innerHTML = `<h3>Confirm: ${esc(c.display)}</h3>
+    <p class="hint">I search this exact model, not its Pro / Max / Plus / Ultra siblings, and not cases or accessories.</p>
+    ${c.storage?.length ? `<div><b>Storage</b> <span class="hint">(optional)</span><div class="row" id="stor" style="margin:6px 0"><button type="button" class="pick" aria-pressed="true" data-s="">Any</button>${c.storage.map(s => `<button type="button" class="pick" aria-pressed="false" data-s="${s}">${s >= 1024 ? s / 1024 + " TB" : s + " GB"}</button>`).join("")}</div></div>` : ""}
+    <div><b>Alternate names I will also search</b><div class="chips" id="aliasChips"></div>
+      <form class="row" id="aliasForm"><input type="text" id="aliasIn" placeholder="add an alternate name or model number…" aria-label="Alternate name"><button class="sm">Add</button></form></div>
+    <div><b>Search strings, in this order</b><div class="qlist" id="qprev"></div></div>
+    <div class="row" style="margin-top:10px"><button class="primary" id="goBtn">Confirm &amp; search live</button><span class="muted small" id="goHint"></span></div>`;
+  $$("#stor .pick").forEach(el => el.onclick = () => { $$("#stor .pick").forEach(x => x.setAttribute("aria-pressed", x === el)); S.storage = el.dataset.s ? +el.dataset.s : null; });
+  $("#aliasForm").onsubmit = e => { e.preventDefault(); const v = $("#aliasIn").value.trim(); if (v) { S.aliases.push(v); $("#aliasIn").value = ""; drawAliases(); } };
+  $("#goBtn").onclick = startSearch; drawAliases(); updSummary();
+}
+function drawAliases() {
+  const all = [...S.aliases.map((a, i) => ["a", i, a]), ...S.models.map((a, i) => ["m", i, a])];
+  $("#aliasChips").innerHTML = all.length ? all.map(([t, i, a]) => `<span class="chip">${esc(a)}${t === "m" ? " <small>model no.</small>" : ""}<button data-t="${t}" data-i="${i}" aria-label="remove ${esc(a)}">×</button></span>`).join("") : `<span class="muted">none</span>`;
+  $$("#aliasChips button").forEach(b => b.onclick = () => { (b.dataset.t === "a" ? S.aliases : S.models).splice(+b.dataset.i, 1); drawAliases(); });
+  $("#qprev").innerHTML = previewQueries().map((q, i) => `${i + 1}. ${esc(q)}`).join("<br>");
+}
+
+/* ============================================================ live search */
+const searchUrl = (r, q) => { const t = r.search || S.discovered[r.id]; return t ? expandTemplate(t, q) : null; };
+async function readByClaude(text, spec, shop) {
+  const sample = S.sample; if (!sample) return [];
+  const nums = new Set(); for (const l of text.split(/\n/)) pricesInLine(l, true).forEach(p => nums.add(p));
+  try {
+    const out = await sample.json(`Below is the text of a search-results page from the shop "${shop.name}". Find listings that are EXACTLY the product "${spec.brand} ${spec.name}"${spec.storage ? ` with ${spec.storage} GB storage` : ""}. Not other variants (Pro, Max, Plus, Ultra, mini, FE, e …), not accessories, ${spec.refurb ? "refurbished allowed" : "not refurbished or used"}. Reply with only a JSON array of {"title":"title copied from the page","price_eur":number copied from the page} (empty array if none). Never guess a price.\n\n---\n${text.slice(0, 14000)}`, { modelTier: "quick" });
+    return (Array.isArray(out) ? out : []).map(o => ({ title: String(o?.title || ""), price: typeof o?.price_eur === "number" ? o.price_eur : parsePrice(o?.price_eur) }))
+      .filter(o => o.title && o.price && [...nums].some(n => Math.abs(n - o.price) < 0.005))                      // price must literally exist on the page
+      .map(o => ({ ...o, v: judge(spec, o.title, shop.cond === "refurbished" ? "refurbished" : "new") })).filter(o => o.v.ok)
+      .map(o => ({ title: o.title, price: o.price, cond: o.v.cond, storage: o.v.storage, evidence: "read by Claude from the page text", byClaude: true }));
+  } catch { return []; }
+}
+
+async function runShop(r, tab, spec, queries, opts) {
+  const t0 = Date.now(), rep = { id: r.id, status: "no_match", message: "", queries: [], ms: 0, results: 0 };
+  const finish = (status, msg) => { rep.status = status; rep.message = msg; rep.ms = Date.now() - t0; return rep; };
+  const origin = new URL(r.web).origin, prefix = new URL(r.web).pathname.replace(/\/$/, "");
+  const known = r.search || S.discovered[r.id];
+  const guesses = (GUESS_PATTERNS[r.cc] || []).map(p => origin + prefix + p);
+  let working = known || null, blocked = false, sawPage = false, found = [], usedUrl = null, rawStruct = "";
+  const echoes = (text, q) => { const qt = tokens(q).slice(0, 3).join(" "); return qt && tokens(text.slice(0, 20000)).join(" ").includes(qt); };
+  outer: for (const q of queries) {
+    rep.queries.push(q);
+    for (const tpl of (working ? [working] : guesses)) {
+      if (S.cancel) return finish("skipped", "stopped");
+      const url = expandTemplate(tpl, q);
+      try { await tab.open(url); } catch (e) { return finish("error", `browser could not open the page (${e?.code || "error"})`); }
+      let text; try { text = await tab.text(); } catch (e) { return finish("error", `could not read the page (${e?.code || "error"})`); }
+      if (looksBlocked(text)) { blocked = true; if (working) break; continue; }
+      if (text.length < 200) continue;
+      if (!working) {                                       // a guessed pattern counts only if the page echoes the search term back
+        if (!echoes(text, q)) continue;
+        working = tpl; S.discovered[r.id] = tpl; lsSet("pt.discovered", S.discovered);
+      }
+      sawPage = true;
+      let list = listingsFromText(text, spec, r.cond === "refurbished" ? "refurbished" : "new");
+      if (!list.length && opts.claude && tokens(text).join(" ").includes(tokens(spec.name)[0] || "~")) list = await readByClaude(text, spec, r);
+      if (list.length) { found = list; usedUrl = url; rawStruct = await tab.structure(); if (!opts.all) break outer; }
+    }
+    if (!working) break;                                     // guessed patterns are tried once, not once per alias
+  }
+  if (!found.length) {
+    if (!sawPage && blocked) return finish("blocked", "the shop showed a bot check, so nothing could be read – open it manually");
+    if (!sawPage && !working) return finish("nosearch", "no working search URL found for this shop – open it manually");
+    if (!sawPage) return finish("error", "the page did not load or was empty");
+    return finish("no_match", `the shop's results contain no exact match for '${spec.name}'`);
+  }
+  // keep the 3 cheapest distinct listings, then try to confirm each on its own product page
+  found.sort((a, b) => a.price - b.price);
+  const picks = found.slice(0, 3);
+  for (const l of picks) {
+    if (S.cancel) break;
+    let price = l.price, source = "listing", url = usedUrl, evidence = l.evidence, readAt = Date.now(), note = "";
+    const purl = urlForTitle(rawStruct, l.title, r.dom);
+    if (purl) {
+      try {
+        await tab.open(purl); const pt = await tab.text(); const pp = priceFromProductText(pt, spec);
+        if (pp) { source = "product"; url = purl; readAt = Date.now(); evidence = pp.evidence; if (Math.abs(pp.price - l.price) > 0.005) note = `search page showed ${eur.format(l.price)}`; price = pp.price; }
+        else url = purl;
+      } catch { /* keep the listing price */ }
+    }
+    emit({ type: "result", result: { key: r.id + "|" + l.title + "|" + source, rid: r.id, retailer: r.name, cc: r.cc, title: l.title, price, cond: l.cond, storage: l.storage, url, source, readAt, evidence, note, byClaude: !!l.byClaude, basis: r.basis } });
+    rep.results++;
+  }
+  return finish("ok", `${rep.results} price(s) read${picks.some(p => p.byClaude) ? " (page read by Claude)" : ""}`);
+}
+
+function emit(ev) {
+  if (ev.type === "result") { S.results.set(ev.result.key, ev.result); renderResults(); }
+}
+
+async function startSearch() {
+  if (!S.cand || !S.shops.size || S.running) return;
+  const spec = currentSpec(), queries = previewQueries(), shops = [...S.shops].map(id => shopsById[id]);
+  S.spec = spec; S.opts = { claude: !!S.sample && $("#optClaude").checked, all: $("#optAll").checked };
+  S.results.clear(); S.reports.clear(); S.done = 0; S.total = shops.length; S.cancel = false; S.running = true;
+  $("#resultsCard").hidden = false; $("#resultsCard").scrollIntoView({ behavior: "smooth", block: "start" });
+  $("#resTitle").textContent = `· ${S.cand.display}${S.storage ? " " + (S.storage >= 1024 ? S.storage / 1024 + " TB" : S.storage + " GB") : ""}`;
+  $("#noRes").hidden = true; $("#logTable tbody").innerHTML = ""; $("#resTable tbody").innerHTML = ""; $("#manual").hidden = true; $("#stopBtn").hidden = false; $("#goBtn").disabled = true;
+  renderManual(shops, queries[0]); setProgress();
+  if (Bridge.state !== "ready") { S.running = false; $("#stopBtn").hidden = true; $("#goBtn").disabled = false; finishUi(true); return; }
+  const queue = [...shops], workers = Array.from({ length: Math.min(3, shops.length) }, () => new Tab());
+  await Promise.all(workers.map(async tab => {
+    while (queue.length && !S.cancel) {
+      const r = queue.shift(); let rep;
+      try { rep = await runShop(r, tab, spec, queries, S.opts); } catch (e) { rep = { id: r.id, status: "error", message: `internal error: ${e?.message || e}`, queries: [], ms: 0 }; }
+      S.reports.set(r.id, rep); S.done++; setProgress(); renderLog();
+    }
+  }));
+  S.running = false; $("#stopBtn").hidden = true; $("#goBtn").disabled = false; finishUi(false);
+}
+function setProgress() { $("#progress").textContent = `${S.done}/${S.total} shops read · ${S.results.size} price${S.results.size === 1 ? "" : "s"}`; $("#bar").style.width = (S.total ? 100 * S.done / S.total : 0) + "%"; }
+function finishUi(noBridge) {
+  setProgress();
+  if (noBridge) { $("#noRes").hidden = false; $("#noRes").textContent = "Live reading is not available in this view (see the note at the top). Use the direct search links below to check the shops yourself."; $("#manual").hidden = false; return; }
+  if (!S.results.size) { $("#noRes").hidden = false; $("#noRes").textContent = `No exact price found at ${S.reports.size} shop(s). The log below says why for each one.`; $("#logBox").open = true; }
+  $("#manual").hidden = false;
+}
+
+function renderResults() {
+  const rows = [...S.results.values()].sort((a, b) => a.price - b.price);
+  $("#resTable tbody").innerHTML = rows.map((r, i) => `<tr class="${i === 0 ? "best" : ""}">
+    <td>${i + 1}</td>
+    <td class="num"><span class="price">${eur.format(r.price)}</span><br>${r.source === "product" ? '<span class="badge live">confirmed on product page</span>' : '<span class="badge list">search listing</span>'}</td>
+    <td><span class="cc">${r.cc}</span><b>${esc(r.retailer)}</b>${r.basis !== "h" ? '<br><span class="muted small">EU storefront</span>' : ""}</td>
+    <td>${esc(r.title)}${r.note ? `<br><span class="muted small">${esc(r.note)}</span>` : ""}<br><span class="muted small" title="${esc(r.evidence)}">${r.byClaude ? "read by Claude · " : ""}${esc((r.evidence || "").slice(0, 90))}</span></td>
+    <td><span class="chip ${r.cond === "new" ? "good" : "warn"}">${esc(r.cond)}</span></td>
+    <td class="muted small">${clock(r.readAt)}<br><span class="age" data-t="${r.readAt}"></span></td>
+    <td><a class="btn sm" href="${esc(r.url)}" target="_blank" rel="noopener noreferrer">Open ↗</a> <button class="sm recheck" data-rid="${r.rid}">Re-check</button></td></tr>`).join("");
+  $$(".recheck").forEach(b => b.onclick = () => recheck(b));
+  tickAges();
+}
+function tickAges() { const now = Date.now(); $$(".age").forEach(el => { const s = Math.max(0, Math.round((now - +el.dataset.t) / 1000)); el.textContent = s < 90 ? `${s}s ago` : `${Math.round(s / 60)} min ago`; }); }
+setInterval(tickAges, 1000);
+
+async function recheck(btn) {
+  if (S.running || Bridge.state !== "ready") return;
+  const r = shopsById[btn.dataset.rid]; btn.disabled = true; btn.textContent = "…"; S.running = true; S.cancel = false;
+  for (const [k, v] of [...S.results]) if (v.rid === r.id) S.results.delete(k);
+  try { const rep = await runShop(r, new Tab(), S.spec, searchQueries({ ...S.spec }, 4), S.opts); S.reports.set(r.id, rep); renderLog(); }
+  finally { S.running = false; renderResults(); setProgress(); }
+}
+
+const ST = { ok: "price read", no_match: "no exact match", blocked: "bot check", timeout: "timed out", error: "error", skipped: "stopped", nosearch: "no search URL" };
+function renderLog() {
+  const rows = [...S.reports.values()].sort((a, b) => (a.status === "ok" ? 0 : 1) - (b.status === "ok" ? 0 : 1) || shopsById[a.id].name.localeCompare(shopsById[b.id].name));
+  $("#logTable tbody").innerHTML = rows.map(rep => { const r = shopsById[rep.id], u = searchUrl(r, S.spec.name) || r.web;
+    return `<tr><td><span class="cc">${r.cc}</span>${esc(r.name)}</td><td class="st ${rep.status}">${ST[rep.status] || rep.status}</td>
+      <td class="small">${esc(rep.message)}${rep.queries?.length ? `<br><span class="muted">searched: ${esc(rep.queries.join(" | "))}</span>` : ""}</td><td class="num muted small">${(rep.ms / 1000).toFixed(1)}s</td>
+      <td><a class="btn sm" href="${esc(u)}" target="_blank" rel="noopener noreferrer">Open shop ↗</a></td></tr>`; }).join("");
+  const c = {}; S.reports.forEach(r => c[r.status] = (c[r.status] || 0) + 1);
+  $("#logSummary").textContent = "· " + Object.entries(c).map(([k, v]) => `${v} ${ST[k] || k}`).join(", ");
+}
+function renderManual(shops, q) {
+  $("#manual").innerHTML = `<details class="more" ${Bridge.state !== "ready" ? "open" : ""}><summary>Direct search links for the selected shops</summary>
+    <p class="hint">Opens each shop's own search for “${esc(q)}”. Shops without a known search URL open their homepage.</p>
+    <div class="links">${shops.map(r => { const u = searchUrl(r, q) || r.web; return `<a href="${esc(u)}" target="_blank" rel="noopener noreferrer" title="${esc(u)}"><span class="cc">${r.cc}</span>${esc(r.name)}</a>`; }).join("")}</div></details>`;
+}
+
+/* ============================================================ bridge status banner */
+function renderBridge() {
+  const pill = $("#bridge"), note = $("#bridgeNote"), s = Bridge.state;
+  const set = (cls, txt) => { pill.className = "pill " + cls; pill.lastElementChild.textContent = txt; };
+  if (s === "ready") { set("ok", "live browser connected"); note.hidden = true; return; }
+  const why = { none: "This view cannot use connected tools.", nohost: "The Claude desktop app's built-in browser is not reachable from this view.", error: "The browser connection failed to start." }[s] || "";
+  set("warn", "live reading unavailable");
+  note.hidden = false;
+  note.innerHTML = `<div class="banner"><b>Live prices need the Claude desktop app.</b> ${esc(why)} This page reads each shop in the app's built-in browser, so it only works when the artifact is open in the Claude desktop app, by its owner, with the browser enabled. You can still identify the product and use the direct search links for every shop.</div>`;
+}
+
+/* ============================================================ database tab */
+function dbRows() {
+  const t = $("#dbFilter").value.toLowerCase(), c = $("#dbCountry").value, k = $("#dbKind").value;
+  return RETAILERS.filter(r => (!c || r.cc === c) && (!k || r.kind === k) && (!t || [r.name, r.dom, r.grp, r.web].join(" ").toLowerCase().includes(t)));
+}
+function renderDb() {
+  const rows = dbRows(), ck = S.checks;
+  $("#dbTable tbody").innerHTML = rows.map(r => { const c = ck[r.id];
+    return `<tr><td><b>${esc(r.name)}</b>${r.grp ? `<br><span class="muted small">${esc(r.grp)}</span>` : ""}</td><td>${r.cc}</td>
+    <td>${esc(KINDS[r.kind])}${r.cond === "refurbished" ? '<br><span class="chip warn">refurbished</span>' : ""}</td>
+    <td><a href="${esc(r.web)}" target="_blank" rel="noopener noreferrer">${esc(r.dom)}</a></td>
+    <td>${esc(r.hq)}<br><span class="muted small">${r.basis === "h" ? "headquartered in Europe" : "EU entity / storefront"}</span></td>
+    <td class="st ${c ? c.st : "unverified"}">${c ? esc(c.st) : "not checked"}${c ? `<br><span class="muted small">${new Date(c.at).toLocaleString()}</span>` : ""}</td></tr>`; }).join("");
+  const n = Object.values(ck).filter(c => c.st === "online").length;
+  $("#dbNote").textContent = `${RETAILERS.length} storefronts · ${n} checked online from your browser so far. “Check shown shops” opens each homepage in the built-in browser (desktop app only).`;
+}
+async function checkShops() {
+  if (Bridge.state !== "ready") { $("#dbProg").textContent = "Needs the Claude desktop app's built-in browser."; return; }
+  const rows = dbRows().slice(0, 40); if (!rows.length) return; $("#checkBtn").disabled = true; let n = 0; S.cancel = false;
+  const queue = [...rows], workers = Array.from({ length: 3 }, () => new Tab());
+  await Promise.all(workers.map(async tab => { while (queue.length) { const r = queue.shift(); let st = "offline";
+    try { await tab.open(r.web); const t = await tab.text(); st = looksBlocked(t) ? "blocked" : t.length > 300 ? "online" : "offline"; } catch { st = "offline"; }
+    S.checks[r.id] = { st, at: Date.now() }; n++; $("#dbProg").textContent = `Checking… ${n}/${rows.length}`; } }));
+  lsSet("pt.checks", S.checks); $("#dbProg").textContent = `Checked ${n} shops${dbRows().length > 40 ? " (first 40 shown; filter to check others)" : ""}.`; $("#checkBtn").disabled = false; renderDb();
+}
+async function exportCsv() {
+  const cols = ["id", "name", "cc", "web", "dom", "kind", "grp", "hq", "basis", "cond", "search", "note"];
+  const q = v => `"${String(v ?? "").replace(/"/g, '""')}"`;
+  const csv = [cols.join(","), ...RETAILERS.map(r => cols.map(c => q(r[c])).join(","))].join("\n");
+  if (!S.downloads) { $("#dbProg").textContent = "Saving files is not available in this view."; return; }
+  try { await S.downloads.save({ filename: "retailers.csv", data: csv }); } catch (e) { $("#dbProg").textContent = e?.code === "declined" ? "Save cancelled." : "Could not save the file here."; }
+}
+function initDbUi() {
+  $("#dbCount").textContent = RETAILERS.length;
+  Object.entries(COUNTRIES).forEach(([c, n]) => $("#dbCountry").add(new Option(n, c)));
+  Object.entries(KINDS).forEach(([k, n]) => $("#dbKind").add(new Option(n, k)));
+  ["dbFilter", "dbCountry", "dbKind"].forEach(id => $("#" + id).oninput = renderDb);
+  $("#checkBtn").onclick = checkShops; $("#csvBtn").onclick = exportCsv;
+  $("#excluded").innerHTML = EXCLUDED.map(e => `<span class="chip bad" title="${esc(e.r)}">${esc(e.n)}</span>`).join("");
+  renderDb();
+}
+
+/* ============================================================ boot */
+renderCountryChips(); renderKinds(); renderShopList(); initDbUi();
+$$(".tab").forEach(b => b.onclick = () => { $$(".tab").forEach(x => x.setAttribute("aria-selected", x === b)); $("#tab-search").hidden = b.dataset.tab !== "search"; $("#tab-db").hidden = b.dataset.tab !== "db"; });
+["optEU", "optRefurb"].forEach(id => $("#" + id).onchange = () => renderShopList());
+$("#allShops").onclick = () => { visibleShops().forEach(r => S.shops.add(r.id)); renderShopList(true); };
+$("#noShops").onclick = () => { S.shops.clear(); renderShopList(true); };
+$("#idForm").onsubmit = onIdentify; $("#stopBtn").onclick = () => { S.cancel = true; };
+(async () => {
+  await Bridge.init(); renderBridge();
+  try { S.sample = await window.claude?.use?.("sample"); } catch { S.sample = null; }
+  try { S.downloads = await window.claude?.use?.("downloads"); } catch { S.downloads = null; }
+})();
+</script>

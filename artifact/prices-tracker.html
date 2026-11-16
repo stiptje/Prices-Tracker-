@@ -1,0 +1,800 @@
+<title>Prices Tracker</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@500;700&display=swap">
+<style>
+/* Layout: a three-step instrument panel – where / what / live readings – with a shop-by-shop log underneath.
+   Palette: cool graphite neutrals, one signal-blue accent, green reserved for "read live just now". */
+:root{
+  --bg:#f3f5f8; --surface:#ffffff; --raised:#eef1f6; --ink:#12161e; --muted:#586172; --line:#d9dee7;
+  --accent:#2a55f5; --accent-ink:#ffffff; --accent-soft:#e6ecff;
+  --live:#0c7d46; --live-soft:#dff4e8; --warn:#8f5b00; --warn-soft:#fff0cf; --bad:#b3261e; --bad-soft:#fde6e3;
+  --font:'Inter',system-ui,-apple-system,'Segoe UI',Roboto,sans-serif; --display:'Space Grotesk','Inter',system-ui,sans-serif;
+  --mono:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#0d1015; --surface:#151a21; --raised:#1c222b; --ink:#e7ebf1; --muted:#97a1b2; --line:#272e39;
+  --accent:#7ea3ff; --accent-ink:#0a1020; --accent-soft:#1a2644;
+  --live:#52d68d; --live-soft:#12301f; --warn:#f0b84d; --warn-soft:#352711; --bad:#ff8c82; --bad-soft:#3b1b19; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#0d1015; --surface:#151a21; --raised:#1c222b; --ink:#e7ebf1; --muted:#97a1b2; --line:#272e39;
+  --accent:#7ea3ff; --accent-ink:#0a1020; --accent-soft:#1a2644;
+  --live:#52d68d; --live-soft:#12301f; --warn:#f0b84d; --warn-soft:#352711; --bad:#ff8c82; --bad-soft:#3b1b19; color-scheme:dark}
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+body{background:var(--bg);color:var(--ink);font:14.5px/1.5 var(--font)}
+.wrap{max-width:1160px;margin:0 auto;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+header.top{background:var(--surface);border-bottom:1px solid var(--line);position:sticky;top:env(safe-area-inset-top,0px);z-index:5}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:10;background:var(--surface)}
+.bar{display:flex;align-items:center;gap:12px 20px;flex-wrap:wrap;padding-block:10px}
+h1{font:700 19px/1.2 var(--display);margin:0;letter-spacing:-.01em}
+h1 small{font:400 12.5px var(--font);color:var(--muted);margin-left:8px;letter-spacing:0}
+h2{font:700 16px/1.3 var(--display);margin:0 0 10px;text-wrap:balance}
+h3{font:600 14px var(--font);margin:0 0 4px}
+nav{display:flex;gap:2px;margin-left:auto}
+.tab{background:none;border:0;padding:7px 12px;border-radius:8px;color:var(--muted);font:500 14px var(--font);cursor:pointer}
+.tab[aria-selected="true"]{background:var(--raised);color:var(--ink)}
+button,.btn{font:500 14px var(--font);border-radius:8px;border:1px solid var(--line);background:var(--surface);color:var(--ink);padding:8px 13px;cursor:pointer;text-decoration:none;display:inline-block}
+button:hover,.btn:hover{border-color:var(--accent)}
+button:focus-visible,input:focus-visible,select:focus-visible,summary:focus-visible,a:focus-visible,.pick:focus-visible,.chipbtn:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+button.primary{background:var(--accent);color:var(--accent-ink);border-color:var(--accent);font-weight:600}
+button:disabled{opacity:.5;cursor:default}
+button.link{border:0;background:none;color:var(--accent);padding:0}
+button.sm,.btn.sm{padding:3px 9px;font-size:12.5px}
+input[type=search],input[type=text],select{flex:1;min-width:0;padding:9px 11px;border-radius:8px;border:1px solid var(--line);background:var(--bg);color:var(--ink);font:inherit}
+a{color:var(--accent)}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:16px;margin-block:14px}
+.row{display:flex;gap:8px 10px;align-items:center;flex-wrap:wrap}.between{justify-content:space-between}
+.col{min-width:0}
+.step{display:inline-grid;place-items:center;width:21px;height:21px;border-radius:50%;background:var(--accent);color:var(--accent-ink);font:700 12px var(--font);margin-right:6px}
+.muted{color:var(--muted)}.small{font-size:12.5px}.hint{color:var(--muted);font-size:12.5px;margin:3px 0}
+.pill{display:inline-flex;align-items:center;gap:6px;border-radius:999px;padding:3px 10px;font-size:12.5px;font-weight:500;background:var(--raised);color:var(--muted)}
+.pill i{width:8px;height:8px;border-radius:50%;background:var(--muted);display:inline-block}
+.pill.ok{background:var(--live-soft);color:var(--live)}.pill.ok i{background:var(--live)}
+.pill.warn{background:var(--warn-soft);color:var(--warn)}.pill.warn i{background:var(--warn)}
+.pill.bad{background:var(--bad-soft);color:var(--bad)}.pill.bad i{background:var(--bad)}
+.chipbtn{padding:7px 13px;border-radius:999px;border:1px solid var(--line);background:var(--raised);cursor:pointer;user-select:none;font-weight:500}
+.chipbtn[aria-pressed="true"]{background:var(--accent);color:var(--accent-ink);border-color:var(--accent)}
+.chipbtn small{opacity:.75;margin-left:4px;font-weight:400}
+details.more{margin-top:10px}details.more>summary{cursor:pointer;color:var(--accent);font-weight:500}
+.filters{display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:12px;margin-top:10px}
+fieldset{border:1px solid var(--line);border-radius:8px;padding:8px 12px;margin:0;min-width:0}
+legend{font-weight:600;font-size:12.5px;padding:0 4px}
+fieldset.wide{grid-column:1/-1}
+label.chk{display:block;margin:4px 0;cursor:pointer}label.chk .hint{display:block;margin-left:22px}
+.shoplist{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:2px 12px;max-height:250px;overflow:auto}
+.shoplist label{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-size:13px}
+.cc{display:inline-block;min-width:25px;text-align:center;font:700 10.5px var(--font);padding:1px 4px;border-radius:5px;background:var(--raised);color:var(--muted);margin-right:5px;letter-spacing:.03em}
+.cands{display:grid;gap:8px;margin-top:10px}
+.cand{border:1px solid var(--line);border-radius:10px;padding:9px 12px;cursor:pointer;display:flex;gap:10px;align-items:flex-start;background:var(--surface);text-align:left;width:100%;font:inherit;color:inherit}
+.cand:hover{border-color:var(--accent)}.cand[aria-pressed="true"]{border-color:var(--accent);background:var(--accent-soft)}
+.cand b{display:block;font-weight:600}.cand .meta{color:var(--muted);font-size:12.5px}.cand .conf{margin-left:auto;font-size:12px;color:var(--muted);white-space:nowrap}
+.confirm{margin-top:12px;border:1px solid var(--accent);border-radius:10px;padding:14px;background:var(--accent-soft)}
+.chips{display:flex;flex-wrap:wrap;gap:6px;margin:6px 0}
+.chip{background:var(--raised);border-radius:999px;padding:2px 10px;font-size:12.5px;display:inline-flex;gap:6px;align-items:center}
+.chip button{border:0;background:none;padding:0;color:var(--muted);font-size:15px;line-height:1}
+.chip.good{background:var(--live-soft);color:var(--live)}.chip.warn{background:var(--warn-soft);color:var(--warn)}.chip.bad{background:var(--bad-soft);color:var(--bad)}
+.pick{padding:5px 12px;border-radius:8px;border:1px solid var(--line);background:var(--surface);cursor:pointer;font-weight:500}
+.pick[aria-pressed="true"]{background:var(--accent);color:var(--accent-ink);border-color:var(--accent)}
+.qlist{font:12.5px var(--mono);background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:6px 10px;margin:6px 0}
+.meter{height:5px;background:var(--raised);border-radius:3px;overflow:hidden;margin:8px 0}.meter>div{height:100%;width:0;background:var(--accent);transition:width .25s}
+.tablewrap{overflow-x:auto;max-width:100%}
+table{width:100%;border-collapse:collapse;font-size:13.5px}
+th,td{padding:8px 9px;border-bottom:1px solid var(--line);text-align:left;vertical-align:top}
+th{font:600 11px var(--font);text-transform:uppercase;letter-spacing:.06em;color:var(--muted);white-space:nowrap}
+td.num,th.num{text-align:right;font-variant-numeric:tabular-nums}
+tr.best td{background:var(--accent-soft)}
+.price{font:700 17px var(--display);font-variant-numeric:tabular-nums;white-space:nowrap}
+.badge{display:inline-block;font-size:11px;border-radius:5px;padding:1px 6px;white-space:nowrap;font-weight:500}
+.badge.live{background:var(--live-soft);color:var(--live)}.badge.list{background:var(--warn-soft);color:var(--warn)}
+.empty{padding:16px;text-align:center;color:var(--muted)}
+.st{font-weight:600}.st.ok,.st.online{color:var(--live)}.st.no_match,.st.unverified{color:var(--muted)}.st.blocked,.st.timeout,.st.error,.st.offline,.st.nosearch{color:var(--bad)}
+.banner{border-radius:10px;padding:10px 12px;margin-block:12px;background:var(--warn-soft);color:var(--ink);border:1px solid var(--warn)}
+.banner b{color:var(--warn)}
+.notice{background:var(--raised);border-radius:8px;padding:8px 12px;font-size:13px}
+pre.diag{font:12px/1.45 var(--mono);white-space:pre-wrap;word-break:break-word;background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:8px;max-height:260px;overflow:auto;margin:6px 0}
+code{font:12px var(--mono);word-break:break-all}
+.links{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:6px 12px;margin-top:8px}
+.links a{display:block;padding:7px 10px;border:1px solid var(--line);border-radius:8px;text-decoration:none;color:var(--ink);background:var(--surface);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.links a:hover{border-color:var(--accent)}
+footer{padding-block:10px 40px}
+@media (max-width:640px){.price{font-size:15px}th,td{padding:6px}nav{margin-left:0}}
+@media (prefers-reduced-motion:reduce){.meter>div{transition:none}}
+</style>
+
+<header class="top"><div class="wrap bar">
+  <h1>Prices Tracker <small>live prices · BE · FR · NL · DE</small></h1>
+  <span id="bridge" class="pill"><i></i><span>checking live connection…</span></span>
+  <nav role="tablist">
+    <button class="tab" role="tab" data-tab="search" aria-selected="true">Search</button>
+    <button class="tab" role="tab" data-tab="db" aria-selected="false">Retailer database <span id="dbCount" class="pill"></span></button>
+  </nav>
+</div></header>
+
+<main class="wrap">
+<div id="bridgeNote" hidden></div>
+
+<section id="tab-search">
+  <div class="card">
+    <h2><span class="step">1</span>Where should I look?</h2>
+    <div class="row" id="countryChips"></div>
+    <details class="more"><summary>Filters &amp; shop selection <span id="selSummary" class="muted"></span></summary>
+      <div class="filters">
+        <fieldset><legend>Shop type</legend><div id="kindBoxes"></div>
+          <p class="hint">Telecom operators are off by default: their device prices are often tied to a subscription.</p></fieldset>
+        <fieldset><legend>Options</legend>
+          <label class="chk"><input type="checkbox" id="optEU" checked> Include European storefronts of non-European groups
+            <span class="hint">Amazon.xx, Apple, Samsung, Google, eBay … Shops outside Europe that only ship in are never included.</span></label>
+          <label class="chk"><input type="checkbox" id="optRefurb"> Also show refurbished / used
+            <span class="hint">Off = new devices only; refurbished-only shops are skipped.</span></label>
+          <label class="chk"><input type="checkbox" id="optClaude" checked> Let Claude read pages my pattern matching cannot
+            <span class="hint">Only prices literally present on the page are accepted.</span></label>
+          <label class="chk"><input type="checkbox" id="optAll"> Try every alternate name at every shop
+            <span class="hint">Slower. Off = stop at the first name that finds the model.</span></label>
+        </fieldset>
+        <fieldset class="wide"><legend>Individual shops <button class="link" id="allShops">all</button> · <button class="link" id="noShops">none</button></legend>
+          <div id="shopList" class="shoplist"></div></fieldset>
+      </div>
+    </details>
+  </div>
+
+  <div class="card">
+    <h2><span class="step">2</span>What are you looking for?</h2>
+    <form id="idForm" class="row"><input id="q" type="search" placeholder="e.g. iphone 15 pro, galaxy s24 ultra, pixel 9, SM-S928B …" autocomplete="off" aria-label="Product keywords">
+      <button class="primary" type="submit">Identify</button></form>
+    <div id="candidates"></div>
+    <div id="confirm" hidden></div>
+  </div>
+
+  <div id="resultsCard" class="card" hidden>
+    <div class="row between"><h2><span class="step">3</span>Live prices <span id="resTitle" class="muted"></span></h2>
+      <div class="row"><span id="progress" class="muted small"></span><button id="stopBtn" class="sm" hidden>Stop</button></div></div>
+    <div class="meter"><div id="bar"></div></div>
+    <p class="hint">Each price was read from the shop's own page in your built-in browser at the time shown. Nothing is stored or reused between searches.</p>
+    <div class="tablewrap"><table id="resTable"><thead><tr><th>#</th><th class="num">Price</th><th>Shop</th><th>Product as listed</th><th>Condition</th><th>Read</th><th></th></tr></thead><tbody></tbody></table></div>
+    <p id="noRes" class="empty" hidden></p>
+    <div id="manual" hidden></div>
+    <details class="more" id="logBox"><summary>Shop-by-shop log <span id="logSummary" class="muted"></span></summary>
+      <div class="tablewrap"><table id="logTable"><thead><tr><th>Shop</th><th>Status</th><th>Details</th><th class="num">Time</th><th></th></tr></thead><tbody></tbody></table></div></details>
+    <details class="more"><summary>Diagnostics (browser tool calls)</summary>
+      <p class="hint">The last calls to the built-in browser and what came back. Useful if a shop reads wrong.</p><pre class="diag" id="diag">no calls yet</pre></details>
+  </div>
+</section>
+
+<section id="tab-db" hidden>
+  <div class="card">
+    <div class="row between"><h2>Retailer database</h2>
+      <div class="row"><button id="csvBtn">Export CSV</button><button id="checkBtn">Check shown shops</button></div></div>
+    <p class="hint" id="dbNote"></p>
+    <div class="row"><input id="dbFilter" type="search" placeholder="filter by name / domain / group …" aria-label="Filter shops">
+      <select id="dbCountry" aria-label="Country"><option value="">All countries</option></select>
+      <select id="dbKind" aria-label="Type"><option value="">All types</option></select></div>
+    <p id="dbProg" class="muted small"></p>
+    <div class="tablewrap"><table id="dbTable"><thead><tr><th>Shop</th><th>Country</th><th>Type</th><th>Website</th><th>HQ / basis</th><th>Check</th></tr></thead><tbody></tbody></table></div>
+  </div>
+  <div class="card"><h3>Excluded: not based in Europe</h3>
+    <p class="hint">These only ship into Europe from outside it, so they are never searched.</p><div id="excluded" class="chips"></div></div>
+</section>
+</main>
+<footer class="wrap muted small">Marketplaces (bol, Amazon, eBay, Cdiscount …) show the featured offer, which can differ from the lowest third-party price. Respect each shop's terms of use.</footer>
+
+<script>
+/* Prices Tracker core – pure logic, no DOM, no network. Inlined into the artifact by build_artifact.py
+   and unit-tested in Node (artifact/test_core.js). Mirrors pricetracker/matcher.py + catalog.py. */
+
+const strip = s => String(s ?? "").normalize("NFKD").replace(/[̀-ͯ]/g, "");
+
+function normalize(text) {
+  if (!text) return "";
+  let s = strip(text).toLowerCase().replace(/ß/g, "ss").replace(/\+/g, " plus ");
+  s = s.replace(/[^a-z0-9]+/g, " ");
+  s = s.replace(/(?<=[a-z])(?=[0-9])|(?<=[0-9])(?=[a-z])/g, " ");
+  return s.split(/\s+/).filter(Boolean).join(" ");
+}
+const tokens = t => { const n = normalize(t); return n ? n.split(" ") : []; };
+function findSeq(hay, needle) {
+  const n = needle.length;
+  if (!n || n > hay.length) return -1;
+  outer: for (let i = 0; i <= hay.length - n; i++) {
+    for (let j = 0; j < n; j++) if (hay[i + j] !== needle[j]) continue outer;
+    return i;
+  }
+  return -1;
+}
+
+/* ------------------------------------------------------------------ prices */
+function parsePrice(raw) {
+  if (raw == null) return null;
+  if (typeof raw === "number") return raw >= 0 ? raw : null;
+  let s = String(raw).replace(/[.,]-+\s*$/, "").replace(/[^\d,.]/g, "").replace(/^[.,]+|[.,]+$/g, "");
+  if (!s) return null;
+  if (s.includes(",") && s.includes(".")) {
+    s = s.lastIndexOf(",") > s.lastIndexOf(".") ? s.replace(/\./g, "").replace(",", ".") : s.replace(/,/g, "");
+  } else if (s.includes(",")) {
+    const i = s.lastIndexOf(","), tail = s.slice(i + 1);
+    s = (tail.length === 1 || tail.length === 2) ? s.slice(0, i).replace(/,/g, "") + "." + tail : s.replace(/,/g, "");
+  } else if (s.includes(".")) {
+    const i = s.lastIndexOf("."), head = s.slice(0, i), tail = s.slice(i + 1);
+    if ((tail.length === 3 && /^\d{1,3}(\.\d{3})*$/.test(head)) || s.split(".").length > 2) s = s.replace(/\./g, "");
+  }
+  const v = parseFloat(s);
+  return Number.isFinite(v) && v >= 0 ? v : null;
+}
+
+const NUM = String.raw`\d{1,3}(?:,\d{3})+\.\d{1,2}|\d{1,3}(?:[.\u00a0\u202f ]\d{3})*(?:[.,]\d{1,2}|[.,]-+)?|\d+(?:[.,]\d{1,2}|[.,]-+)?`;
+const PRICE_RE = new RegExp(String.raw`(?:€|EUR)\s*(${NUM})|(${NUM})\s*(?:€|EUR)(?![A-Za-z])|(?<![\d.,])(\d{1,3}(?:\.\d{3})*,-+)`, "g");
+const NOT_CURRENT = /\b(per\s*(maand|mnd|month|mois)|\/\s*(mnd|maand|mois|mo|monat|month)|par mois|pro monat|monatlich|maandelijks|mtl\.?|x\s*\d+\s*(€|mois)|\d+\s*x\s*(€|\d)|vanaf|ab\s*\d|dès|des|from|bespaar|economisez|ersparnis|sparen|save|korting|remise|rabatt|adviesprijs|uvp|statt|was|avant|ancien|verzend|livraison|versand|shipping|gratis|offert)\b/i;
+
+/** All EUR amounts in a line (current-price candidates only unless `all`). */
+function pricesInLine(line, all = false) {
+  if (!all && NOT_CURRENT.test(strip(line))) return [];
+  const out = [];
+  for (const m of line.matchAll(PRICE_RE)) {
+    const v = parsePrice(m[1] || m[2] || m[3]);
+    if (v != null && v >= 5 && v < 20000) out.push(v);
+  }
+  return out;
+}
+
+/* ------------------------------------------------------------------ matcher */
+const VARIANT = new Set("pro max plus ultra mini fe lite edge neo air xl fold flip se e t s r x gt turbo note go play prime core power active classic slim spro ce c a i v k".split(" "));
+const ACC = new Set(("case cases cover covers bumper screenprotector protector protectors tempered charger cable adapter adaptor holder mount lanyard powerbank sleeve wallet pouch stylus dock magsafe replacement repair tripod gimbal headphones " +
+  "hoes hoesje hoesjes beschermglas beschermfolie oplader kabel houder telefoonhoesje reparatie coque etui housse chargeur protege rechange reparation cordon " +
+  "hulle huelle schutzhulle schutzfolie panzerglas ladegerat ladekabel halterung displayschutz tasche ersatzteil armband ersatz reparatur").split(" "));
+const WEAK_ACC = new Set("screen glass film skin lens battery stand strap support verre trempe ecran scherm schutz folie bescherming charging housse display".split(" "));
+const FOR = new Set("voor pour fur for compatible compatibel kompatibel geschikt compatibles kompatible fits fit passend adapte avec mit with met ersatz und".split(" "));
+const REFURB = new Set("refurbished refurb renewed reconditionne reconditionnee reconditionnes gebraucht aufbereitet generaluberholt tweedehands gerenoveerd refurbed preowned occasion used".split(" "));
+const REFURB_PH = [["second", "hand"], ["remis", "a", "neuf"], ["pre", "owned"], ["tres", "bon", "etat"], ["comme", "neuf"]];
+
+function parseStorage(norm) {
+  const out = new Set();
+  for (const m of norm.matchAll(/\b(\d{1,4}) ?(gb|go|tb|to)\b/g)) out.add(+m[1] * (m[2] === "tb" || m[2] === "to" ? 1024 : 1));
+  return out;
+}
+
+function nameSeqs(spec) {
+  const names = [spec.name, ...(spec.aliases || [])];
+  if (spec.brand) names.push(`${spec.brand} ${spec.name}`);
+  const seen = new Set(), out = [];
+  for (const n of names) { const t = tokens(n); const k = t.join(" "); if (t.length && !seen.has(k)) { seen.add(k); out.push(t); } }
+  return out.sort((a, b) => b.length - a.length);
+}
+
+function judge(spec, title, retailerCond = "new") {
+  const toks = tokens(title);
+  if (!toks.length) return { ok: false, reason: "empty" };
+  const norm = toks.join(" ");
+  for (const ex of spec.exclude || []) { const et = tokens(ex); if (et.length && findSeq(toks, et) >= 0) return { ok: false, reason: "excluded term" }; }
+  let pos = -1, matched = null, viaNum = false;
+  for (const s of nameSeqs(spec)) { const i = findSeq(toks, s); if (i >= 0) { pos = i; matched = s; break; } }
+  if (pos < 0) for (const m of spec.models || []) { const s = tokens(m); const i = s.length ? findSeq(toks, s) : -1; if (i >= 0) { pos = i; matched = s; viaNum = true; break; } }
+  if (pos < 0) return { ok: false, reason: "model not in title" };
+  const end = pos + matched.length, own = new Set(tokens(spec.name));
+  if (!viaNum && end < toks.length) {
+    const nxt = toks[end];
+    if (VARIANT.has(nxt) && nxt !== matched[matched.length - 1]) {
+      if (nxt.length > 1 || (end > 0 && /^\d+$/.test(toks[end - 1]))) return { ok: false, reason: `different variant (${nxt})` };
+    }
+  }
+  if (toks.slice(Math.max(0, pos - 4), pos).some(t => FOR.has(t))) return { ok: false, reason: "accessory (for <model>)" };
+  const allow = new Set((spec.allow || []).flatMap(tokens));
+  const bad = toks.find(t => ACC.has(t) && !own.has(t) && !allow.has(t));
+  if (bad) return { ok: false, reason: `accessory word ${bad}` };
+  const near = [...toks.slice(Math.max(0, pos - 2), pos), ...toks.slice(end, end + 1)];
+  const weak = near.find(t => WEAK_ACC.has(t) && !own.has(t) && !allow.has(t));
+  if (weak) return { ok: false, reason: `accessory word ${weak}` };
+  let cond = retailerCond === "refurbished" ? "refurbished" : "new";
+  if (cond === "new" && (toks.some(t => REFURB.has(t)) || REFURB_PH.some(p => findSeq(toks, p) >= 0))) cond = "refurbished";
+  if (cond === "refurbished" && !spec.refurb) return { ok: false, reason: "refurbished (not requested)" };
+  const sizes = parseStorage(norm);
+  let storage = null;
+  if (spec.storage) {
+    if (sizes.size && !sizes.has(spec.storage)) return { ok: false, reason: `other storage` };
+    if (sizes.has(spec.storage)) storage = spec.storage;
+  } else if (sizes.size) storage = Math.max(...sizes);
+  return { ok: true, reason: "match", cond, storage };
+}
+
+function searchQueries(spec, limit = 4) {
+  const c = [];
+  if (spec.brand && !spec.name.toLowerCase().startsWith(spec.brand.toLowerCase())) c.push(`${spec.brand} ${spec.name}`);
+  c.push(spec.name, ...(spec.aliases || []), ...(spec.models || []));
+  const seen = new Set(), out = [];
+  for (const q of c) { const k = tokens(q).join(" "); if (k && !seen.has(k)) { seen.add(k); out.push(q.trim()); } }
+  return out.slice(0, limit);
+}
+
+/* ------------------------------------------------------------------ identification */
+function ratio(a, b) {              // Ratcliff/Obershelp-ish via LCS-free bigram Dice – cheap & typo tolerant
+  if (a === b) return 1; if (a.length < 2 || b.length < 2) return 0;
+  const bg = s => { const m = new Map(); for (let i = 0; i < s.length - 1; i++) { const g = s.slice(i, i + 2); m.set(g, (m.get(g) || 0) + 1); } return m; };
+  const A = bg(a), B = bg(b); let hit = 0;
+  for (const [g, n] of A) hit += Math.min(n, B.get(g) || 0);
+  return (2 * hit) / (a.length + b.length - 2);
+}
+const BRANDS = new Set("apple samsung google xiaomi redmi poco oneplus nothing motorola fairphone sony honor oppo asus huawei realme lg nokia hmd".split(" "));
+
+function identify(query, catalog, limit = 6) {
+  const qn = normalize(query), qt = qn.split(" ").filter(Boolean);
+  if (!qt.length) return [];
+  const qset = new Set(qt), scored = [];
+  for (const p of catalog) {
+    const display = p.b && !p.n.toLowerCase().startsWith(p.b.toLowerCase()) ? `${p.b} ${p.n}` : p.n;
+    let best = 0;
+    for (const nm of [p.n, display, ...(p.a || []), ...(p.m || [])]) {
+      const nt = tokens(nm); if (!nt.length) continue;
+      const nset = new Set(nt); let inter = 0; for (const t of qset) if (nset.has(t)) inter++;
+      if (!inter) continue;
+      const prec = inter / nset.size, rec = inter / qset.size, f1 = 2 * prec * rec / (prec + rec);
+      const qn_ = [...qset].filter(t => /^\d+$/.test(t)), nn_ = [...nset].filter(t => /^\d+$/.test(t));
+      let mult = 1;
+      if (qn_.length && nn_.length && !qn_.some(x => nn_.includes(x))) mult = 0.4; else if (qn_.length && !nn_.length) mult = 0.7;
+      const r = ratio(qn, nt.join(" "));
+      best = Math.max(best, f1 * mult, r * 0.92 * mult);
+      if (qn.includes(nt.join(" "))) best = Math.max(best, 0.55 + 0.4 * (nt.length / Math.max(qt.length, 1)));
+    }
+    if (best >= 0.5) scored.push([best, p, display]);
+  }
+  scored.sort((x, y) => y[0] - x[0] || (y[1].y || 0) - (x[1].y || 0) || x[1].n.length - y[1].n.length);
+  const out = scored.slice(0, limit).map(([s, p, display]) => ({
+    kind: "catalog", id: p.id, confidence: Math.round(s * 100) / 100, display, brand: p.b || "", name: p.n, year: p.y || null,
+    category: p.c || "smartphone", storage: p.s || [], aliases: p.a || [], models: p.m || [], allow: p.w || [],
+  }));
+  const brand = qt.find(t => BRANDS.has(t)) || "";
+  out.push({ kind: "custom", id: "custom", confidence: 0, display: `Search exactly: “${query.trim()}”`, brand: brand ? brand[0].toUpperCase() + brand.slice(1) : "",
+    name: query.trim(), year: null, category: "custom", storage: [], aliases: [], models: [], allow: [] });
+  return out;
+}
+
+/* ------------------------------------------------------------------ reading a shop page (text) */
+const BLOCK = /(captcha|are you a robot|robot check|unusual traffic|access denied|request blocked|just a moment|verifying you are human|pardon our interruption|bot detection|ihre anfrage wurde blockiert|vous avez été bloqué|attention required|enable javascript and cookies)/i;
+const looksBlocked = text => (text || "").length < 6000 && BLOCK.test(text || "");
+
+const PRICE_ONLY = new RegExp(String.raw`^\W{0,3}(?:€|EUR)?\s*(?:${NUM})\s*(?:€|EUR)?\W{0,3}$`);
+/** A struck-through old price and the current price often sit on adjacent price-only lines. */
+function withSecondPrice(prices, lines, next, snippet) {
+  if (prices.length !== 1) return prices;
+  for (let k = next; k < Math.min(lines.length, next + 2); k++) {
+    if (!PRICE_ONLY.test(lines[k])) break;
+    const p = pricesInLine(lines[k]);
+    if (p.length) { snippet.push(lines[k]); return [prices[0], p[0]]; }
+  }
+  return prices;
+}
+
+/** Listings in the visible text of a search-results page: a title line that matches the model + the nearby current price. */
+function listingsFromText(text, spec, retailerCond = "new") {
+  const lines = String(text || "").split(/\r?\n/).map(l => l.trim()).filter(Boolean);
+  const fam = tokens(spec.name).find(t => !/^\d+$/.test(t) && t.length > 2) || "";
+  const out = [], seen = new Set();
+  for (let i = 0; i < lines.length; i++) {
+    const line = lines[i];
+    if (line.length > 240 || line.length < 6) continue;
+    const v = judge(spec, line, retailerCond);
+    if (!v.ok) continue;
+    let prices = pricesInLine(line);
+    const snippet = [line];
+    let j = i + 1;
+    for (; j <= i + 7 && j < lines.length && !prices.length; j++) {
+      if (fam && tokens(lines[j]).includes(fam)) break;                 // next product starts
+      snippet.push(lines[j]);
+      prices = pricesInLine(lines[j]);
+    }
+    prices = withSecondPrice(prices, lines, j, snippet);
+    if (!prices.length) continue;
+    // a struck-through old price + current price sit together: the lower of the first two is the current one
+    const price = prices.length > 1 && prices[1] / prices[0] > 0.5 && prices[1] < prices[0] ? prices[1] : prices[0];
+    const key = tokens(line).join(" ") + "|" + price;
+    if (seen.has(key)) continue; seen.add(key);
+    out.push({ title: line, price, cond: v.cond, storage: v.storage, evidence: snippet.join(" ⏎ ").slice(0, 260) });
+  }
+  return out;
+}
+
+function urlsFrom(raw, domain) {
+  const found = [];
+  for (const m of String(raw || "").matchAll(/https?:\/\/[^\s"'<>)\]]+/g)) {
+    let u = m[0].replace(/[.,;]+$/, "");
+    try { const h = new URL(u).hostname; if (h === domain || h.endsWith("." + domain)) found.push({ url: u, at: m.index }); } catch { /* skip */ }
+  }
+  return found;
+}
+/** nearest URL to where `title` occurs in `raw` (read_page / find output) */
+function urlForTitle(raw, title, domain) {
+  const urls = urlsFrom(raw, domain); if (!urls.length) return null;
+  const at = String(raw).indexOf(title.slice(0, 30));
+  if (at < 0) return null;
+  let best = null, bd = 600;
+  for (const u of urls) { const d = Math.abs(u.at - at); if (d < bd) { bd = d; best = u.url; } }
+  return best;
+}
+
+/** price on a product page's text: first valid current price within the first lines after the model title */
+function priceFromProductText(text, spec) {
+  const lines = String(text || "").split(/\r?\n/).map(l => l.trim()).filter(Boolean);
+  for (let i = 0; i < Math.min(lines.length, 80); i++) {
+    if (judge(spec, lines[i], "new").ok || judge({ ...spec, refurb: true }, lines[i], "new").ok) {
+      for (let j = i; j < Math.min(lines.length, i + 25); j++) {
+        let p = pricesInLine(lines[j]);
+        if (p.length) { const sn = lines.slice(i, j + 1); p = withSecondPrice(p, lines, j + 1, sn);
+          return { price: p.length > 1 && p[1] < p[0] && p[1] / p[0] > 0.5 ? p[1] : p[0], title: lines[i], evidence: sn.join(" ⏎ ").slice(0, 260) }; }
+      }
+    }
+  }
+  return null;
+}
+
+function expandTemplate(tpl, q) {
+  const dash = tokens(q).join("-") || encodeURIComponent(q);
+  return tpl.replace("{q_path}", encodeURIComponent(q)).replace("{q_dash}", dash).replace("{q}", encodeURIComponent(q).replace(/%20/g, "+"));
+}
+const GUESS_PATTERNS = { BE: ["/zoeken?q={q}", "/search?q={q}", "/recherche?q={q}"], NL: ["/zoeken?q={q}", "/search?q={q}", "/zoeken?query={q}"],
+  FR: ["/recherche?q={q}", "/search?q={q}", "/catalogsearch/result/?q={q}"], DE: ["/suche?q={q}", "/search?q={q}", "/catalogsearch/result/?q={q}"] };
+
+if (typeof module !== "undefined") module.exports = { normalize, tokens, parsePrice, pricesInLine, judge, searchQueries, identify, listingsFromText, urlForTitle, urlsFrom, priceFromProductText, expandTemplate, looksBlocked, GUESS_PATTERNS };
+
+</script>
+<script>
+"use strict";
+const RETAILERS = [{"id":"coolblue-be","name":"Coolblue","cc":"BE","web":"https://www.coolblue.be/nl","dom":"coolblue.be","kind":"online_electronics","hq":"NL","basis":"h","grp":"Coolblue","search":"https://www.coolblue.be/nl/zoeken?query={q}","cond":"new"},{"id":"mediamarkt-be","name":"MediaMarkt","cc":"BE","web":"https://www.mediamarkt.be/nl","dom":"mediamarkt.be","kind":"electronics_chain","hq":"DE","basis":"h","grp":"MediaMarktSaturn (Ceconomy)","search":"https://www.mediamarkt.be/nl/search.html?query={q}","cond":"new"},{"id":"krefel-be","name":"Krefel","cc":"BE","web":"https://www.krefel.be/nl","dom":"krefel.be","kind":"electronics_chain","hq":"BE","basis":"h","cond":"new"},{"id":"vandenborre-be","name":"Vanden Borre","cc":"BE","web":"https://www.vandenborre.be/","dom":"vandenborre.be","kind":"electronics_chain","hq":"FR","basis":"h","grp":"Fnac Darty","cond":"new","note":"Belgian chain owned by Fnac Darty"},{"id":"bol-be","name":"bol","cc":"BE","web":"https://www.bol.com/be/nl/","dom":"bol.com","kind":"marketplace","hq":"NL","basis":"h","grp":"bol","search":"https://www.bol.com/be/nl/s/?searchtext={q}","cond":"new","note":"Marketplace: price shown is the featured offer"},{"id":"fnac-be","name":"Fnac","cc":"BE","web":"https://www.fnac.be/","dom":"fnac.be","kind":"electronics_chain","hq":"FR","basis":"h","grp":"Fnac Darty","search":"https://www.fnac.be/SearchResult/ResultList.aspx?Search={q}","cond":"new"},{"id":"amazon-be","name":"Amazon.com.be","cc":"BE","web":"https://www.amazon.com.be/","dom":"amazon.com.be","kind":"marketplace","hq":"US","basis":"s","grp":"Amazon","search":"https://www.amazon.com.be/s?k={q}","cond":"new","note":"Operated by Amazon EU S.à r.l. (Luxembourg); featured offer shown"},{"id":"alternate-be","name":"Alternate","cc":"BE","web":"https://www.alternate.be/","dom":"alternate.be","kind":"computer_specialist","hq":"DE","basis":"h","grp":"Alternate","search":"https://www.alternate.be/listing.xhtml?q={q}","cond":"new"},{"id":"ldlc-be","name":"LDLC Belgique","cc":"BE","web":"https://www.ldlc.be/","dom":"ldlc.be","kind":"computer_specialist","hq":"FR","basis":"h","grp":"LDLC","cond":"new"},{"id":"carrefour-be","name":"Carrefour Belgium","cc":"BE","web":"https://www.carrefour.eu/nl","dom":"carrefour.eu","kind":"general_retail","hq":"FR","basis":"h","grp":"Carrefour","cond":"new"},{"id":"proximus-be","name":"Proximus","cc":"BE","web":"https://www.proximus.be/","dom":"proximus.be","kind":"telecom_operator","hq":"BE","basis":"h","cond":"new"},{"id":"orange-be","name":"Orange Belgium","cc":"BE","web":"https://www.orange.be/","dom":"orange.be","kind":"telecom_operator","hq":"BE","basis":"h","grp":"Orange","cond":"new"},{"id":"telenet-be","name":"Telenet","cc":"BE","web":"https://www.telenet.be/","dom":"telenet.be","kind":"telecom_operator","hq":"BE","basis":"h","grp":"Liberty Global","cond":"new"},{"id":"base-be","name":"BASE","cc":"BE","web":"https://www.base.be/","dom":"base.be","kind":"telecom_operator","hq":"BE","basis":"h","grp":"Telenet","cond":"new"},{"id":"mobilevikings-be","name":"Mobile Vikings","cc":"BE","web":"https://mobilevikings.be/","dom":"mobilevikings.be","kind":"telecom_operator","hq":"BE","basis":"h","grp":"Telenet","cond":"new"},{"id":"backmarket-be","name":"Back Market","cc":"BE","web":"https://www.backmarket.be/nl-be","dom":"backmarket.be","kind":"refurbished","hq":"FR","basis":"h","grp":"Back Market","search":"https://www.backmarket.be/nl-be/search?q={q}","cond":"refurbished"},{"id":"swappie-be","name":"Swappie","cc":"BE","web":"https://swappie.com/be-nl/","dom":"swappie.com","kind":"refurbished","hq":"FI","basis":"h","grp":"Swappie","cond":"refurbished"},{"id":"refurbed-be","name":"refurbed","cc":"BE","web":"https://www.refurbed.be/","dom":"refurbed.be","kind":"refurbished","hq":"AT","basis":"h","grp":"refurbed","cond":"refurbished"},{"id":"apple-be","name":"Apple Store","cc":"BE","web":"https://www.apple.com/be-nl/","dom":"apple.com","kind":"brand_store","hq":"US","basis":"s","grp":"Apple","search":"https://www.apple.com/be-nl/search/{q_path}?src=serp","cond":"new","note":"Apple pages are not schema.org-annotated; results may be unavailable"},{"id":"samsung-be","name":"Samsung Shop","cc":"BE","web":"https://www.samsung.com/be/","dom":"samsung.com","kind":"brand_store","hq":"KR","basis":"s","grp":"Samsung","search":"https://www.samsung.com/be/search/?searchvalue={q}","cond":"new"},{"id":"xiaomi-be","name":"Xiaomi Store","cc":"BE","web":"https://www.mi.com/be/","dom":"mi.com","kind":"brand_store","hq":"CN","basis":"s","grp":"Xiaomi","cond":"new","note":"Local EU storefront"},{"id":"oneplus-be","name":"OnePlus Store","cc":"BE","web":"https://www.oneplus.com/be","dom":"oneplus.com","kind":"brand_store","hq":"CN","basis":"s","grp":"OnePlus","cond":"new","note":"Local EU storefront"},{"id":"google-be","name":"Google Store","cc":"BE","web":"https://store.google.com/be","dom":"store.google.com","kind":"brand_store","hq":"US","basis":"s","grp":"Google","cond":"new"},{"id":"fairphone-be","name":"Fairphone Shop","cc":"BE","web":"https://shop.fairphone.com/be","dom":"fairphone.com","kind":"brand_store","hq":"NL","basis":"h","grp":"Fairphone","cond":"new"},{"id":"honor-be","name":"Honor","cc":"BE","web":"https://www.honor.com/be/","dom":"honor.com","kind":"brand_store","hq":"CN","basis":"s","grp":"Honor","cond":"new","note":"Local EU storefront"},{"id":"ebay-be","name":"eBay Belgium","cc":"BE","web":"https://www.ebay.be/","dom":"ebay.be","kind":"marketplace","hq":"US","basis":"s","grp":"eBay","search":"https://www.ebay.be/sch/i.php?_nkw={q}","cond":"new","note":"Marketplace; many private sellers and used items"},{"id":"fnac-fr","name":"Fnac","cc":"FR","web":"https://www.fnac.com/","dom":"fnac.com","kind":"electronics_chain","hq":"FR","basis":"h","grp":"Fnac Darty","search":"https://www.fnac.com/SearchResult/ResultList.aspx?Search={q}","cond":"new"},{"id":"darty-fr","name":"Darty","cc":"FR","web":"https://www.darty.com/","dom":"darty.com","kind":"electronics_chain","hq":"FR","basis":"h","grp":"Fnac Darty","search":"https://www.darty.com/nav/recherche?text={q}","cond":"new"},{"id":"boulanger-fr","name":"Boulanger","cc":"FR","web":"https://www.boulanger.com/","dom":"boulanger.com","kind":"electronics_chain","hq":"FR","basis":"h","search":"https://www.boulanger.com/resultats?tr={q}","cond":"new"},{"id":"cdiscount-fr","name":"Cdiscount","cc":"FR","web":"https://www.cdiscount.com/","dom":"cdiscount.com","kind":"marketplace","hq":"FR","basis":"h","grp":"Casino","search":"https://www.cdiscount.com/search/10/{q_dash}.html","cond":"new"},{"id":"amazon-fr","name":"Amazon.fr","cc":"FR","web":"https://www.amazon.fr/","dom":"amazon.fr","kind":"marketplace","hq":"US","basis":"s","grp":"Amazon","search":"https://www.amazon.fr/s?k={q}","cond":"new","note":"Operated by Amazon EU S.à r.l.; featured offer shown"},{"id":"rakuten-fr","name":"Rakuten France","cc":"FR","web":"https://fr.shopping.rakuten.com/","dom":"rakuten.com","kind":"marketplace","hq":"JP","basis":"s","grp":"Rakuten","search":"https://fr.shopping.rakuten.com/search/{q_path}","cond":"new","note":"Rakuten France SAS, Paris; marketplace"},{"id":"ldlc-fr","name":"LDLC","cc":"FR","web":"https://www.ldlc.com/","dom":"ldlc.com","kind":"computer_specialist","hq":"FR","basis":"h","grp":"LDLC","search":"https://www.ldlc.com/recherche/{q_path}/","cond":"new"},{"id":"materiel-net","name":"Materiel.net","cc":"FR","web":"https://www.materiel.net/","dom":"materiel.net","kind":"computer_specialist","hq":"FR","basis":"h","grp":"LDLC","search":"https://www.materiel.net/recherche/{q_path}/","cond":"new"},{"id":"rueducommerce-fr","name":"Rue du Commerce","cc":"FR","web":"https://www.rueducommerce.fr/","dom":"rueducommerce.fr","kind":"online_electronics","hq":"FR","basis":"h","cond":"new"},{"id":"grosbill-fr","name":"Grosbill","cc":"FR","web":"https://www.grosbill.com/","dom":"grosbill.com","kind":"computer_specialist","hq":"FR","basis":"h","cond":"new"},{"id":"topachat-fr","name":"TopAchat","cc":"FR","web":"https://www.topachat.com/","dom":"topachat.com","kind":"computer_specialist","hq":"FR","basis":"h","cond":"new"},{"id":"cybertek-fr","name":"Cybertek","cc":"FR","web":"https://www.cybertek.fr/","dom":"cybertek.fr","kind":"computer_specialist","hq":"FR","basis":"h","cond":"new"},{"id":"ubaldi-fr","name":"Ubaldi","cc":"FR","web":"https://www.ubaldi.com/","dom":"ubaldi.com","kind":"online_electronics","hq":"FR","basis":"h","cond":"new"},{"id":"sonvideo-fr","name":"Son-Vidéo.com","cc":"FR","web":"https://www.son-video.com/","dom":"son-video.com","kind":"online_electronics","hq":"FR","basis":"h","cond":"new"},{"id":"electrodepot-fr","name":"Electro Dépôt","cc":"FR","web":"https://www.electrodepot.fr/","dom":"electrodepot.fr","kind":"electronics_chain","hq":"FR","basis":"h","search":"https://www.electrodepot.fr/catalogsearch/result/?q={q}","cond":"new"},{"id":"but-fr","name":"BUT","cc":"FR","web":"https://www.but.fr/","dom":"but.fr","kind":"general_retail","hq":"FR","basis":"h","cond":"new"},{"id":"conforama-fr","name":"Conforama","cc":"FR","web":"https://www.conforama.fr/","dom":"conforama.fr","kind":"general_retail","hq":"FR","basis":"h","cond":"new"},{"id":"auchan-fr","name":"Auchan","cc":"FR","web":"https://www.auchan.fr/","dom":"auchan.fr","kind":"general_retail","hq":"FR","basis":"h","search":"https://www.auchan.fr/recherche?text={q}","cond":"new"},{"id":"carrefour-fr","name":"Carrefour","cc":"FR","web":"https://www.carrefour.fr/","dom":"carrefour.fr","kind":"general_retail","hq":"FR","basis":"h","grp":"Carrefour","search":"https://www.carrefour.fr/s?q={q}","cond":"new"},{"id":"leclerc-fr","name":"E.Leclerc","cc":"FR","web":"https://www.e.leclerc/","dom":"e.leclerc","kind":"general_retail","hq":"FR","basis":"h","search":"https://www.e.leclerc/recherche?q={q}","cond":"new"},{"id":"cultura-fr","name":"Cultura","cc":"FR","web":"https://www.cultura.com/","dom":"cultura.com","kind":"general_retail","hq":"FR","basis":"h","search":"https://www.cultura.com/catalogsearch/result/?q={q}","cond":"new"},{"id":"conrad-fr","name":"Conrad France","cc":"FR","web":"https://www.conrad.fr/","dom":"conrad.fr","kind":"computer_specialist","hq":"DE","basis":"h","grp":"Conrad","cond":"new"},{"id":"orange-fr","name":"Orange","cc":"FR","web":"https://boutique.orange.fr/","dom":"orange.fr","kind":"telecom_operator","hq":"FR","basis":"h","grp":"Orange","cond":"new"},{"id":"sfr-fr","name":"SFR","cc":"FR","web":"https://www.sfr.fr/","dom":"sfr.fr","kind":"telecom_operator","hq":"FR","basis":"h","grp":"Altice France","cond":"new"},{"id":"bouygues-fr","name":"Bouygues Telecom","cc":"FR","web":"https://www.bouyguestelecom.fr/","dom":"bouyguestelecom.fr","kind":"telecom_operator","hq":"FR","basis":"h","cond":"new"},{"id":"free-fr","name":"Free Mobile","cc":"FR","web":"https://mobile.free.fr/","dom":"free.fr","kind":"telecom_operator","hq":"FR","basis":"h","grp":"Iliad","cond":"new"},{"id":"laposte-mobile-fr","name":"La Poste Mobile","cc":"FR","web":"https://www.lapostemobile.fr/","dom":"lapostemobile.fr","kind":"telecom_operator","hq":"FR","basis":"h","cond":"new"},{"id":"backmarket-fr","name":"Back Market","cc":"FR","web":"https://www.backmarket.fr/fr-fr","dom":"backmarket.fr","kind":"refurbished","hq":"FR","basis":"h","grp":"Back Market","search":"https://www.backmarket.fr/fr-fr/search?q={q}","cond":"refurbished"},{"id":"certideal-fr","name":"Certideal","cc":"FR","web":"https://www.certideal.com/","dom":"certideal.com","kind":"refurbished","hq":"FR","basis":"h","cond":"refurbished"},{"id":"swappie-fr","name":"Swappie","cc":"FR","web":"https://swappie.com/fr/","dom":"swappie.com","kind":"refurbished","hq":"FI","basis":"h","grp":"Swappie","cond":"refurbished"},{"id":"refurbed-fr","name":"refurbed","cc":"FR","web":"https://www.refurbed.fr/","dom":"refurbed.fr","kind":"refurbished","hq":"AT","basis":"h","grp":"refurbed","cond":"refurbished"},{"id":"apple-fr","name":"Apple Store","cc":"FR","web":"https://www.apple.com/fr/","dom":"apple.com","kind":"brand_store","hq":"US","basis":"s","grp":"Apple","search":"https://www.apple.com/fr/search/{q_path}?src=serp","cond":"new","note":"Apple pages are not schema.org-annotated; results may be unavailable"},{"id":"samsung-fr","name":"Samsung Shop","cc":"FR","web":"https://www.samsung.com/fr/","dom":"samsung.com","kind":"brand_store","hq":"KR","basis":"s","grp":"Samsung","search":"https://www.samsung.com/fr/search/?searchvalue={q}","cond":"new"},{"id":"xiaomi-fr","name":"Xiaomi Store","cc":"FR","web":"https://www.mi.com/fr/","dom":"mi.com","kind":"brand_store","hq":"CN","basis":"s","grp":"Xiaomi","cond":"new","note":"Local EU storefront"},{"id":"oneplus-fr","name":"OnePlus Store","cc":"FR","web":"https://www.oneplus.com/fr","dom":"oneplus.com","kind":"brand_store","hq":"CN","basis":"s","grp":"OnePlus","cond":"new","note":"Local EU storefront"},{"id":"google-fr","name":"Google Store","cc":"FR","web":"https://store.google.com/fr","dom":"store.google.com","kind":"brand_store","hq":"US","basis":"s","grp":"Google","cond":"new"},{"id":"fairphone-fr","name":"Fairphone Shop","cc":"FR","web":"https://shop.fairphone.com/fr","dom":"fairphone.com","kind":"brand_store","hq":"NL","basis":"h","grp":"Fairphone","cond":"new"},{"id":"motorola-fr","name":"Motorola","cc":"FR","web":"https://www.motorola.fr/","dom":"motorola.fr","kind":"brand_store","hq":"US","basis":"s","grp":"Lenovo/Motorola","cond":"new","note":"Local EU storefront"},{"id":"honor-fr","name":"Honor","cc":"FR","web":"https://www.honor.com/fr/","dom":"honor.com","kind":"brand_store","hq":"CN","basis":"s","grp":"Honor","cond":"new","note":"Local EU storefront"},{"id":"huawei-fr","name":"Huawei","cc":"FR","web":"https://consumer.huawei.com/fr/","dom":"huawei.com","kind":"brand_store","hq":"CN","basis":"s","grp":"Huawei","cond":"new","note":"Local EU storefront"},{"id":"ebay-fr","name":"eBay France","cc":"FR","web":"https://www.ebay.fr/","dom":"ebay.fr","kind":"marketplace","hq":"US","basis":"s","grp":"eBay","search":"https://www.ebay.fr/sch/i.php?_nkw={q}","cond":"new","note":"Marketplace; many private sellers and used items"},{"id":"coolblue-nl","name":"Coolblue","cc":"NL","web":"https://www.coolblue.nl/","dom":"coolblue.nl","kind":"online_electronics","hq":"NL","basis":"h","grp":"Coolblue","search":"https://www.coolblue.nl/zoeken?query={q}","cond":"new"},{"id":"bol-nl","name":"bol","cc":"NL","web":"https://www.bol.com/nl/nl/","dom":"bol.com","kind":"marketplace","hq":"NL","basis":"h","grp":"bol","search":"https://www.bol.com/nl/nl/s/?searchtext={q}","cond":"new","note":"Marketplace: price shown is the featured offer"},{"id":"mediamarkt-nl","name":"MediaMarkt","cc":"NL","web":"https://www.mediamarkt.nl/","dom":"mediamarkt.nl","kind":"electronics_chain","hq":"DE","basis":"h","grp":"MediaMarktSaturn (Ceconomy)","search":"https://www.mediamarkt.nl/nl/search.html?query={q}","cond":"new"},{"id":"amazon-nl","name":"Amazon.nl","cc":"NL","web":"https://www.amazon.nl/","dom":"amazon.nl","kind":"marketplace","hq":"US","basis":"s","grp":"Amazon","search":"https://www.amazon.nl/s?k={q}","cond":"new","note":"Operated by Amazon EU S.à r.l.; featured offer shown"},{"id":"bcc-nl","name":"BCC","cc":"NL","web":"https://www.bcc.nl/","dom":"bcc.nl","kind":"electronics_chain","hq":"NL","basis":"h","cond":"new"},{"id":"expert-nl","name":"Expert","cc":"NL","web":"https://www.expert.nl/","dom":"expert.nl","kind":"electronics_chain","hq":"NL","basis":"h","cond":"new"},{"id":"wehkamp-nl","name":"Wehkamp","cc":"NL","web":"https://www.wehkamp.nl/","dom":"wehkamp.nl","kind":"general_retail","hq":"NL","basis":"h","cond":"new"},{"id":"alternate-nl","name":"Alternate","cc":"NL","web":"https://www.alternate.nl/","dom":"alternate.nl","kind":"computer_specialist","hq":"DE","basis":"h","grp":"Alternate","search":"https://www.alternate.nl/listing.xhtml?q={q}","cond":"new"},{"id":"azerty-nl","name":"Azerty","cc":"NL","web":"https://azerty.nl/","dom":"azerty.nl","kind":"computer_specialist","hq":"NL","basis":"h","cond":"new"},{"id":"megekko-nl","name":"Megekko","cc":"NL","web":"https://www.megekko.nl/","dom":"megekko.nl","kind":"computer_specialist","hq":"NL","basis":"h","cond":"new"},{"id":"paradigit-nl","name":"Paradigit","cc":"NL","web":"https://www.paradigit.nl/","dom":"paradigit.nl","kind":"electronics_chain","hq":"NL","basis":"h","cond":"new"},{"id":"belsimpel-nl","name":"Belsimpel","cc":"NL","web":"https://www.belsimpel.nl/","dom":"belsimpel.nl","kind":"online_electronics","hq":"NL","basis":"h","cond":"new","note":"Phone specialist; shows device price with and without subscription"},{"id":"salland-nl","name":"Salland Electro","cc":"NL","web":"https://www.sallandelectro.nl/","dom":"sallandelectro.nl","kind":"online_electronics","hq":"NL","basis":"h","cond":"new"},{"id":"coolshop-nl","name":"Coolshop","cc":"NL","web":"https://www.coolshop.nl/","dom":"coolshop.nl","kind":"online_electronics","hq":"DK","basis":"h","grp":"Coolshop","cond":"new"},{"id":"computeruniverse-nl","name":"Computeruniverse","cc":"NL","web":"https://www.computeruniverse.net/nl","dom":"computeruniverse.net","kind":"computer_specialist","hq":"DE","basis":"h","grp":"Computeruniverse","cond":"new"},{"id":"kpn-nl","name":"KPN","cc":"NL","web":"https://www.kpn.com/","dom":"kpn.com","kind":"telecom_operator","hq":"NL","basis":"h","cond":"new"},{"id":"vodafoneziggo-nl","name":"Vodafone (VodafoneZiggo)","cc":"NL","web":"https://www.vodafone.nl/","dom":"vodafone.nl","kind":"telecom_operator","hq":"NL","basis":"h","cond":"new"},{"id":"odido-nl","name":"Odido","cc":"NL","web":"https://www.odido.nl/","dom":"odido.nl","kind":"telecom_operator","hq":"NL","basis":"h","cond":"new"},{"id":"gomibo-nl","name":"Gomibo","cc":"NL","web":"https://www.gomibo.nl/","dom":"gomibo.nl","kind":"refurbished","hq":"NL","basis":"h","cond":"refurbished"},{"id":"backmarket-nl","name":"Back Market","cc":"NL","web":"https://www.backmarket.nl/nl-nl","dom":"backmarket.nl","kind":"refurbished","hq":"FR","basis":"h","grp":"Back Market","search":"https://www.backmarket.nl/nl-nl/search?q={q}","cond":"refurbished"},{"id":"swappie-nl","name":"Swappie","cc":"NL","web":"https://swappie.com/nl/","dom":"swappie.com","kind":"refurbished","hq":"FI","basis":"h","grp":"Swappie","cond":"refurbished"},{"id":"refurbed-nl","name":"refurbed","cc":"NL","web":"https://www.refurbed.nl/","dom":"refurbed.nl","kind":"refurbished","hq":"AT","basis":"h","grp":"refurbed","cond":"refurbished"},{"id":"apple-nl","name":"Apple Store","cc":"NL","web":"https://www.apple.com/nl/","dom":"apple.com","kind":"brand_store","hq":"US","basis":"s","grp":"Apple","search":"https://www.apple.com/nl/search/{q_path}?src=serp","cond":"new","note":"Apple pages are not schema.org-annotated; results may be unavailable"},{"id":"samsung-nl","name":"Samsung Shop","cc":"NL","web":"https://www.samsung.com/nl/","dom":"samsung.com","kind":"brand_store","hq":"KR","basis":"s","grp":"Samsung","search":"https://www.samsung.com/nl/search/?searchvalue={q}","cond":"new"},{"id":"xiaomi-nl","name":"Xiaomi Store","cc":"NL","web":"https://www.mi.com/nl/","dom":"mi.com","kind":"brand_store","hq":"CN","basis":"s","grp":"Xiaomi","cond":"new","note":"Local EU storefront"},{"id":"oneplus-nl","name":"OnePlus Store","cc":"NL","web":"https://www.oneplus.com/nl","dom":"oneplus.com","kind":"brand_store","hq":"CN","basis":"s","grp":"OnePlus","cond":"new","note":"Local EU storefront"},{"id":"google-nl","name":"Google Store","cc":"NL","web":"https://store.google.com/nl","dom":"store.google.com","kind":"brand_store","hq":"US","basis":"s","grp":"Google","cond":"new"},{"id":"fairphone-nl","name":"Fairphone Shop","cc":"NL","web":"https://shop.fairphone.com/nl","dom":"fairphone.com","kind":"brand_store","hq":"NL","basis":"h","grp":"Fairphone","cond":"new"},{"id":"motorola-nl","name":"Motorola","cc":"NL","web":"https://www.motorola.nl/","dom":"motorola.nl","kind":"brand_store","hq":"US","basis":"s","grp":"Lenovo/Motorola","cond":"new","note":"Local EU storefront"},{"id":"honor-nl","name":"Honor","cc":"NL","web":"https://www.honor.com/nl/","dom":"honor.com","kind":"brand_store","hq":"CN","basis":"s","grp":"Honor","cond":"new","note":"Local EU storefront"},{"id":"huawei-nl","name":"Huawei","cc":"NL","web":"https://consumer.huawei.com/nl/","dom":"huawei.com","kind":"brand_store","hq":"CN","basis":"s","grp":"Huawei","cond":"new","note":"Local EU storefront"},{"id":"ebay-nl","name":"eBay Netherlands","cc":"NL","web":"https://www.ebay.nl/","dom":"ebay.nl","kind":"marketplace","hq":"US","basis":"s","grp":"eBay","search":"https://www.ebay.nl/sch/i.php?_nkw={q}","cond":"new","note":"Marketplace; many private sellers and used items"},{"id":"mediamarkt-de","name":"MediaMarkt","cc":"DE","web":"https://www.mediamarkt.de/","dom":"mediamarkt.de","kind":"electronics_chain","hq":"DE","basis":"h","grp":"MediaMarktSaturn (Ceconomy)","search":"https://www.mediamarkt.de/de/search.html?query={q}","cond":"new"},{"id":"saturn-de","name":"Saturn","cc":"DE","web":"https://www.saturn.de/","dom":"saturn.de","kind":"electronics_chain","hq":"DE","basis":"h","grp":"MediaMarktSaturn (Ceconomy)","search":"https://www.saturn.de/de/search.html?query={q}","cond":"new"},{"id":"amazon-de","name":"Amazon.de","cc":"DE","web":"https://www.amazon.de/","dom":"amazon.de","kind":"marketplace","hq":"US","basis":"s","grp":"Amazon","search":"https://www.amazon.de/s?k={q}","cond":"new","note":"Operated by Amazon EU S.à r.l.; featured offer shown"},{"id":"otto-de","name":"OTTO","cc":"DE","web":"https://www.otto.de/","dom":"otto.de","kind":"general_retail","hq":"DE","basis":"h","grp":"Otto Group","search":"https://www.otto.de/suche/{q_path}/","cond":"new"},{"id":"notebooksbilliger-de","name":"notebooksbilliger.de","cc":"DE","web":"https://www.notebooksbilliger.de/","dom":"notebooksbilliger.de","kind":"computer_specialist","hq":"DE","basis":"h","search":"https://www.notebooksbilliger.de/produkte/{q_path}","cond":"new"},{"id":"cyberport-de","name":"Cyberport","cc":"DE","web":"https://www.cyberport.de/","dom":"cyberport.de","kind":"computer_specialist","hq":"DE","basis":"h","cond":"new"},{"id":"alternate-de","name":"Alternate","cc":"DE","web":"https://www.alternate.de/","dom":"alternate.de","kind":"computer_specialist","hq":"DE","basis":"h","grp":"Alternate","search":"https://www.alternate.de/listing.xhtml?q={q}","cond":"new"},{"id":"mindfactory-de","name":"Mindfactory","cc":"DE","web":"https://www.mindfactory.de/","dom":"mindfactory.de","kind":"computer_specialist","hq":"DE","basis":"h","search":"https://www.mindfactory.de/search_result.php?search_query={q}","cond":"new"},{"id":"computeruniverse-de","name":"Computeruniverse","cc":"DE","web":"https://www.computeruniverse.net/de","dom":"computeruniverse.net","kind":"computer_specialist","hq":"DE","basis":"h","grp":"Computeruniverse","search":"https://www.computeruniverse.net/de/search?query={q}","cond":"new"},{"id":"caseking-de","name":"Caseking","cc":"DE","web":"https://www.caseking.de/","dom":"caseking.de","kind":"computer_specialist","hq":"DE","basis":"h","search":"https://www.caseking.de/search?sSearch={q}","cond":"new"},{"id":"jacob-de","name":"Jacob Elektronik","cc":"DE","web":"https://www.jacob.de/","dom":"jacob.de","kind":"computer_specialist","hq":"DE","basis":"h","cond":"new"},{"id":"arlt-de","name":"ARLT Computer","cc":"DE","web":"https://www.arlt.com/","dom":"arlt.com","kind":"computer_specialist","hq":"DE","basis":"h","cond":"new"},{"id":"conrad-de","name":"Conrad Electronic","cc":"DE","web":"https://www.conrad.de/","dom":"conrad.de","kind":"computer_specialist","hq":"DE","basis":"h","grp":"Conrad","search":"https://www.conrad.de/de/search.html?search={q}","cond":"new"},{"id":"expert-de","name":"expert","cc":"DE","web":"https://www.expert.de/","dom":"expert.de","kind":"electronics_chain","hq":"DE","basis":"h","cond":"new"},{"id":"euronics-de","name":"EURONICS","cc":"DE","web":"https://www.euronics.de/","dom":"euronics.de","kind":"electronics_chain","hq":"DE","basis":"h","cond":"new"},{"id":"medimax-de","name":"MEDIMAX","cc":"DE","web":"https://www.medimax.de/","dom":"medimax.de","kind":"electronics_chain","hq":"DE","basis":"h","grp":"ElectronicPartner","cond":"new"},{"id":"kaufland-de","name":"Kaufland.de","cc":"DE","web":"https://www.kaufland.de/","dom":"kaufland.de","kind":"marketplace","hq":"DE","basis":"h","grp":"Schwarz Gruppe","search":"https://www.kaufland.de/s/?search_value={q}","cond":"new","note":"Marketplace + own range; featured offer shown"},{"id":"lidl-de","name":"Lidl","cc":"DE","web":"https://www.lidl.de/","dom":"lidl.de","kind":"general_retail","hq":"DE","basis":"h","grp":"Schwarz Gruppe","search":"https://www.lidl.de/q/search?q={q}","cond":"new"},{"id":"tchibo-de","name":"Tchibo","cc":"DE","web":"https://www.tchibo.de/","dom":"tchibo.de","kind":"general_retail","hq":"DE","basis":"h","cond":"new"},{"id":"netto-de","name":"Netto Online","cc":"DE","web":"https://www.netto-online.de/","dom":"netto-online.de","kind":"general_retail","hq":"DE","basis":"h","cond":"new"},{"id":"reichelt-de","name":"reichelt elektronik","cc":"DE","web":"https://www.reichelt.de/","dom":"reichelt.de","kind":"computer_specialist","hq":"DE","basis":"h","cond":"new"},{"id":"pearl-de","name":"PEARL","cc":"DE","web":"https://www.pearl.de/","dom":"pearl.de","kind":"online_electronics","hq":"DE","basis":"h","cond":"new"},{"id":"medion-de","name":"MEDION Shop","cc":"DE","web":"https://www.medion.com/de/shop/","dom":"medion.com","kind":"brand_store","hq":"DE","basis":"h","cond":"new","note":"Brand store (Lenovo group); mostly laptops/TV, some phones"},{"id":"elektroshopwagner-de","name":"Elektroshop Wagner","cc":"DE","web":"https://www.elektroshop-wagner.de/","dom":"elektroshop-wagner.de","kind":"online_electronics","hq":"DE","basis":"h","cond":"new"},{"id":"proshop-de","name":"Proshop","cc":"DE","web":"https://www.proshop.de/","dom":"proshop.de","kind":"computer_specialist","hq":"DK","basis":"h","grp":"Proshop","cond":"new"},{"id":"coolshop-de","name":"Coolshop","cc":"DE","web":"https://www.coolshop.de/","dom":"coolshop.de","kind":"online_electronics","hq":"DK","basis":"h","grp":"Coolshop","cond":"new"},{"id":"coolblue-de","name":"Coolblue","cc":"DE","web":"https://www.coolblue.de/","dom":"coolblue.de","kind":"online_electronics","hq":"NL","basis":"h","grp":"Coolblue","cond":"new"},{"id":"galaxus-de","name":"Galaxus","cc":"DE","web":"https://www.galaxus.de/","dom":"galaxus.de","kind":"online_electronics","hq":"CH","basis":"h","grp":"Digitec Galaxus (Migros)","search":"https://www.galaxus.de/de/search?q={q}","cond":"new"},{"id":"telekom-de","name":"Telekom Shop","cc":"DE","web":"https://www.telekom.de/","dom":"telekom.de","kind":"telecom_operator","hq":"DE","basis":"h","grp":"Deutsche Telekom","cond":"new"},{"id":"vodafone-de","name":"Vodafone","cc":"DE","web":"https://www.vodafone.de/","dom":"vodafone.de","kind":"telecom_operator","hq":"GB","basis":"h","grp":"Vodafone","cond":"new"},{"id":"o2-de","name":"O2 (Telefónica)","cc":"DE","web":"https://www.o2online.de/","dom":"o2online.de","kind":"telecom_operator","hq":"ES","basis":"h","grp":"Telefónica","cond":"new"},{"id":"1und1-de","name":"1&1","cc":"DE","web":"https://www.1und1.de/","dom":"1und1.de","kind":"telecom_operator","hq":"DE","basis":"h","grp":"United Internet","cond":"new"},{"id":"congstar-de","name":"congstar","cc":"DE","web":"https://www.congstar.de/","dom":"congstar.de","kind":"telecom_operator","hq":"DE","basis":"h","grp":"Deutsche Telekom","cond":"new"},{"id":"mobilcom-de","name":"mobilcom-debitel","cc":"DE","web":"https://www.mobilcom-debitel.de/","dom":"mobilcom-debitel.de","kind":"telecom_operator","hq":"DE","basis":"h","grp":"freenet","cond":"new"},{"id":"klarmobil-de","name":"klarmobil","cc":"DE","web":"https://www.klarmobil.de/","dom":"klarmobil.de","kind":"telecom_operator","hq":"DE","basis":"h","grp":"freenet","cond":"new"},{"id":"sparhandy-de","name":"sparhandy","cc":"DE","web":"https://www.sparhandy.de/","dom":"sparhandy.de","kind":"online_electronics","hq":"DE","basis":"h","cond":"new","note":"Phone specialist; shows device price with and without contract"},{"id":"handyflash-de","name":"Handyflash","cc":"DE","web":"https://www.handyflash.de/","dom":"handyflash.de","kind":"online_electronics","hq":"DE","basis":"h","cond":"new"},{"id":"rebuy-de","name":"rebuy","cc":"DE","web":"https://www.rebuy.de/","dom":"rebuy.de","kind":"refurbished","hq":"DE","basis":"h","grp":"rebuy","cond":"refurbished","note":"Re-commerce: used & refurbished"},{"id":"backmarket-de","name":"Back Market","cc":"DE","web":"https://www.backmarket.de/de-de","dom":"backmarket.de","kind":"refurbished","hq":"FR","basis":"h","grp":"Back Market","search":"https://www.backmarket.de/de-de/search?q={q}","cond":"refurbished"},{"id":"swappie-de","name":"Swappie","cc":"DE","web":"https://swappie.com/de/","dom":"swappie.com","kind":"refurbished","hq":"FI","basis":"h","grp":"Swappie","cond":"refurbished"},{"id":"refurbed-de","name":"refurbed","cc":"DE","web":"https://www.refurbed.de/","dom":"refurbed.de","kind":"refurbished","hq":"AT","basis":"h","grp":"refurbed","cond":"refurbished"},{"id":"apple-de","name":"Apple Store","cc":"DE","web":"https://www.apple.com/de/","dom":"apple.com","kind":"brand_store","hq":"US","basis":"s","grp":"Apple","search":"https://www.apple.com/de/search/{q_path}?src=serp","cond":"new","note":"Apple pages are not schema.org-annotated; results may be unavailable"},{"id":"samsung-de","name":"Samsung Shop","cc":"DE","web":"https://www.samsung.com/de/","dom":"samsung.com","kind":"brand_store","hq":"KR","basis":"s","grp":"Samsung","search":"https://www.samsung.com/de/search/?searchvalue={q}","cond":"new"},{"id":"xiaomi-de","name":"Xiaomi Store","cc":"DE","web":"https://www.mi.com/de/","dom":"mi.com","kind":"brand_store","hq":"CN","basis":"s","grp":"Xiaomi","cond":"new","note":"Local EU storefront"},{"id":"oneplus-de","name":"OnePlus Store","cc":"DE","web":"https://www.oneplus.com/de","dom":"oneplus.com","kind":"brand_store","hq":"CN","basis":"s","grp":"OnePlus","cond":"new","note":"Local EU storefront"},{"id":"google-de","name":"Google Store","cc":"DE","web":"https://store.google.com/de","dom":"store.google.com","kind":"brand_store","hq":"US","basis":"s","grp":"Google","cond":"new"},{"id":"fairphone-de","name":"Fairphone Shop","cc":"DE","web":"https://shop.fairphone.com/de","dom":"fairphone.com","kind":"brand_store","hq":"NL","basis":"h","grp":"Fairphone","cond":"new"},{"id":"motorola-de","name":"Motorola","cc":"DE","web":"https://www.motorola.de/","dom":"motorola.de","kind":"brand_store","hq":"US","basis":"s","grp":"Lenovo/Motorola","cond":"new","note":"Local EU storefront"},{"id":"honor-de","name":"Honor","cc":"DE","web":"https://www.honor.com/de/","dom":"honor.com","kind":"brand_store","hq":"CN","basis":"s","grp":"Honor","cond":"new","note":"Local EU storefront"},{"id":"huawei-de","name":"Huawei","cc":"DE","web":"https://consumer.huawei.com/de/","dom":"huawei.com","kind":"brand_store","hq":"CN","basis":"s","grp":"Huawei","cond":"new","note":"Local EU storefront"},{"id":"ebay-de","name":"eBay Germany","cc":"DE","web":"https://www.ebay.de/","dom":"ebay.de","kind":"marketplace","hq":"US","basis":"s","grp":"eBay","search":"https://www.ebay.de/sch/i.php?_nkw={q}","cond":"new","note":"Marketplace; many private sellers and used items"}];
+const CATALOG = [{"id":"apple-iphone-11","b":"Apple","n":"iPhone 11","a":["Apple iPhone 11"],"s":[64,128,256],"y":2019,"c":"smartphone"},{"id":"apple-iphone-11-pro","b":"Apple","n":"iPhone 11 Pro","a":["Apple iPhone 11 Pro"],"s":[64,256,512],"y":2019,"c":"smartphone"},{"id":"apple-iphone-11-pro-max","b":"Apple","n":"iPhone 11 Pro Max","a":["Apple iPhone 11 Pro Max"],"s":[64,256,512],"y":2019,"c":"smartphone"},{"id":"apple-iphone-12-mini","b":"Apple","n":"iPhone 12 mini","a":["Apple iPhone 12 mini"],"s":[64,128,256],"y":2020,"c":"smartphone"},{"id":"apple-iphone-12","b":"Apple","n":"iPhone 12","a":["Apple iPhone 12"],"s":[64,128,256],"y":2020,"c":"smartphone"},{"id":"apple-iphone-12-pro","b":"Apple","n":"iPhone 12 Pro","a":["Apple iPhone 12 Pro"],"s":[128,256,512],"y":2020,"c":"smartphone"},{"id":"apple-iphone-12-pro-max","b":"Apple","n":"iPhone 12 Pro Max","a":["Apple iPhone 12 Pro Max"],"s":[128,256,512],"y":2020,"c":"smartphone"},{"id":"apple-iphone-13-mini","b":"Apple","n":"iPhone 13 mini","a":["Apple iPhone 13 mini"],"s":[128,256,512],"y":2021,"c":"smartphone"},{"id":"apple-iphone-13","b":"Apple","n":"iPhone 13","a":["Apple iPhone 13"],"s":[128,256,512],"y":2021,"c":"smartphone"},{"id":"apple-iphone-13-pro","b":"Apple","n":"iPhone 13 Pro","a":["Apple iPhone 13 Pro"],"s":[128,256,512,1024],"y":2021,"c":"smartphone"},{"id":"apple-iphone-13-pro-max","b":"Apple","n":"iPhone 13 Pro Max","a":["Apple iPhone 13 Pro Max"],"s":[128,256,512,1024],"y":2021,"c":"smartphone"},{"id":"apple-iphone-14","b":"Apple","n":"iPhone 14","a":["Apple iPhone 14"],"s":[128,256,512],"y":2022,"c":"smartphone"},{"id":"apple-iphone-14-plus","b":"Apple","n":"iPhone 14 Plus","a":["Apple iPhone 14 Plus"],"s":[128,256,512],"y":2022,"c":"smartphone"},{"id":"apple-iphone-14-pro","b":"Apple","n":"iPhone 14 Pro","a":["Apple iPhone 14 Pro"],"s":[128,256,512,1024],"y":2022,"c":"smartphone"},{"id":"apple-iphone-14-pro-max","b":"Apple","n":"iPhone 14 Pro Max","a":["Apple iPhone 14 Pro Max"],"s":[128,256,512,1024],"y":2022,"c":"smartphone"},{"id":"apple-iphone-15","b":"Apple","n":"iPhone 15","a":["Apple iPhone 15"],"s":[128,256,512],"y":2023,"c":"smartphone"},{"id":"apple-iphone-15-plus","b":"Apple","n":"iPhone 15 Plus","a":["Apple iPhone 15 Plus"],"s":[128,256,512],"y":2023,"c":"smartphone"},{"id":"apple-iphone-15-pro","b":"Apple","n":"iPhone 15 Pro","a":["Apple iPhone 15 Pro"],"s":[128,256,512,1024],"y":2023,"c":"smartphone"},{"id":"apple-iphone-15-pro-max","b":"Apple","n":"iPhone 15 Pro Max","a":["Apple iPhone 15 Pro Max"],"s":[256,512,1024],"y":2023,"c":"smartphone"},{"id":"apple-iphone-16e","b":"Apple","n":"iPhone 16e","a":["Apple iPhone 16e"],"s":[128,256,512],"y":2025,"c":"smartphone"},{"id":"apple-iphone-16","b":"Apple","n":"iPhone 16","a":["Apple iPhone 16"],"s":[128,256,512],"y":2024,"c":"smartphone"},{"id":"apple-iphone-16-plus","b":"Apple","n":"iPhone 16 Plus","a":["Apple iPhone 16 Plus"],"s":[128,256,512],"y":2024,"c":"smartphone"},{"id":"apple-iphone-16-pro","b":"Apple","n":"iPhone 16 Pro","a":["Apple iPhone 16 Pro"],"s":[128,256,512,1024],"y":2024,"c":"smartphone"},{"id":"apple-iphone-16-pro-max","b":"Apple","n":"iPhone 16 Pro Max","a":["Apple iPhone 16 Pro Max"],"s":[256,512,1024],"y":2024,"c":"smartphone"},{"id":"apple-iphone-17","b":"Apple","n":"iPhone 17","a":["Apple iPhone 17"],"s":[256,512],"y":2025,"c":"smartphone"},{"id":"apple-iphone-air","b":"Apple","n":"iPhone Air","a":["Apple iPhone Air"],"s":[256,512,1024],"y":2025,"c":"smartphone"},{"id":"apple-iphone-17-pro","b":"Apple","n":"iPhone 17 Pro","a":["Apple iPhone 17 Pro"],"s":[256,512,1024],"y":2025,"c":"smartphone"},{"id":"apple-iphone-17-pro-max","b":"Apple","n":"iPhone 17 Pro Max","a":["Apple iPhone 17 Pro Max"],"s":[256,512,1024,2048],"y":2025,"c":"smartphone"},{"id":"apple-iphone-se-2020","b":"Apple","n":"iPhone SE (2020)","a":["iPhone SE 2020","iPhone SE 2nd generation","iPhone SE (2e generatie)"],"s":[64,128,256],"y":2020,"c":"smartphone"},{"id":"apple-iphone-se-2022","b":"Apple","n":"iPhone SE (2022)","a":["iPhone SE 2022","iPhone SE 3","iPhone SE (3rd generation)","iPhone SE (3e generatie)","iPhone SE (3. Generation)"],"s":[64,128,256],"y":2022,"c":"smartphone"},{"id":"samsung-galaxy-s21","b":"Samsung","n":"Galaxy S21","a":["Samsung Galaxy S21","Samsung Galaxy S21 5G","S21"],"m":["SM-G991B"],"s":[128,256],"y":2021,"c":"smartphone"},{"id":"samsung-galaxy-s21plus","b":"Samsung","n":"Galaxy S21+","a":["Samsung Galaxy S21+","Samsung Galaxy S21+ 5G","S21 Plus"],"m":["SM-G996B"],"s":[128,256],"y":2021,"c":"smartphone"},{"id":"samsung-galaxy-s21-ultra","b":"Samsung","n":"Galaxy S21 Ultra","a":["Samsung Galaxy S21 Ultra","Samsung Galaxy S21 Ultra 5G","S21 Ultra"],"m":["SM-G998B"],"s":[128,256,512],"y":2021,"c":"smartphone"},{"id":"samsung-galaxy-s21-fe","b":"Samsung","n":"Galaxy S21 FE","a":["Samsung Galaxy S21 FE","Samsung Galaxy S21 FE 5G","S21 FE"],"m":["SM-G990B"],"s":[128,256],"y":2022,"c":"smartphone"},{"id":"samsung-galaxy-s22","b":"Samsung","n":"Galaxy S22","a":["Samsung Galaxy S22","Samsung Galaxy S22 5G","S22"],"m":["SM-S901B"],"s":[128,256],"y":2022,"c":"smartphone"},{"id":"samsung-galaxy-s22plus","b":"Samsung","n":"Galaxy S22+","a":["Samsung Galaxy S22+","Samsung Galaxy S22+ 5G","S22 Plus"],"m":["SM-S906B"],"s":[128,256],"y":2022,"c":"smartphone"},{"id":"samsung-galaxy-s22-ultra","b":"Samsung","n":"Galaxy S22 Ultra","a":["Samsung Galaxy S22 Ultra","Samsung Galaxy S22 Ultra 5G","S22 Ultra"],"m":["SM-S908B"],"s":[128,256,512,1024],"y":2022,"c":"smartphone"},{"id":"samsung-galaxy-s23","b":"Samsung","n":"Galaxy S23","a":["Samsung Galaxy S23","Samsung Galaxy S23 5G","S23"],"m":["SM-S911B"],"s":[128,256,512],"y":2023,"c":"smartphone"},{"id":"samsung-galaxy-s23plus","b":"Samsung","n":"Galaxy S23+","a":["Samsung Galaxy S23+","Samsung Galaxy S23+ 5G","S23 Plus"],"m":["SM-S916B"],"s":[256,512],"y":2023,"c":"smartphone"},{"id":"samsung-galaxy-s23-ultra","b":"Samsung","n":"Galaxy S23 Ultra","a":["Samsung Galaxy S23 Ultra","Samsung Galaxy S23 Ultra 5G","S23 Ultra"],"m":["SM-S918B"],"s":[256,512,1024],"y":2023,"c":"smartphone"},{"id":"samsung-galaxy-s23-fe","b":"Samsung","n":"Galaxy S23 FE","a":["Samsung Galaxy S23 FE","Samsung Galaxy S23 FE 5G","S23 FE"],"m":["SM-S711B"],"s":[128,256],"y":2023,"c":"smartphone"},{"id":"samsung-galaxy-s24","b":"Samsung","n":"Galaxy S24","a":["Samsung Galaxy S24","Samsung Galaxy S24 5G","S24"],"m":["SM-S921B"],"s":[128,256,512],"y":2024,"c":"smartphone"},{"id":"samsung-galaxy-s24plus","b":"Samsung","n":"Galaxy S24+","a":["Samsung Galaxy S24+","Samsung Galaxy S24+ 5G","S24 Plus"],"m":["SM-S926B"],"s":[256,512],"y":2024,"c":"smartphone"},{"id":"samsung-galaxy-s24-ultra","b":"Samsung","n":"Galaxy S24 Ultra","a":["Samsung Galaxy S24 Ultra","Samsung Galaxy S24 Ultra 5G","S24 Ultra"],"m":["SM-S928B"],"s":[256,512,1024],"y":2024,"c":"smartphone"},{"id":"samsung-galaxy-s24-fe","b":"Samsung","n":"Galaxy S24 FE","a":["Samsung Galaxy S24 FE","Samsung Galaxy S24 FE 5G","S24 FE"],"m":["SM-S721B"],"s":[128,256,512],"y":2024,"c":"smartphone"},{"id":"samsung-galaxy-s25","b":"Samsung","n":"Galaxy S25","a":["Samsung Galaxy S25","Samsung Galaxy S25 5G","S25"],"m":["SM-S931B"],"s":[128,256,512],"y":2025,"c":"smartphone"},{"id":"samsung-galaxy-s25plus","b":"Samsung","n":"Galaxy S25+","a":["Samsung Galaxy S25+","Samsung Galaxy S25+ 5G","S25 Plus"],"m":["SM-S936B"],"s":[256,512],"y":2025,"c":"smartphone"},{"id":"samsung-galaxy-s25-ultra","b":"Samsung","n":"Galaxy S25 Ultra","a":["Samsung Galaxy S25 Ultra","Samsung Galaxy S25 Ultra 5G","S25 Ultra"],"m":["SM-S938B"],"s":[256,512,1024],"y":2025,"c":"smartphone"},{"id":"samsung-galaxy-s25-edge","b":"Samsung","n":"Galaxy S25 Edge","a":["Samsung Galaxy S25 Edge","Samsung Galaxy S25 Edge 5G","S25 Edge"],"m":["SM-S937B"],"s":[256,512],"y":2025,"c":"smartphone"},{"id":"samsung-galaxy-s25-fe","b":"Samsung","n":"Galaxy S25 FE","a":["Samsung Galaxy S25 FE","Samsung Galaxy S25 FE 5G","S25 FE"],"m":["SM-S731B"],"s":[128,256,512],"y":2025,"c":"smartphone"},{"id":"samsung-galaxy-z-fold5","b":"Samsung","n":"Galaxy Z Fold5","a":["Samsung Galaxy Z Fold5","Samsung Galaxy Z Fold5 5G","Z Fold5"],"s":[256,512,1024],"y":2023,"c":"smartphone"},{"id":"samsung-galaxy-z-flip5","b":"Samsung","n":"Galaxy Z Flip5","a":["Samsung Galaxy Z Flip5","Samsung Galaxy Z Flip5 5G","Z Flip5"],"s":[256,512],"y":2023,"c":"smartphone"},{"id":"samsung-galaxy-z-fold6","b":"Samsung","n":"Galaxy Z Fold6","a":["Samsung Galaxy Z Fold6","Samsung Galaxy Z Fold6 5G","Z Fold6"],"s":[256,512,1024],"y":2024,"c":"smartphone"},{"id":"samsung-galaxy-z-flip6","b":"Samsung","n":"Galaxy Z Flip6","a":["Samsung Galaxy Z Flip6","Samsung Galaxy Z Flip6 5G","Z Flip6"],"s":[256,512],"y":2024,"c":"smartphone"},{"id":"samsung-galaxy-z-fold7","b":"Samsung","n":"Galaxy Z Fold7","a":["Samsung Galaxy Z Fold7","Samsung Galaxy Z Fold7 5G","Z Fold7"],"s":[256,512,1024],"y":2025,"c":"smartphone"},{"id":"samsung-galaxy-z-flip7","b":"Samsung","n":"Galaxy Z Flip7","a":["Samsung Galaxy Z Flip7","Samsung Galaxy Z Flip7 5G","Z Flip7"],"s":[256,512],"y":2025,"c":"smartphone"},{"id":"samsung-galaxy-z-flip7-fe","b":"Samsung","n":"Galaxy Z Flip7 FE","a":["Samsung Galaxy Z Flip7 FE","Samsung Galaxy Z Flip7 FE 5G","Z Flip7 FE"],"s":[128,256],"y":2025,"c":"smartphone"},{"id":"samsung-galaxy-a15","b":"Samsung","n":"Galaxy A15","a":["Samsung Galaxy A15","Samsung Galaxy A15 5G","Galaxy A15 5G"],"s":[128,256],"y":2023,"c":"smartphone"},{"id":"samsung-galaxy-a16","b":"Samsung","n":"Galaxy A16","a":["Samsung Galaxy A16","Samsung Galaxy A16 5G","Galaxy A16 5G"],"s":[128,256],"y":2024,"c":"smartphone"},{"id":"samsung-galaxy-a25","b":"Samsung","n":"Galaxy A25","a":["Samsung Galaxy A25","Samsung Galaxy A25 5G","Galaxy A25 5G"],"s":[128,256],"y":2024,"c":"smartphone"},{"id":"samsung-galaxy-a26","b":"Samsung","n":"Galaxy A26","a":["Samsung Galaxy A26","Samsung Galaxy A26 5G","Galaxy A26 5G"],"s":[128,256],"y":2025,"c":"smartphone"},{"id":"samsung-galaxy-a34","b":"Samsung","n":"Galaxy A34","a":["Samsung Galaxy A34","Samsung Galaxy A34 5G","Galaxy A34 5G"],"s":[128,256],"y":2023,"c":"smartphone"},{"id":"samsung-galaxy-a35","b":"Samsung","n":"Galaxy A35","a":["Samsung Galaxy A35","Samsung Galaxy A35 5G","Galaxy A35 5G"],"s":[128,256],"y":2024,"c":"smartphone"},{"id":"samsung-galaxy-a36","b":"Samsung","n":"Galaxy A36","a":["Samsung Galaxy A36","Samsung Galaxy A36 5G","Galaxy A36 5G"],"s":[128,256],"y":2025,"c":"smartphone"},{"id":"samsung-galaxy-a54","b":"Samsung","n":"Galaxy A54","a":["Samsung Galaxy A54","Samsung Galaxy A54 5G","Galaxy A54 5G"],"s":[128,256],"y":2023,"c":"smartphone"},{"id":"samsung-galaxy-a55","b":"Samsung","n":"Galaxy A55","a":["Samsung Galaxy A55","Samsung Galaxy A55 5G","Galaxy A55 5G"],"s":[128,256],"y":2024,"c":"smartphone"},{"id":"samsung-galaxy-a56","b":"Samsung","n":"Galaxy A56","a":["Samsung Galaxy A56","Samsung Galaxy A56 5G","Galaxy A56 5G"],"s":[128,256],"y":2025,"c":"smartphone"},{"id":"google-pixel-6a","b":"Google","n":"Pixel 6a","a":["Google Pixel 6a"],"s":[128],"y":2022,"c":"smartphone"},{"id":"google-pixel-7","b":"Google","n":"Pixel 7","a":["Google Pixel 7"],"s":[128,256],"y":2022,"c":"smartphone"},{"id":"google-pixel-7-pro","b":"Google","n":"Pixel 7 Pro","a":["Google Pixel 7 Pro"],"s":[128,256,512],"y":2022,"c":"smartphone"},{"id":"google-pixel-7a","b":"Google","n":"Pixel 7a","a":["Google Pixel 7a"],"s":[128],"y":2023,"c":"smartphone"},{"id":"google-pixel-8","b":"Google","n":"Pixel 8","a":["Google Pixel 8"],"s":[128,256],"y":2023,"c":"smartphone"},{"id":"google-pixel-8-pro","b":"Google","n":"Pixel 8 Pro","a":["Google Pixel 8 Pro"],"s":[128,256,512,1024],"y":2023,"c":"smartphone"},{"id":"google-pixel-8a","b":"Google","n":"Pixel 8a","a":["Google Pixel 8a"],"s":[128,256],"y":2024,"c":"smartphone"},{"id":"google-pixel-9","b":"Google","n":"Pixel 9","a":["Google Pixel 9"],"s":[128,256],"y":2024,"c":"smartphone"},{"id":"google-pixel-9-pro","b":"Google","n":"Pixel 9 Pro","a":["Google Pixel 9 Pro"],"s":[128,256,512,1024],"y":2024,"c":"smartphone"},{"id":"google-pixel-9-pro-xl","b":"Google","n":"Pixel 9 Pro XL","a":["Google Pixel 9 Pro XL"],"s":[128,256,512,1024],"y":2024,"c":"smartphone"},{"id":"google-pixel-9-pro-fold","b":"Google","n":"Pixel 9 Pro Fold","a":["Google Pixel 9 Pro Fold"],"s":[256,512],"y":2024,"c":"smartphone"},{"id":"google-pixel-9a","b":"Google","n":"Pixel 9a","a":["Google Pixel 9a"],"s":[128,256],"y":2025,"c":"smartphone"},{"id":"google-pixel-10","b":"Google","n":"Pixel 10","a":["Google Pixel 10"],"s":[128,256],"y":2025,"c":"smartphone"},{"id":"google-pixel-10-pro","b":"Google","n":"Pixel 10 Pro","a":["Google Pixel 10 Pro"],"s":[128,256,512,1024],"y":2025,"c":"smartphone"},{"id":"google-pixel-10-pro-xl","b":"Google","n":"Pixel 10 Pro XL","a":["Google Pixel 10 Pro XL"],"s":[256,512,1024],"y":2025,"c":"smartphone"},{"id":"google-pixel-10-pro-fold","b":"Google","n":"Pixel 10 Pro Fold","a":["Google Pixel 10 Pro Fold"],"s":[256,512,1024],"y":2025,"c":"smartphone"},{"id":"xiaomi-xiaomi-13t","b":"Xiaomi","n":"Xiaomi 13T","a":["Xiaomi 13T 5G"],"s":[128,256,512],"y":2023,"c":"smartphone"},{"id":"xiaomi-xiaomi-13t-pro","b":"Xiaomi","n":"Xiaomi 13T Pro","a":["Xiaomi 13T Pro 5G"],"s":[128,256,512],"y":2023,"c":"smartphone"},{"id":"xiaomi-xiaomi-14","b":"Xiaomi","n":"Xiaomi 14","a":["Xiaomi 14 5G"],"s":[128,256,512],"y":2024,"c":"smartphone"},{"id":"xiaomi-xiaomi-14t","b":"Xiaomi","n":"Xiaomi 14T","a":["Xiaomi 14T 5G"],"s":[128,256,512],"y":2024,"c":"smartphone"},{"id":"xiaomi-xiaomi-14t-pro","b":"Xiaomi","n":"Xiaomi 14T Pro","a":["Xiaomi 14T Pro 5G"],"s":[128,256,512],"y":2024,"c":"smartphone"},{"id":"xiaomi-xiaomi-14-ultra","b":"Xiaomi","n":"Xiaomi 14 Ultra","a":["Xiaomi 14 Ultra 5G"],"s":[128,256,512],"y":2024,"c":"smartphone"},{"id":"xiaomi-xiaomi-15","b":"Xiaomi","n":"Xiaomi 15","a":["Xiaomi 15 5G"],"s":[128,256,512],"y":2025,"c":"smartphone"},{"id":"xiaomi-xiaomi-15-ultra","b":"Xiaomi","n":"Xiaomi 15 Ultra","a":["Xiaomi 15 Ultra 5G"],"s":[128,256,512],"y":2025,"c":"smartphone"},{"id":"xiaomi-xiaomi-15t","b":"Xiaomi","n":"Xiaomi 15T","a":["Xiaomi 15T 5G"],"s":[128,256,512],"y":2025,"c":"smartphone"},{"id":"xiaomi-xiaomi-15t-pro","b":"Xiaomi","n":"Xiaomi 15T Pro","a":["Xiaomi 15T Pro 5G"],"s":[128,256,512],"y":2025,"c":"smartphone"},{"id":"xiaomi-redmi-note-13","b":"Xiaomi","n":"Redmi Note 13","a":["Redmi Note 13 5G","Xiaomi Redmi Note 13"],"s":[128,256,512],"y":2024,"c":"smartphone"},{"id":"xiaomi-redmi-note-13-pro","b":"Xiaomi","n":"Redmi Note 13 Pro","a":["Redmi Note 13 Pro 5G","Xiaomi Redmi Note 13 Pro"],"s":[128,256,512],"y":2024,"c":"smartphone"},{"id":"xiaomi-redmi-note-13-proplus","b":"Xiaomi","n":"Redmi Note 13 Pro+","a":["Redmi Note 13 Pro+ 5G","Xiaomi Redmi Note 13 Pro+"],"s":[128,256,512],"y":2024,"c":"smartphone"},{"id":"xiaomi-redmi-note-14","b":"Xiaomi","n":"Redmi Note 14","a":["Redmi Note 14 5G","Xiaomi Redmi Note 14"],"s":[128,256,512],"y":2025,"c":"smartphone"},{"id":"xiaomi-redmi-note-14-pro","b":"Xiaomi","n":"Redmi Note 14 Pro","a":["Redmi Note 14 Pro 5G","Xiaomi Redmi Note 14 Pro"],"s":[128,256,512],"y":2025,"c":"smartphone"},{"id":"xiaomi-redmi-note-14-proplus","b":"Xiaomi","n":"Redmi Note 14 Pro+","a":["Redmi Note 14 Pro+ 5G","Xiaomi Redmi Note 14 Pro+"],"s":[128,256,512],"y":2025,"c":"smartphone"},{"id":"xiaomi-poco-f6","b":"Xiaomi","n":"POCO F6","a":["POCO F6 5G","Xiaomi POCO F6"],"s":[128,256,512],"y":2024,"c":"smartphone"},{"id":"xiaomi-poco-f6-pro","b":"Xiaomi","n":"POCO F6 Pro","a":["POCO F6 Pro 5G","Xiaomi POCO F6 Pro"],"s":[128,256,512],"y":2024,"c":"smartphone"},{"id":"xiaomi-poco-x6-pro","b":"Xiaomi","n":"POCO X6 Pro","a":["POCO X6 Pro 5G","Xiaomi POCO X6 Pro"],"s":[128,256,512],"y":2024,"c":"smartphone"},{"id":"xiaomi-poco-f7-pro","b":"Xiaomi","n":"POCO F7 Pro","a":["POCO F7 Pro 5G","Xiaomi POCO F7 Pro"],"s":[128,256,512],"y":2025,"c":"smartphone"},{"id":"xiaomi-poco-x7-pro","b":"Xiaomi","n":"POCO X7 Pro","a":["POCO X7 Pro 5G","Xiaomi POCO X7 Pro"],"s":[128,256,512],"y":2025,"c":"smartphone"},{"id":"oneplus-oneplus-11","b":"OnePlus","n":"OnePlus 11","a":["OnePlus 11 5G"],"s":[128,256,512],"y":2023,"c":"smartphone"},{"id":"oneplus-oneplus-12","b":"OnePlus","n":"OnePlus 12","a":["OnePlus 12 5G"],"s":[128,256,512],"y":2024,"c":"smartphone"},{"id":"oneplus-oneplus-12r","b":"OnePlus","n":"OnePlus 12R","a":["OnePlus 12R 5G"],"s":[128,256,512],"y":2024,"c":"smartphone"},{"id":"oneplus-oneplus-13","b":"OnePlus","n":"OnePlus 13","a":["OnePlus 13 5G"],"s":[128,256,512],"y":2025,"c":"smartphone"},{"id":"oneplus-oneplus-13r","b":"OnePlus","n":"OnePlus 13R","a":["OnePlus 13R 5G"],"s":[128,256,512],"y":2025,"c":"smartphone"},{"id":"oneplus-oneplus-nord-4","b":"OnePlus","n":"OnePlus Nord 4","a":["OnePlus Nord 4 5G"],"s":[128,256,512],"y":2024,"c":"smartphone"},{"id":"oneplus-oneplus-nord-5","b":"OnePlus","n":"OnePlus Nord 5","a":["OnePlus Nord 5 5G"],"s":[128,256,512],"y":2025,"c":"smartphone"},{"id":"nothing-nothing-phone-1","b":"Nothing","n":"Nothing Phone (1)","a":["Nothing Phone 1"],"s":[128,256,512],"y":2022,"c":"smartphone"},{"id":"nothing-nothing-phone-2","b":"Nothing","n":"Nothing Phone (2)","a":["Nothing Phone 2"],"s":[128,256,512],"y":2023,"c":"smartphone"},{"id":"nothing-nothing-phone-2a","b":"Nothing","n":"Nothing Phone (2a)","a":["Nothing Phone 2a"],"s":[128,256,512],"y":2024,"c":"smartphone"},{"id":"nothing-nothing-phone-2a-plus","b":"Nothing","n":"Nothing Phone (2a) Plus","a":["Nothing Phone 2a Plus"],"s":[128,256,512],"y":2024,"c":"smartphone"},{"id":"nothing-nothing-phone-3a","b":"Nothing","n":"Nothing Phone (3a)","a":["Nothing Phone 3a"],"s":[128,256,512],"y":2025,"c":"smartphone"},{"id":"nothing-nothing-phone-3a-pro","b":"Nothing","n":"Nothing Phone (3a) Pro","a":["Nothing Phone 3a Pro"],"s":[128,256,512],"y":2025,"c":"smartphone"},{"id":"nothing-nothing-phone-3","b":"Nothing","n":"Nothing Phone (3)","a":["Nothing Phone 3"],"s":[128,256,512],"y":2025,"c":"smartphone"},{"id":"nothing-cmf-phone-1","b":"Nothing","n":"CMF Phone 1","s":[128,256,512],"y":2024,"c":"smartphone"},{"id":"nothing-cmf-phone-2-pro","b":"Nothing","n":"CMF Phone 2 Pro","s":[128,256,512],"y":2025,"c":"smartphone"},{"id":"motorola-razr-40","b":"Motorola","n":"razr 40","a":["Motorola razr 40","Motorola razr 40 5G"],"s":[128,256,512],"y":2023,"c":"smartphone"},{"id":"motorola-razr-50","b":"Motorola","n":"razr 50","a":["Motorola razr 50","Motorola razr 50 5G"],"s":[128,256,512],"y":2024,"c":"smartphone"},{"id":"motorola-razr-50-ultra","b":"Motorola","n":"razr 50 ultra","a":["Motorola razr 50 ultra","Motorola razr 50 ultra 5G"],"s":[128,256,512],"y":2024,"c":"smartphone"},{"id":"motorola-razr-60","b":"Motorola","n":"razr 60","a":["Motorola razr 60","Motorola razr 60 5G"],"s":[128,256,512],"y":2025,"c":"smartphone"},{"id":"motorola-razr-60-ultra","b":"Motorola","n":"razr 60 ultra","a":["Motorola razr 60 ultra","Motorola razr 60 ultra 5G"],"s":[128,256,512],"y":2025,"c":"smartphone"},{"id":"motorola-edge-50-neo","b":"Motorola","n":"edge 50 neo","a":["Motorola edge 50 neo","Motorola edge 50 neo 5G"],"s":[128,256,512],"y":2024,"c":"smartphone"},{"id":"motorola-edge-50-pro","b":"Motorola","n":"edge 50 pro","a":["Motorola edge 50 pro","Motorola edge 50 pro 5G"],"s":[128,256,512],"y":2024,"c":"smartphone"},{"id":"motorola-moto-g85","b":"Motorola","n":"moto g85","a":["Motorola moto g85","Motorola moto g85 5G"],"s":[128,256,512],"y":2024,"c":"smartphone"},{"id":"motorola-moto-g55","b":"Motorola","n":"moto g55","a":["Motorola moto g55","Motorola moto g55 5G"],"s":[128,256,512],"y":2024,"c":"smartphone"},{"id":"fairphone-fairphone-4","b":"Fairphone","n":"Fairphone 4","s":[128,256],"y":2021,"c":"smartphone"},{"id":"fairphone-fairphone-5","b":"Fairphone","n":"Fairphone 5","s":[256],"y":2023,"c":"smartphone"},{"id":"fairphone-fairphone-gen.-6","b":"Fairphone","n":"Fairphone (Gen. 6)","a":["Fairphone 6"],"s":[256],"y":2025,"c":"smartphone"},{"id":"sony-xperia-1-v","b":"Sony","n":"Xperia 1 V","a":["Sony Xperia 1 V"],"s":[128,256,512],"y":2023,"c":"smartphone"},{"id":"sony-xperia-1-vi","b":"Sony","n":"Xperia 1 VI","a":["Sony Xperia 1 VI"],"s":[128,256,512],"y":2024,"c":"smartphone"},{"id":"sony-xperia-1-vii","b":"Sony","n":"Xperia 1 VII","a":["Sony Xperia 1 VII"],"s":[128,256,512],"y":2025,"c":"smartphone"},{"id":"sony-xperia-5-v","b":"Sony","n":"Xperia 5 V","a":["Sony Xperia 5 V"],"s":[128,256,512],"y":2023,"c":"smartphone"},{"id":"sony-xperia-10-v","b":"Sony","n":"Xperia 10 V","a":["Sony Xperia 10 V"],"s":[128,256,512],"y":2023,"c":"smartphone"},{"id":"sony-xperia-10-vi","b":"Sony","n":"Xperia 10 VI","a":["Sony Xperia 10 VI"],"s":[128,256,512],"y":2024,"c":"smartphone"},{"id":"honor-honor-magic6-pro","b":"Honor","n":"Honor Magic6 Pro","a":["Magic6 Pro"],"s":[256,512],"y":2024,"c":"smartphone"},{"id":"honor-honor-magic7-pro","b":"Honor","n":"Honor Magic7 Pro","a":["Magic7 Pro"],"s":[256,512],"y":2025,"c":"smartphone"},{"id":"honor-honor-200","b":"Honor","n":"Honor 200","s":[256,512],"y":2024,"c":"smartphone"},{"id":"honor-honor-200-pro","b":"Honor","n":"Honor 200 Pro","s":[256,512],"y":2024,"c":"smartphone"},{"id":"honor-honor-400","b":"Honor","n":"Honor 400","s":[256,512],"y":2025,"c":"smartphone"},{"id":"honor-honor-400-pro","b":"Honor","n":"Honor 400 Pro","s":[256,512],"y":2025,"c":"smartphone"},{"id":"oppo-oppo-find-x8","b":"OPPO","n":"OPPO Find X8","a":["Find X8"],"s":[256,512],"y":2024,"c":"smartphone"},{"id":"oppo-oppo-find-x8-pro","b":"OPPO","n":"OPPO Find X8 Pro","a":["Find X8 Pro"],"s":[256,512],"y":2024,"c":"smartphone"},{"id":"asus-zenfone-11-ultra","b":"Asus","n":"Zenfone 11 Ultra","a":["Asus Zenfone 11 Ultra","ASUS Zenfone 11 Ultra 5G"],"s":[256,512],"y":2024,"c":"smartphone"},{"id":"apple-airpods-pro-2nd-generation","b":"Apple","n":"AirPods Pro (2nd generation)","a":["AirPods Pro 2","Apple AirPods Pro 2","AirPods Pro 2e generatie","AirPods Pro (2. Generation)"],"y":2022,"c":"earbuds","w":["case","charging","magsafe","usb","c"]},{"id":"apple-airpods-4","b":"Apple","n":"AirPods 4","a":["Apple AirPods 4","AirPods (4th generation)"],"y":2024,"c":"earbuds","w":["case","charging","magsafe","usb","c"]},{"id":"samsung-galaxy-buds3-pro","b":"Samsung","n":"Galaxy Buds3 Pro","a":["Samsung Galaxy Buds3 Pro","Galaxy Buds 3 Pro"],"y":2024,"c":"earbuds","w":["case","charging"]},{"id":"sony-wh-1000xm5","b":"Sony","n":"WH-1000XM5","a":["Sony WH-1000XM5","WH1000XM5"],"y":2022,"c":"headphones"},{"id":"sony-wh-1000xm6","b":"Sony","n":"WH-1000XM6","a":["Sony WH-1000XM6","WH1000XM6"],"y":2025,"c":"headphones"},{"id":"apple-apple-watch-series-10","b":"Apple","n":"Apple Watch Series 10","a":["Apple Watch S10"],"y":2024,"c":"smartwatch","w":["band","strap"]},{"id":"apple-ipad-10th-generation","b":"Apple","n":"iPad (10th generation)","a":["iPad 10","Apple iPad 10th generation","iPad 10e generatie","iPad 10. Generation"],"s":[64,256],"y":2022,"c":"tablet"},{"id":"sony-playstation-5-slim","b":"Sony","n":"PlayStation 5 Slim","a":["PS5 Slim","Sony PlayStation 5 Slim"],"y":2023,"c":"console"}];
+const EXCLUDED = [{"n":"AliExpress","r":"Alibaba Group, China – cross-border shipper"},{"n":"Temu","r":"PDD Holdings, China-linked – ships from China"},{"n":"Banggood","r":"Based in China – cross-border shipper"},{"n":"Geekbuying","r":"Based in China – cross-border shipper"},{"n":"Gshopper","r":"Based in China – cross-border shipper"},{"n":"GearBest","r":"Based in China – cross-border shipper (defunct)"},{"n":"DHgate","r":"Based in China – cross-border shipper"},{"n":"TomTop","r":"Based in China – cross-border shipper"},{"n":"LightInTheBox","r":"Based in China – cross-border shipper"},{"n":"Tinydeal","r":"Based in China – cross-border shipper"},{"n":"Cafago","r":"Based in China – cross-border shipper"},{"n":"Shein","r":"Based in Singapore/China – cross-border shipper"},{"n":"Wish","r":"Based in the US – cross-border shipper"},{"n":"Newegg","r":"Based in the US – cross-border shipper"},{"n":"B&H Photo","r":"Based in the US – cross-border shipper"},{"n":"Walmart","r":"Based in the US – no European storefront"},{"n":"Best Buy","r":"Based in the US – no European storefront"},{"n":"Ubuy","r":"Based outside Europe – cross-border shipper"}];
+const KINDS = { electronics_chain: "Electronics chain", online_electronics: "Online electronics shop", computer_specialist: "Computer / IT specialist", marketplace: "Marketplace",
+  general_retail: "Hypermarket / department store", telecom_operator: "Telecom operator", brand_store: "Brand store", refurbished: "Refurbished specialist" };
+const COUNTRIES = { BE: "Belgium", FR: "France", NL: "Netherlands", DE: "Germany" };
+const DEFAULT_OFF = new Set(["telecom_operator"]);
+const SERVER = "host:claude_browser";
+const $ = (s, el = document) => el.querySelector(s), $$ = (s, el = document) => [...el.querySelectorAll(s)];
+const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+const eur = new Intl.NumberFormat(undefined, { style: "currency", currency: "EUR" });
+const clock = ms => new Date(ms).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit", second: "2-digit" });
+const sleep = ms => new Promise(r => setTimeout(r, ms));
+const lsGet = (k, d) => { try { const v = localStorage.getItem(k); return v ? JSON.parse(v) : d; } catch { return d; } };
+const lsSet = (k, v) => { try { localStorage.setItem(k, JSON.stringify(v)); } catch { /* storage unavailable */ } };
+
+const S = { countries: new Set(lsGet("pt.countries", Object.keys(COUNTRIES))), kinds: new Set(Object.keys(KINDS).filter(k => !DEFAULT_OFF.has(k))), shops: new Set(),
+  cand: null, storage: null, aliases: [], models: [], results: new Map(), reports: new Map(), done: 0, total: 0, running: false, cancel: false, spec: null, opts: null,
+  discovered: lsGet("pt.discovered", {}), checks: lsGet("pt.checks", {}), sample: null, downloads: null };
+
+/* ============================================================ browser bridge */
+const diag = [];
+function logDiag(tool, input, outcome) {
+  diag.unshift(`${new Date().toLocaleTimeString()}  ${tool} ${JSON.stringify(input).slice(0, 140)}\n   → ${outcome}`); diag.length = Math.min(diag.length, 30);
+  const el = $("#diag"); if (el) el.textContent = diag.join("\n");
+}
+const Bridge = {
+  mcp: null, state: "checking", tools: [],
+  async init() {
+    try { this.mcp = await window.claude?.use?.("mcp"); } catch { this.mcp = null; }
+    if (!this.mcp) { this.state = "none"; return; }
+    try {
+      const l = await this.mcp.listTools(SERVER);
+      const s = (l.servers || []).find(x => x.server === SERVER);
+      if (!s || !s.tools?.length) { this.state = "nohost"; return; }
+      this.tools = s.tools.map(t => t.name); this.state = "ready";
+    } catch (e) { this.state = e?.code === "server_not_connected" ? "nohost" : "error"; this.err = e; }
+  },
+  async call(tool, input) {
+    try {
+      const r = await this.mcp.callTool(SERVER, tool, input, { cache: false, signal: AbortSignal.timeout(60000) });
+      logDiag(tool, input, `ok · ${resText(r).length} chars · ${resText(r).slice(0, 90).replace(/\s+/g, " ")}`);
+      return r;
+    } catch (e) { logDiag(tool, input, `ERROR ${e?.code || ""} ${String(e?.message || e).slice(0, 160)}`); throw e; }
+  },
+};
+function resText(r) {
+  if (!r) return "";
+  const p = r.payload;
+  if (typeof p === "string") return p;
+  const parts = (r.content || []).filter(b => b && b.type === "text").map(b => b.text);
+  const joined = parts.join("\n");
+  if (p && typeof p === "object") {                                  // {text:"…"} / {content:"…"} style payloads
+    const strs = []; (function walk(o) { if (typeof o === "string") strs.push(o); else if (o && typeof o === "object") Object.values(o).forEach(walk); })(p);
+    const longest = strs.sort((a, b) => b.length - a.length)[0];
+    if (longest && longest.length > joined.length * 0.5) return longest;
+  }
+  return joined;
+}
+function findTabId(r) {
+  let found;
+  (function walk(o) { if (found != null || !o || typeof o !== "object") return;
+    for (const [k, v] of Object.entries(o)) { if (/^tab_?id$/i.test(k) && (typeof v === "number" || typeof v === "string")) { found = v; return; } walk(v); } })(r?.payload ?? r?.structuredContent);
+  if (found != null) return found;
+  const m = /tab[\s_-]?id\D{0,6}(\d+)/i.exec(resText(r)); return m ? +m[1] : null;
+}
+class Tab {
+  constructor() { this.id = null; }
+  async open(url) {
+    if (this.id == null) { const r = await Bridge.call("preview_start", { url }); this.id = findTabId(r); return; }
+    try { await Bridge.call("navigate", { url, tabId: this.id }); }
+    catch (e) { if (e?.code === "tool_error" || e?.code === "bad_request") { const r = await Bridge.call("preview_start", { url }); const id = findTabId(r); if (id != null) this.id = id; } else throw e; }
+  }
+  async text() {
+    let t = "";
+    for (let i = 0; i < 4; i++) {
+      t = resText(await Bridge.call("get_page_text", this.id != null ? { tabId: this.id } : {}));
+      if (t.length > 600 || looksBlocked(t)) break;
+      await sleep(1500);                                              // JavaScript-rendered results need a moment
+    }
+    return t;
+  }
+  async structure() { try { return resText(await Bridge.call("read_page", this.id != null ? { tabId: this.id } : {})); } catch { return ""; } }
+}
+
+/* ============================================================ shop selection UI */
+const shopsById = Object.fromEntries(RETAILERS.map(r => [r.id, r]));
+function renderCountryChips() {
+  $("#countryChips").innerHTML = Object.entries(COUNTRIES).map(([c, n]) => `<button class="chipbtn" aria-pressed="${S.countries.has(c)}" data-c="${c}">${n} <small>${RETAILERS.filter(r => r.cc === c).length} shops</small></button>`).join("");
+  $$("#countryChips .chipbtn").forEach(el => el.onclick = () => { const c = el.dataset.c; S.countries.has(c) ? S.countries.delete(c) : S.countries.add(c); lsSet("pt.countries", [...S.countries]); renderCountryChips(); renderShopList(); });
+}
+function renderKinds() {
+  $("#kindBoxes").innerHTML = Object.entries(KINDS).map(([k, n]) => `<label class="chk"><input type="checkbox" data-k="${k}" ${S.kinds.has(k) ? "checked" : ""}> ${esc(n)}</label>`).join("");
+  $$("#kindBoxes input").forEach(el => el.onchange = () => { el.checked ? S.kinds.add(el.dataset.k) : S.kinds.delete(el.dataset.k); renderShopList(); });
+}
+const visibleShops = () => RETAILERS.filter(r => S.countries.has(r.cc) && S.kinds.has(r.kind) && ($("#optEU").checked || r.basis === "h") && ($("#optRefurb").checked || r.cond !== "refurbished"));
+function renderShopList(keep) {
+  const vis = visibleShops();
+  S.shops = keep ? new Set([...S.shops].filter(id => vis.some(r => r.id === id))) : new Set(vis.map(r => r.id));
+  $("#shopList").innerHTML = vis.map(r => `<label title="${esc(r.web)}"><input type="checkbox" data-id="${r.id}" ${S.shops.has(r.id) ? "checked" : ""}> <span class="cc">${r.cc}</span>${esc(r.name)}</label>`).join("");
+  $$("#shopList input").forEach(el => el.onchange = () => { el.checked ? S.shops.add(el.dataset.id) : S.shops.delete(el.dataset.id); updSummary(); });
+  updSummary();
+}
+function updSummary() { const n = S.shops.size; $("#selSummary").textContent = `· ${n} shop${n === 1 ? "" : "s"} selected`; const b = $("#goBtn"); if (b) b.disabled = !n || S.running; }
+
+/* ============================================================ identify → confirm */
+const currentSpec = () => ({ name: S.cand.name, brand: S.cand.brand || "", aliases: [...S.aliases], models: [...S.models], allow: S.cand.allow || [], storage: S.storage || null, refurb: $("#optRefurb").checked });
+async function onIdentify(e) {
+  e.preventDefault();
+  const q = $("#q").value.trim(); if (!q) return;
+  const c = identify(q, CATALOG);
+  S.cands = c; S.cand = null; $("#confirm").hidden = true;
+  const weak = !c.some(x => x.kind === "catalog" && x.confidence >= 0.9);
+  $("#candidates").innerHTML = `<p class="hint">Which one do you mean?</p><div class="cands" id="candList"></div>` +
+    (S.sample && weak ? `<p class="row"><button id="askClaude" class="sm">Ask Claude for more candidates</button><span class="hint" id="askNote"></span></p>` : "");
+  drawCands();
+  if (c[0].kind === "catalog" && c[0].confidence >= 0.99) pickCand(0);
+  $("#askClaude")?.addEventListener("click", askClaude);
+}
+function drawCands() {
+  $("#candList").innerHTML = S.cands.map((x, i) => `<button type="button" class="cand" data-i="${i}" aria-pressed="${S.cand === x}"><span><b>${esc(x.display)}</b>
+    <span class="meta">${[x.category !== "custom" ? x.category : "", x.year || "", x.kind === "ai" ? "suggested by Claude – please check" : ""].filter(Boolean).join(" · ")}${x.models?.length ? " · model no. " + esc(x.models.join(", ")) : ""}</span></span>
+    <span class="conf">${x.kind === "custom" ? "exactly as typed" : x.kind === "ai" ? "AI" : Math.round(x.confidence * 100) + "% match"}</span></button>`).join("");
+  $$("#candList .cand").forEach(el => el.onclick = () => pickCand(+el.dataset.i));
+}
+function pickCand(i) { S.cand = S.cands[i]; S.storage = null; S.aliases = [...(S.cand.aliases || [])]; S.models = [...(S.cand.models || [])]; drawCands(); renderConfirm(); }
+async function askClaude() {
+  const b = $("#askClaude"), note = $("#askNote"); b.disabled = true; note.textContent = "asking…";
+  try {
+    const out = await S.sample.json(`You identify consumer electronics for a European price comparison tool. The user typed: "${$("#q").value.trim().slice(0, 150)}". Reply with only a JSON array (max 4) of products that really exist, each {"brand":"","name":"exact retail model name without the brand","year":2024,"category":"smartphone","aliases":["names shops also use"],"model_numbers":["only if certain"],"storage_gb":[128,256]}.`, { modelTier: "quick" });
+    const add = (Array.isArray(out) ? out : []).filter(o => o?.name).slice(0, 4).map(o => ({ kind: "ai", id: "ai-" + o.name, confidence: 0.5, display: `${o.brand || ""} ${o.name}`.trim(), brand: o.brand || "", name: String(o.name), year: o.year || null,
+      category: o.category || "", storage: (o.storage_gb || []).filter(Number.isFinite), aliases: (o.aliases || []).map(String).slice(0, 6), models: (o.model_numbers || []).map(String).slice(0, 4), allow: [] }));
+    const custom = S.cands.filter(x => x.kind === "custom"); S.cands = [...S.cands.filter(x => x.kind !== "custom"), ...add, ...custom]; drawCands(); note.textContent = add.length ? "" : "Claude had no further suggestions.";
+  } catch (e) { note.textContent = e?.code === "not_granted" ? "Not allowed in this view." : "Claude could not answer right now."; b.disabled = false; }
+}
+function previewQueries() { return searchQueries({ name: S.cand.name, brand: S.cand.brand, aliases: S.aliases, models: S.models }, 4); }
+function renderConfirm() {
+  const c = S.cand, box = $("#confirm"); box.hidden = false; box.className = "confirm";
+  box.innerHTML = `<h3>Confirm: ${esc(c.display)}</h3>
+    <p class="hint">I search this exact model, not its Pro / Max / Plus / Ultra siblings, and not cases or accessories.</p>
+    ${c.storage?.length ? `<div><b>Storage</b> <span class="hint">(optional)</span><div class="row" id="stor" style="margin:6px 0"><button type="button" class="pick" aria-pressed="true" data-s="">Any</button>${c.storage.map(s => `<button type="button" class="pick" aria-pressed="false" data-s="${s}">${s >= 1024 ? s / 1024 + " TB" : s + " GB"}</button>`).join("")}</div></div>` : ""}
+    <div><b>Alternate names I will also search</b><div class="chips" id="aliasChips"></div>
+      <form class="row" id="aliasForm"><input type="text" id="aliasIn" placeholder="add an alternate name or model number…" aria-label="Alternate name"><button class="sm">Add</button></form></div>
+    <div><b>Search strings, in this order</b><div class="qlist" id="qprev"></div></div>
+    <div class="row" style="margin-top:10px"><button class="primary" id="goBtn">Confirm &amp; search live</button><span class="muted small" id="goHint"></span></div>`;
+  $$("#stor .pick").forEach(el => el.onclick = () => { $$("#stor .pick").forEach(x => x.setAttribute("aria-pressed", x === el)); S.storage = el.dataset.s ? +el.dataset.s : null; });
+  $("#aliasForm").onsubmit = e => { e.preventDefault(); const v = $("#aliasIn").value.trim(); if (v) { S.aliases.push(v); $("#aliasIn").value = ""; drawAliases(); } };
+  $("#goBtn").onclick = startSearch; drawAliases(); updSummary();
+}
+function drawAliases() {
+  const all = [...S.aliases.map((a, i) => ["a", i, a]), ...S.models.map((a, i) => ["m", i, a])];
+  $("#aliasChips").innerHTML = all.length ? all.map(([t, i, a]) => `<span class="chip">${esc(a)}${t === "m" ? " <small>model no.</small>" : ""}<button data-t="${t}" data-i="${i}" aria-label="remove ${esc(a)}">×</button></span>`).join("") : `<span class="muted">none</span>`;
+  $$("#aliasChips button").forEach(b => b.onclick = () => { (b.dataset.t === "a" ? S.aliases : S.models).splice(+b.dataset.i, 1); drawAliases(); });
+  $("#qprev").innerHTML = previewQueries().map((q, i) => `${i + 1}. ${esc(q)}`).join("<br>");
+}
+
+/* ============================================================ live search */
+const searchUrl = (r, q) => { const t = r.search || S.discovered[r.id]; return t ? expandTemplate(t, q) : null; };
+async function readByClaude(text, spec, shop) {
+  const sample = S.sample; if (!sample) return [];
+  const nums = new Set(); for (const l of text.split(/\n/)) pricesInLine(l, true).forEach(p => nums.add(p));
+  try {
+    const out = await sample.json(`Below is the text of a search-results page from the shop "${shop.name}". Find listings that are EXACTLY the product "${spec.brand} ${spec.name}"${spec.storage ? ` with ${spec.storage} GB storage` : ""}. Not other variants (Pro, Max, Plus, Ultra, mini, FE, e …), not accessories, ${spec.refurb ? "refurbished allowed" : "not refurbished or used"}. Reply with only a JSON array of {"title":"title copied from the page","price_eur":number copied from the page} (empty array if none). Never guess a price.\n\n---\n${text.slice(0, 14000)}`, { modelTier: "quick" });
+    return (Array.isArray(out) ? out : []).map(o => ({ title: String(o?.title || ""), price: typeof o?.price_eur === "number" ? o.price_eur : parsePrice(o?.price_eur) }))
+      .filter(o => o.title && o.price && [...nums].some(n => Math.abs(n - o.price) < 0.005))                      // price must literally exist on the page
+      .map(o => ({ ...o, v: judge(spec, o.title, shop.cond === "refurbished" ? "refurbished" : "new") })).filter(o => o.v.ok)
+      .map(o => ({ title: o.title, price: o.price, cond: o.v.cond, storage: o.v.storage, evidence: "read by Claude from the page text", byClaude: true }));
+  } catch { return []; }
+}
+
+async function runShop(r, tab, spec, queries, opts) {
+  const t0 = Date.now(), rep = { id: r.id, status: "no_match", message: "", queries: [], ms: 0, results: 0 };
+  const finish = (status, msg) => { rep.status = status; rep.message = msg; rep.ms = Date.now() - t0; return rep; };
+  const origin = new URL(r.web).origin, prefix = new URL(r.web).pathname.replace(/\/$/, "");
+  const known = r.search || S.discovered[r.id];
+  const guesses = (GUESS_PATTERNS[r.cc] || []).map(p => origin + prefix + p);
+  let working = known || null, blocked = false, sawPage = false, found = [], usedUrl = null, rawStruct = "";
+  const echoes = (text, q) => { const qt = tokens(q).slice(0, 3).join(" "); return qt && tokens(text.slice(0, 20000)).join(" ").includes(qt); };
+  outer: for (const q of queries) {
+    rep.queries.push(q);
+    for (const tpl of (working ? [working] : guesses)) {
+      if (S.cancel) return finish("skipped", "stopped");
+      const url = expandTemplate(tpl, q);
+      try { await tab.open(url); } catch (e) { return finish("error", `browser could not open the page (${e?.code || "error"})`); }
+      let text; try { text = await tab.text(); } catch (e) { return finish("error", `could not read the page (${e?.code || "error"})`); }
+      if (looksBlocked(text)) { blocked = true; if (working) break; continue; }
+      if (text.length < 200) continue;
+      if (!working) {                                       // a guessed pattern counts only if the page echoes the search term back
+        if (!echoes(text, q)) continue;
+        working = tpl; S.discovered[r.id] = tpl; lsSet("pt.discovered", S.discovered);
+      }
+      sawPage = true;
+      let list = listingsFromText(text, spec, r.cond === "refurbished" ? "refurbished" : "new");
+      if (!list.length && opts.claude && tokens(text).join(" ").includes(tokens(spec.name)[0] || "~")) list = await readByClaude(text, spec, r);
+      if (list.length) { found = list; usedUrl = url; rawStruct = await tab.structure(); if (!opts.all) break outer; }
+    }
+    if (!working) break;                                     // guessed patterns are tried once, not once per alias
+  }
+  if (!found.length) {
+    if (!sawPage && blocked) return finish("blocked", "the shop showed a bot check, so nothing could be read – open it manually");
+    if (!sawPage && !working) return finish("nosearch", "no working search URL found for this shop – open it manually");
+    if (!sawPage) return finish("error", "the page did not load or was empty");
+    return finish("no_match", `the shop's results contain no exact match for '${spec.name}'`);
+  }
+  // keep the 3 cheapest distinct listings, then try to confirm each on its own product page
+  found.sort((a, b) => a.price - b.price);
+  const picks = found.slice(0, 3);
+  for (const l of picks) {
+    if (S.cancel) break;
+    let price = l.price, source = "listing", url = usedUrl, evidence = l.evidence, readAt = Date.now(), note = "";
+    const purl = urlForTitle(rawStruct, l.title, r.dom);
+    if (purl) {
+      try {
+        await tab.open(purl); const pt = await tab.text(); const pp = priceFromProductText(pt, spec);
+        if (pp) { source = "product"; url = purl; readAt = Date.now(); evidence = pp.evidence; if (Math.abs(pp.price - l.price) > 0.005) note = `search page showed ${eur.format(l.price)}`; price = pp.price; }
+        else url = purl;
+      } catch { /* keep the listing price */ }
+    }
+    emit({ type: "result", result: { key: r.id + "|" + l.title + "|" + source, rid: r.id, retailer: r.name, cc: r.cc, title: l.title, price, cond: l.cond, storage: l.storage, url, source, readAt, evidence, note, byClaude: !!l.byClaude, basis: r.basis } });
+    rep.results++;
+  }
+  return finish("ok", `${rep.results} price(s) read${picks.some(p => p.byClaude) ? " (page read by Claude)" : ""}`);
+}
+
+function emit(ev) {
+  if (ev.type === "result") { S.results.set(ev.result.key, ev.result); renderResults(); }
+}
+
+async function startSearch() {
+  if (!S.cand || !S.shops.size || S.running) return;
+  const spec = currentSpec(), queries = previewQueries(), shops = [...S.shops].map(id => shopsById[id]);
+  S.spec = spec; S.opts = { claude: !!S.sample && $("#optClaude").checked, all: $("#optAll").checked };
+  S.results.clear(); S.reports.clear(); S.done = 0; S.total = shops.length; S.cancel = false; S.running = true;
+  $("#resultsCard").hidden = false; $("#resultsCard").scrollIntoView({ behavior: "smooth", block: "start" });
+  $("#resTitle").textContent = `· ${S.cand.display}${S.storage ? " " + (S.storage >= 1024 ? S.storage / 1024 + " TB" : S.storage + " GB") : ""}`;
+  $("#noRes").hidden = true; $("#logTable tbody").innerHTML = ""; $("#resTable tbody").innerHTML = ""; $("#manual").hidden = true; $("#stopBtn").hidden = false; $("#goBtn").disabled = true;
+  renderManual(shops, queries[0]); setProgress();
+  if (Bridge.state !== "ready") { S.running = false; $("#stopBtn").hidden = true; $("#goBtn").disabled = false; finishUi(true); return; }
+  const queue = [...shops], workers = Array.from({ length: Math.min(3, shops.length) }, () => new Tab());
+  await Promise.all(workers.map(async tab => {
+    while (queue.length && !S.cancel) {
+      const r = queue.shift(); let rep;
+      try { rep = await runShop(r, tab, spec, queries, S.opts); } catch (e) { rep = { id: r.id, status: "error", message: `internal error: ${e?.message || e}`, queries: [], ms: 0 }; }
+      S.reports.set(r.id, rep); S.done++; setProgress(); renderLog();
+    }
+  }));
+  S.running = false; $("#stopBtn").hidden = true; $("#goBtn").disabled = false; finishUi(false);
+}
+function setProgress() { $("#progress").textContent = `${S.done}/${S.total} shops read · ${S.results.size} price${S.results.size === 1 ? "" : "s"}`; $("#bar").style.width = (S.total ? 100 * S.done / S.total : 0) + "%"; }
+function finishUi(noBridge) {
+  setProgress();
+  if (noBridge) { $("#noRes").hidden = false; $("#noRes").textContent = "Live reading is not available in this view (see the note at the top). Use the direct search links below to check the shops yourself."; $("#manual").hidden = false; return; }
+  if (!S.results.size) { $("#noRes").hidden = false; $("#noRes").textContent = `No exact price found at ${S.reports.size} shop(s). The log below says why for each one.`; $("#logBox").open = true; }
+  $("#manual").hidden = false;
+}
+
+function renderResults() {
+  const rows = [...S.results.values()].sort((a, b) => a.price - b.price);
+  $("#resTable tbody").innerHTML = rows.map((r, i) => `<tr class="${i === 0 ? "best" : ""}">
+    <td>${i + 1}</td>
+    <td class="num"><span class="price">${eur.format(r.price)}</span><br>${r.source === "product" ? '<span class="badge live">confirmed on product page</span>' : '<span class="badge list">search listing</span>'}</td>
+    <td><span class="cc">${r.cc}</span><b>${esc(r.retailer)}</b>${r.basis !== "h" ? '<br><span class="muted small">EU storefront</span>' : ""}</td>
+    <td>${esc(r.title)}${r.note ? `<br><span class="muted small">${esc(r.note)}</span>` : ""}<br><span class="muted small" title="${esc(r.evidence)}">${r.byClaude ? "read by Claude · " : ""}${esc((r.evidence || "").slice(0, 90))}</span></td>
+    <td><span class="chip ${r.cond === "new" ? "good" : "warn"}">${esc(r.cond)}</span></td>
+    <td class="muted small">${clock(r.readAt)}<br><span class="age" data-t="${r.readAt}"></span></td>
+    <td><a class="btn sm" href="${esc(r.url)}" target="_blank" rel="noopener noreferrer">Open ↗</a> <button class="sm recheck" data-rid="${r.rid}">Re-check</button></td></tr>`).join("");
+  $$(".recheck").forEach(b => b.onclick = () => recheck(b));
+  tickAges();
+}
+function tickAges() { const now = Date.now(); $$(".age").forEach(el => { const s = Math.max(0, Math.round((now - +el.dataset.t) / 1000)); el.textContent = s < 90 ? `${s}s ago` : `${Math.round(s / 60)} min ago`; }); }
+setInterval(tickAges, 1000);
+
+async function recheck(btn) {
+  if (S.running || Bridge.state !== "ready") return;
+  const r = shopsById[btn.dataset.rid]; btn.disabled = true; btn.textContent = "…"; S.running = true; S.cancel = false;
+  for (const [k, v] of [...S.results]) if (v.rid === r.id) S.results.delete(k);
+  try { const rep = await runShop(r, new Tab(), S.spec, searchQueries({ ...S.spec }, 4), S.opts); S.reports.set(r.id, rep); renderLog(); }
+  finally { S.running = false; renderResults(); setProgress(); }
+}
+
+const ST = { ok: "price read", no_match: "no exact match", blocked: "bot check", timeout: "timed out", error: "error", skipped: "stopped", nosearch: "no search URL" };
+function renderLog() {
+  const rows = [...S.reports.values()].sort((a, b) => (a.status === "ok" ? 0 : 1) - (b.status === "ok" ? 0 : 1) || shopsById[a.id].name.localeCompare(shopsById[b.id].name));
+  $("#logTable tbody").innerHTML = rows.map(rep => { const r = shopsById[rep.id], u = searchUrl(r, S.spec.name) || r.web;
+    return `<tr><td><span class="cc">${r.cc}</span>${esc(r.name)}</td><td class="st ${rep.status}">${ST[rep.status] || rep.status}</td>
+      <td class="small">${esc(rep.message)}${rep.queries?.length ? `<br><span class="muted">searched: ${esc(rep.queries.join(" | "))}</span>` : ""}</td><td class="num muted small">${(rep.ms / 1000).toFixed(1)}s</td>
+      <td><a class="btn sm" href="${esc(u)}" target="_blank" rel="noopener noreferrer">Open shop ↗</a></td></tr>`; }).join("");
+  const c = {}; S.reports.forEach(r => c[r.status] = (c[r.status] || 0) + 1);
+  $("#logSummary").textContent = "· " + Object.entries(c).map(([k, v]) => `${v} ${ST[k] || k}`).join(", ");
+}
+function renderManual(shops, q) {
+  $("#manual").innerHTML = `<details class="more" ${Bridge.state !== "ready" ? "open" : ""}><summary>Direct search links for the selected shops</summary>
+    <p class="hint">Opens each shop's own search for “${esc(q)}”. Shops without a known search URL open their homepage.</p>
+    <div class="links">${shops.map(r => { const u = searchUrl(r, q) || r.web; return `<a href="${esc(u)}" target="_blank" rel="noopener noreferrer" title="${esc(u)}"><span class="cc">${r.cc}</span>${esc(r.name)}</a>`; }).join("")}</div></details>`;
+}
+
+/* ============================================================ bridge status banner */
+function renderBridge() {
+  const pill = $("#bridge"), note = $("#bridgeNote"), s = Bridge.state;
+  const set = (cls, txt) => { pill.className = "pill " + cls; pill.lastElementChild.textContent = txt; };
+  if (s === "ready") { set("ok", "live browser connected"); note.hidden = true; return; }
+  const why = { none: "This view cannot use connected tools.", nohost: "The Claude desktop app's built-in browser is not reachable from this view.", error: "The browser connection failed to start." }[s] || "";
+  set("warn", "live reading unavailable");
+  note.hidden = false;
+  note.innerHTML = `<div class="banner"><b>Live prices need the Claude desktop app.</b> ${esc(why)} This page reads each shop in the app's built-in browser, so it only works when the artifact is open in the Claude desktop app, by its owner, with the browser enabled. You can still identify the product and use the direct search links for every shop.</div>`;
+}
+
+/* ============================================================ database tab */
+function dbRows() {
+  const t = $("#dbFilter").value.toLowerCase(), c = $("#dbCountry").value, k = $("#dbKind").value;
+  return RETAILERS.filter(r => (!c || r.cc === c) && (!k || r.kind === k) && (!t || [r.name, r.dom, r.grp, r.web].join(" ").toLowerCase().includes(t)));
+}
+function renderDb() {
+  const rows = dbRows(), ck = S.checks;
+  $("#dbTable tbody").innerHTML = rows.map(r => { const c = ck[r.id];
+    return `<tr><td><b>${esc(r.name)}</b>${r.grp ? `<br><span class="muted small">${esc(r.grp)}</span>` : ""}</td><td>${r.cc}</td>
+    <td>${esc(KINDS[r.kind])}${r.cond === "refurbished" ? '<br><span class="chip warn">refurbished</span>' : ""}</td>
+    <td><a href="${esc(r.web)}" target="_blank" rel="noopener noreferrer">${esc(r.dom)}</a></td>
+    <td>${esc(r.hq)}<br><span class="muted small">${r.basis === "h" ? "headquartered in Europe" : "EU entity / storefront"}</span></td>
+    <td class="st ${c ? c.st : "unverified"}">${c ? esc(c.st) : "not checked"}${c ? `<br><span class="muted small">${new Date(c.at).toLocaleString()}</span>` : ""}</td></tr>`; }).join("");
+  const n = Object.values(ck).filter(c => c.st === "online").length;
+  $("#dbNote").textContent = `${RETAILERS.length} storefronts · ${n} checked online from your browser so far. “Check shown shops” opens each homepage in the built-in browser (desktop app only).`;
+}
+async function checkShops() {
+  if (Bridge.state !== "ready") { $("#dbProg").textContent = "Needs the Claude desktop app's built-in browser."; return; }
+  const rows = dbRows().slice(0, 40); if (!rows.length) return; $("#checkBtn").disabled = true; let n = 0; S.cancel = false;
+  const queue = [...rows], workers = Array.from({ length: 3 }, () => new Tab());
+  await Promise.all(workers.map(async tab => { while (queue.length) { const r = queue.shift(); let st = "offline";
+    try { await tab.open(r.web); const t = await tab.text(); st = looksBlocked(t) ? "blocked" : t.length > 300 ? "online" : "offline"; } catch { st = "offline"; }
+    S.checks[r.id] = { st, at: Date.now() }; n++; $("#dbProg").textContent = `Checking… ${n}/${rows.length}`; } }));
+  lsSet("pt.checks", S.checks); $("#dbProg").textContent = `Checked ${n} shops${dbRows().length > 40 ? " (first 40 shown; filter to check others)" : ""}.`; $("#checkBtn").disabled = false; renderDb();
+}
+async function exportCsv() {
+  const cols = ["id", "name", "cc", "web", "dom", "kind", "grp", "hq", "basis", "cond", "search", "note"];
+  const q = v => `"${String(v ?? "").replace(/"/g, '""')}"`;
+  const csv = [cols.join(","), ...RETAILERS.map(r => cols.map(c => q(r[c])).join(","))].join("\n");
+  if (!S.downloads) { $("#dbProg").textContent = "Saving files is not available in this view."; return; }
+  try { await S.downloads.save({ filename: "retailers.csv", data: csv }); } catch (e) { $("#dbProg").textContent = e?.code === "declined" ? "Save cancelled." : "Could not save the file here."; }
+}
+function initDbUi() {
+  $("#dbCount").textContent = RETAILERS.length;
+  Object.entries(COUNTRIES).forEach(([c, n]) => $("#dbCountry").add(new Option(n, c)));
+  Object.entries(KINDS).forEach(([k, n]) => $("#dbKind").add(new Option(n, k)));
+  ["dbFilter", "dbCountry", "dbKind"].forEach(id => $("#" + id).oninput = renderDb);
+  $("#checkBtn").onclick = checkShops; $("#csvBtn").onclick = exportCsv;
+  $("#excluded").innerHTML = EXCLUDED.map(e => `<span class="chip bad" title="${esc(e.r)}">${esc(e.n)}</span>`).join("");
+  renderDb();
+}
+
+/* ============================================================ boot */
+renderCountryChips(); renderKinds(); renderShopList(); initDbUi();
+$$(".tab").forEach(b => b.onclick = () => { $$(".tab").forEach(x => x.setAttribute("aria-selected", x === b)); $("#tab-search").hidden = b.dataset.tab !== "search"; $("#tab-db").hidden = b.dataset.tab !== "db"; });
+["optEU", "optRefurb"].forEach(id => $("#" + id).onchange = () => renderShopList());
+$("#allShops").onclick = () => { visibleShops().forEach(r => S.shops.add(r.id)); renderShopList(true); };
+$("#noShops").onclick = () => { S.shops.clear(); renderShopList(true); };
+$("#idForm").onsubmit = onIdentify; $("#stopBtn").onclick = () => { S.cancel = true; };
+(async () => {
+  await Bridge.init(); renderBridge();
+  try { S.sample = await window.claude?.use?.("sample"); } catch { S.sample = null; }
+  try { S.downloads = await window.claude?.use?.("downloads"); } catch { S.downloads = null; }
+})();
+</script>

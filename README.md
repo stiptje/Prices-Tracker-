@@ -54,3 +54,12 @@ scripts/         seed_retailers.py · build_catalog.py · demo.py
 tests/           fake shop server + 57 tests
 ```
 Config via env: `PT_MAX_WORKERS`, `PT_PER_HOST`, `PT_HTTP_TIMEOUT`, `PT_MAX_PRODUCT_PAGES`, `PT_BROWSER`, `ANTHROPIC_API_KEY`, `PT_LLM_MODEL`.
+
+## Claude Artifact version (visual app, no install)
+
+`artifact/prices-tracker.html` is the same product as a single-page Claude Artifact (rebuild with `python scripts/build_artifact.py`).
+An artifact page cannot fetch other websites itself, so it reads each shop through the **Claude desktop app's built-in browser**
+(`host:claude_browser`, owner only). It opens the shop's search page, reads the page text, applies the same strict model matcher,
+then tries to confirm the price on the product page. Prices must literally appear on the page; Claude is only a fallback reader and
+its numbers are re-checked against the page text. Outside the desktop app it falls back to direct search links per shop.
+Tests: `node artifact/test_core.js` (39) and `node artifact/e2e_mock.js` (UI run against a *mocked* browser bridge).
