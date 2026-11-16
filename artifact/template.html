@@ -127,6 +127,8 @@ footer{padding-block:10px 40px}
             <span class="hint">Amazon.xx, Apple, Samsung, Google, eBay … Shops outside Europe that only ship in are never included.</span></label>
           <label class="chk"><input type="checkbox" id="optRefurb"> Also show refurbished / used
             <span class="hint">Off = new devices only; refurbished-only shops are skipped.</span></label>
+          <label class="chk"><input type="checkbox" id="optNoUrl"> Include shops without a known search URL
+            <span class="hint">The page has to guess their search address: slower and more browser prompts. Off = only shops with a known one.</span></label>
           <label class="chk"><input type="checkbox" id="optClaude" checked> Let Claude read pages my pattern matching cannot
             <span class="hint">Only prices literally present on the page are accepted.</span></label>
           <label class="chk"><input type="checkbox" id="optAll"> Try every alternate name at every shop
@@ -150,6 +152,7 @@ footer{padding-block:10px 40px}
     <div class="row between"><h2><span class="step">3</span>Live prices <span id="resTitle" class="muted"></span></h2>
       <div class="row"><span id="progress" class="muted small"></span><button id="stopBtn" class="sm" hidden>Stop</button></div></div>
     <div class="meter"><div id="bar"></div></div>
+    <div id="haltBox" hidden></div>
     <p class="hint">Each price was read from the shop's own page in your built-in browser at the time shown. Nothing is stored or reused between searches.</p>
     <div class="tablewrap"><table id="resTable"><thead><tr><th>#</th><th class="num">Price</th><th>Shop</th><th>Product as listed</th><th>Condition</th><th>Read</th><th></th></tr></thead><tbody></tbody></table></div>
     <p id="noRes" class="empty" hidden></p>
@@ -209,6 +212,8 @@ function logDiag(tool, input, outcome) {
   diag.unshift(`${new Date().toLocaleTimeString()}  ${tool} ${JSON.stringify(input).slice(0, 140)}\n   → ${outcome}`); diag.length = Math.min(diag.length, 30);
   const el = $("#diag"); if (el) el.textContent = diag.join("\n");
 }
+const OPEN_TOOLS = new Set(["preview_start", "navigate"]);
+class Declined extends Error { constructor(m) { super(m || "browser action not approved"); this.name = "Declined"; } }
 const Bridge = {
   mcp: null, state: "checking", tools: [],
   async init() {
@@ -223,7 +228,11 @@ const Bridge = {
   },
   async call(tool, input) {
     try {
-      const r = await this.mcp.callTool(SERVER, tool, input, { cache: false, signal: AbortSignal.timeout(60000) });
+      // Opening a page may wait for the viewer to approve it in the Claude app, so it gets no deadline.
+      // Reads get one of our own (not an AbortSignal: an aborted call is reported as "cancelled", which
+      // is also what a refused approval looks like).
+      const p = this.mcp.callTool(SERVER, tool, input, { cache: false });
+      const r = OPEN_TOOLS.has(tool) ? await p : await Promise.race([p, new Promise((_, rej) => setTimeout(() => rej({ code: "timeout", message: "no answer in 90 s" }), 90000))]);
       logDiag(tool, input, `ok · ${resText(r).length} chars · ${resText(r).slice(0, 90).replace(/\s+/g, " ")}`);
       return r;
     } catch (e) { logDiag(tool, input, `ERROR ${e?.code || ""} ${String(e?.message || e).slice(0, 160)}`); throw e; }
@@ -278,7 +287,7 @@ function renderKinds() {
   $("#kindBoxes").innerHTML = Object.entries(KINDS).map(([k, n]) => `<label class="chk"><input type="checkbox" data-k="${k}" ${S.kinds.has(k) ? "checked" : ""}> ${esc(n)}</label>`).join("");
   $$("#kindBoxes input").forEach(el => el.onchange = () => { el.checked ? S.kinds.add(el.dataset.k) : S.kinds.delete(el.dataset.k); renderShopList(); });
 }
-const visibleShops = () => RETAILERS.filter(r => S.countries.has(r.cc) && S.kinds.has(r.kind) && ($("#optEU").checked || r.basis === "h") && ($("#optRefurb").checked || r.cond !== "refurbished"));
+const visibleShops = () => RETAILERS.filter(r => S.countries.has(r.cc) && S.kinds.has(r.kind) && ($("#optEU").checked || r.basis === "h") && ($("#optRefurb").checked || r.cond !== "refurbished") && ($("#optNoUrl").checked || r.search || S.discovered[r.id]));
 function renderShopList(keep) {
   const vis = visibleShops();
   S.shops = keep ? new Set([...S.shops].filter(id => vis.some(r => r.id === id))) : new Set(vis.map(r => r.id));
@@ -366,8 +375,8 @@ async function runShop(r, tab, spec, queries, opts) {
     for (const tpl of (working ? [working] : guesses)) {
       if (S.cancel) return finish("skipped", "stopped");
       const url = expandTemplate(tpl, q);
-      try { await tab.open(url); } catch (e) { return finish("error", `browser could not open the page (${e?.code || "error"})`); }
-      let text; try { text = await tab.text(); } catch (e) { return finish("error", `could not read the page (${e?.code || "error"})`); }
+      try { await tab.open(url); } catch (e) { if (e?.code === "cancelled") throw new Declined(); return finish("error", `browser could not open the page (${e?.code || "error"})`); }
+      let text; try { text = await tab.text(); } catch (e) { if (e?.code === "cancelled") throw new Declined(); return finish("error", `could not read the page (${e?.code || "error"})`); }
       if (looksBlocked(text)) { blocked = true; if (working) break; continue; }
       if (text.length < 200) continue;
       if (!working) {                                       // a guessed pattern counts only if the page echoes the search term back
@@ -421,15 +430,31 @@ async function startSearch() {
   $("#noRes").hidden = true; $("#logTable tbody").innerHTML = ""; $("#resTable tbody").innerHTML = ""; $("#manual").hidden = true; $("#stopBtn").hidden = false; $("#goBtn").disabled = true;
   renderManual(shops, queries[0]); setProgress();
   if (Bridge.state !== "ready") { S.running = false; $("#stopBtn").hidden = true; $("#goBtn").disabled = false; finishUi(true); return; }
-  const queue = [...shops], workers = Array.from({ length: Math.min(3, shops.length) }, () => new Tab());
-  await Promise.all(workers.map(async tab => {
-    while (queue.length && !S.cancel) {
-      const r = queue.shift(); let rep;
-      try { rep = await runShop(r, tab, spec, queries, S.opts); } catch (e) { rep = { id: r.id, status: "error", message: `internal error: ${e?.message || e}`, queries: [], ms: 0 }; }
-      S.reports.set(r.id, rep); S.done++; setProgress(); renderLog();
-    }
-  }));
-  S.running = false; $("#stopBtn").hidden = true; $("#goBtn").disabled = false; finishUi(false);
+  S.queue = [...shops]; S.queries = queries;
+  await runQueue();
+}
+/** One shop at a time in one browser tab: the Claude app asks the viewer to approve browser actions, and parallel tabs flood it. */
+async function runQueue() {
+  S.running = true; S.cancel = false; S.halted = false; $("#haltBox").hidden = true; $("#stopBtn").hidden = false; $("#goBtn") && ($("#goBtn").disabled = true);
+  const tab = new Tab();
+  while (S.queue.length && !S.cancel) {
+    const r = S.queue[0]; let rep;
+    try { rep = await runShop(r, tab, S.spec, S.queries, S.opts); }
+    catch (e) { if (e instanceof Declined) { S.halted = true; break; } rep = { id: r.id, status: "error", message: `internal error: ${e?.message || e}`, queries: [], ms: 0 }; }
+    S.queue.shift(); S.reports.set(r.id, rep); S.done++; setProgress(); renderLog();
+  }
+  S.running = false; $("#stopBtn").hidden = true; $("#goBtn") && ($("#goBtn").disabled = false);
+  if (S.halted) showHalt(); else { if (S.cancel) S.queue = []; finishUi(false); }
+}
+function showHalt() {
+  const box = $("#haltBox"); box.hidden = false;
+  box.innerHTML = `<div class="banner"><b>Paused: the Claude app did not approve a browser action.</b>
+    I stopped after ${S.done} of ${S.total} shops instead of failing the rest. When Claude asks to let this page use the built-in browser, choose to allow it
+    (for the whole session if offered), then continue. ${S.queue.length} shop${S.queue.length === 1 ? "" : "s"} left.
+    <div class="row" style="margin-top:8px"><button class="primary" id="resumeBtn">Continue</button><button id="dropBtn">Stop here</button></div></div>`;
+  $("#resumeBtn").onclick = () => runQueue();
+  $("#dropBtn").onclick = () => { S.queue = []; box.hidden = true; finishUi(false); };
+  $("#manual").hidden = false;
 }
 function setProgress() { $("#progress").textContent = `${S.done}/${S.total} shops read · ${S.results.size} price${S.results.size === 1 ? "" : "s"}`; $("#bar").style.width = (S.total ? 100 * S.done / S.total : 0) + "%"; }
 function finishUi(noBridge) {
@@ -460,6 +485,7 @@ async function recheck(btn) {
   const r = shopsById[btn.dataset.rid]; btn.disabled = true; btn.textContent = "…"; S.running = true; S.cancel = false;
   for (const [k, v] of [...S.results]) if (v.rid === r.id) S.results.delete(k);
   try { const rep = await runShop(r, new Tab(), S.spec, searchQueries({ ...S.spec }, 4), S.opts); S.reports.set(r.id, rep); renderLog(); }
+  catch (e) { if (e instanceof Declined) $("#noRes").hidden = false, $("#noRes").textContent = "The Claude app did not approve the browser action, so the re-check did not run."; }
   finally { S.running = false; renderResults(); setProgress(); }
 }
 
@@ -509,11 +535,12 @@ function renderDb() {
 async function checkShops() {
   if (Bridge.state !== "ready") { $("#dbProg").textContent = "Needs the Claude desktop app's built-in browser."; return; }
   const rows = dbRows().slice(0, 40); if (!rows.length) return; $("#checkBtn").disabled = true; let n = 0; S.cancel = false;
-  const queue = [...rows], workers = Array.from({ length: 3 }, () => new Tab());
-  await Promise.all(workers.map(async tab => { while (queue.length) { const r = queue.shift(); let st = "offline";
-    try { await tab.open(r.web); const t = await tab.text(); st = looksBlocked(t) ? "blocked" : t.length > 300 ? "online" : "offline"; } catch { st = "offline"; }
-    S.checks[r.id] = { st, at: Date.now() }; n++; $("#dbProg").textContent = `Checking… ${n}/${rows.length}`; } }));
-  lsSet("pt.checks", S.checks); $("#dbProg").textContent = `Checked ${n} shops${dbRows().length > 40 ? " (first 40 shown; filter to check others)" : ""}.`; $("#checkBtn").disabled = false; renderDb();
+  const tab = new Tab();
+  for (const r of rows) { let st = "offline";
+    try { await tab.open(r.web); const t = await tab.text(); st = looksBlocked(t) ? "blocked" : t.length > 300 ? "online" : "offline"; }
+    catch (e) { if (e?.code === "cancelled") { $("#dbProg").textContent = `Stopped after ${n} shops: the Claude app did not approve a browser action. Allow it and run the check again.`; break; } st = "offline"; }
+    S.checks[r.id] = { st, at: Date.now() }; n++; $("#dbProg").textContent = `Checking… ${n}/${rows.length}`; }
+  lsSet("pt.checks", S.checks); if (!/^Stopped/.test($("#dbProg").textContent)) $("#dbProg").textContent = `Checked ${n} shops${dbRows().length > 40 ? " (first 40 shown; filter to check others)" : ""}.`; $("#checkBtn").disabled = false; renderDb();
 }
 async function exportCsv() {
   const cols = ["id", "name", "cc", "web", "dom", "kind", "grp", "hq", "basis", "cond", "search", "note"];
@@ -535,7 +562,7 @@ function initDbUi() {
 /* ============================================================ boot */
 renderCountryChips(); renderKinds(); renderShopList(); initDbUi();
 $$(".tab").forEach(b => b.onclick = () => { $$(".tab").forEach(x => x.setAttribute("aria-selected", x === b)); $("#tab-search").hidden = b.dataset.tab !== "search"; $("#tab-db").hidden = b.dataset.tab !== "db"; });
-["optEU", "optRefurb"].forEach(id => $("#" + id).onchange = () => renderShopList());
+["optEU", "optRefurb", "optNoUrl"].forEach(id => $("#" + id).onchange = () => renderShopList());
 $("#allShops").onclick = () => { visibleShops().forEach(r => S.shops.add(r.id)); renderShopList(true); };
 $("#noShops").onclick = () => { S.shops.clear(); renderShopList(true); };
 $("#idForm").onsubmit = onIdentify; $("#stopBtn").onclick = () => { S.cancel = true; };

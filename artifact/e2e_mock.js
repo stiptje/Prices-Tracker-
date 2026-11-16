@@ -21,11 +21,16 @@ const MOCK = () => {
       listTools: async () => ({ servers: [{ server: "host:claude_browser", tools: ["preview_start", "navigate", "get_page_text", "read_page", "tabs_context"].map(name => ({ name })) }] }),
       callTool: async (srv, tool, input) => {
         window.__calls.push(tool);
+        window.__conc = (window.__conc || 0) + 1; window.__maxConc = Math.max(window.__maxConc || 0, window.__conc);
+        try { await new Promise(r => setTimeout(r, 5));
+        if (tool === "navigate" || tool === "preview_start") { window.__opens = (window.__opens || 0) + 1;
+          if (window.__declineAt && window.__opens === window.__declineAt) throw Object.assign(new Error("user declined"), { code: "cancelled" }); }
         if (tool === "preview_start") { const id = nextTab++; cur[id] = input.url; return { payload: { tabId: id, url: input.url }, content: [{ type: "text", text: "opened" }] }; }
         if (tool === "navigate") { cur[input.tabId] = input.url; return text("navigated"); }
         if (tool === "get_page_text") return text(pages(cur[input.tabId]));
         if (tool === "read_page") return text(cur[input.tabId].includes("/zoeken") && cur[input.tabId].includes("coolblue") ? `link "Apple iPhone 15 Pro 256GB Zwart" https://www.coolblue.nl/product/123/apple-iphone-15-pro.html\nlink "Apple iPhone 15 Pro Max 256GB" https://www.coolblue.nl/product/999/max.html` : "");
         throw Object.assign(new Error("unknown tool"), { code: "bad_request" });
+        } finally { window.__conc--; }
       } };
     if (n === "sample") { const f = async () => ({ text: "" }); f.json = async () => []; return f; }
     if (n === "downloads") return { save: async x => { window.__saved = x; return { status: "saved" }; } };
