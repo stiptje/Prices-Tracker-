@@ -127,6 +127,19 @@ t("productText", () => {
   const r = C.priceFromProductText("Menu\nApple iPhone 15 Pro 256GB Zwart\n★★★★★ 4,8\n€ 1.199,00\n€ 1.089,00\nVandaag besteld", spec("iPhone 15 Pro", { storage: 256 }));
   assert.strictEqual(r.price, 1089);
 });
+const OPPO_PAGE = `Menu\nOPPO Find X10 Pro Max 512GB Grijs 5G\n★ 4,6 (55)\n€ 55 cashback bij inruil\n€ 55,-\n€ 1.649,00\n€ 1.549,00\nVandaag besteld, morgen in huis\nVergelijkbare producten\nOPPO Find X10 Pro 256GB\n€ 899,00`;
+t("Coolblue case: a €55 side amount is never taken as the price", () => {
+  const spec = { loose: true, name: "oppo x10", brand: "Oppo", storage: 512, aliases: [], models: [] };
+  const withHint = C.priceFromProductText(OPPO_PAGE, spec, 1549); assert.strictEqual(withHint.price, 1549);
+  assert.strictEqual(C.priceFromProductText(OPPO_PAGE, spec).price, 1549);                  // even without a hint
+  const bad = C.priceFromProductText("OPPO Find X10 Pro Max 512GB Grijs 5G\n€ 55,-\nGratis verzending", spec, 1549);
+  assert(bad.mismatch && bad.price === null && bad.observed[0] === 55);                      // disagreement => not confirmed
+});
+t("pickCurrent / listing with small side amount", () => {
+  assert.strictEqual(C.pickCurrent([55, 1649, 1549]), 1549); assert.strictEqual(C.pickCurrent([899]), 899); assert.strictEqual(C.pickCurrent([20, 19.95]), 19.95);
+  const out = C.listingsFromText("OPPO Find X10 Pro Max 512GB Grijs 5G\n€ 55 extra garantie\n€ 1.549,00", { loose: true, name: "oppo x10", brand: "Oppo", storage: 512, aliases: [], models: [] });
+  assert.strictEqual(out[0].price, 1549);
+});
 t("blocked", () => { assert(C.looksBlocked("Please complete the captcha")); assert(!C.looksBlocked("x".repeat(7000) + "captcha")); });
 t("expand", () => { assert.strictEqual(C.expandTemplate("https://x/s?q={q}", "iPhone 15 Pro"), "https://x/s?q=iPhone+15+Pro"); assert.strictEqual(C.expandTemplate("https://x/{q_dash}.html", "iPhone 15 Pro"), "https://x/iphone-15-pro.html"); });
 console.log(n + " core tests passed");

@@ -42,7 +42,7 @@ function parsePrice(raw) {
 
 const NUM = String.raw`\d{1,3}(?:,\d{3})+\.\d{1,2}|\d{1,3}(?:[.\u00a0\u202f ]\d{3})*(?:[.,]\d{1,2}|[.,]-+)?|\d+(?:[.,]\d{1,2}|[.,]-+)?`;
 const PRICE_RE = new RegExp(String.raw`(?:€|EUR)\s*(${NUM})|(${NUM})\s*(?:€|EUR)(?![A-Za-z])|(?<![\d.,])(\d{1,3}(?:\.\d{3})*,-+)`, "g");
-const NOT_CURRENT = /\b(per\s*(maand|mnd|month|mois)|\/\s*(mnd|maand|mois|mo|monat|month)|par mois|pro monat|monatlich|maandelijks|mtl\.?|x\s*\d+\s*(€|mois)|\d+\s*x\s*(€|\d)|vanaf|ab\s*\d|dès|des|from|bespaar|economisez|ersparnis|sparen|save|korting|remise|rabatt|adviesprijs|uvp|statt|was|avant|ancien|verzend|livraison|versand|shipping|gratis|offert)\b/i;
+const NOT_CURRENT = /\b(per\s*(maand|mnd|month|mois)|\/\s*(mnd|maand|mois|mo|monat|month)|par mois|pro monat|monatlich|maandelijks|mtl\.?|x\s*\d+\s*(€|mois)|\d+\s*x\s*(€|\d)|vanaf|ab\s*\d|dès|des|from|bespaar|economisez|ersparnis|sparen|save|korting|remise|rabatt|adviesprijs|uvp|statt|was|avant|ancien|verzend|livraison|versand|shipping|gratis|offert|cashback|inruil|trade-?in|eintausch|reprise|cadeau|geschenk|gift|borg|deposit|statiegeld|toeslag|bundel)\b/i;
 
 /** All EUR amounts in a line (current-price candidates only unless `all`). */
 function pricesInLine(line, all = false) {
@@ -174,6 +174,24 @@ function identify(query, catalog, limit = 6) {
 const BLOCK = /(captcha|are you a robot|robot check|unusual traffic|access denied|request blocked|just a moment|verifying you are human|pardon our interruption|bot detection|ihre anfrage wurde blockiert|vous avez été bloqué|attention required|enable javascript and cookies)/i;
 const looksBlocked = text => (text || "").length < 6000 && BLOCK.test(text || "");
 
+/** Choose the current price from the euro amounts found around a product: drop small side amounts (cashback, deposits,
+    instalments) next to a much larger price, and prefer the lower of a struck-through old price and the new one. */
+function pickCurrent(ps) {
+  if (!ps.length) return null;
+  const max = Math.max(...ps);
+  let q = ps.filter(p => !(max >= 150 && p < 0.1 * max)); if (!q.length) q = ps;
+  return q.length > 1 && q[1] < q[0] && q[1] / q[0] > 0.5 ? q[1] : q[0];
+}
+const STOP_SECTION = /(vergelijkbaar|andere klanten|ook interessant|gerelateerd|aanbevolen|accessoires|similar|related|recommended|you may also|customers also|produits similaires|vous aimerez|ähnliche|empfohlen|das könnte)/i;
+/** every euro amount from line i onward, until a "related products" style section starts */
+function collectPrices(lines, i, span = 40) {
+  const out = [];
+  for (let j = i; j < Math.min(lines.length, i + span); j++) {
+    if (j > i + 3 && STOP_SECTION.test(lines[j]) && lines[j].length < 80) break;
+    out.push(...pricesInLine(lines[j]));
+  }
+  return out;
+}
 const PRICE_ONLY = new RegExp(String.raw`^\W{0,3}(?:€|EUR)?\s*(?:${NUM})\s*(?:€|EUR)?\W{0,3}$`);
 /** A struck-through old price and the current price often sit on adjacent price-only lines. */
 function withSecondPrice(prices, lines, next, snippet) {
@@ -207,7 +225,7 @@ function listingsFromText(text, spec, retailerCond = "new") {
     prices = withSecondPrice(prices, lines, j, snippet);
     if (!prices.length) continue;
     // a struck-through old price + current price sit together: the lower of the first two is the current one
-    const price = prices.length > 1 && prices[1] / prices[0] > 0.5 && prices[1] < prices[0] ? prices[1] : prices[0];
+    const price = pickCurrent(prices);
     const key = tokens(line).join(" ") + "|" + price;
     if (seen.has(key)) continue; seen.add(key);
     out.push({ title: line, price, cond: v.cond, storage: v.storage, storageOk: !spec.storage || v.storage === spec.storage, evidence: snippet.join(" ⏎ ").slice(0, 260) });
@@ -240,16 +258,18 @@ function urlForTitle(raw, title, domain, origin) {
 }
 
 /** price on a product page's text: first valid current price within the first lines after the model title */
-function priceFromProductText(text, spec) {
+function priceFromProductText(text, spec, hint) {
   const lines = String(text || "").split(/\r?\n/).map(l => l.trim()).filter(Boolean);
   for (let i = 0; i < Math.min(lines.length, 80); i++) {
-    if (judge(spec, lines[i], "new").ok || judge({ ...spec, refurb: true }, lines[i], "new").ok) {
-      for (let j = i; j < Math.min(lines.length, i + 25); j++) {
-        let p = pricesInLine(lines[j]);
-        if (p.length) { const sn = lines.slice(i, j + 1); p = withSecondPrice(p, lines, j + 1, sn);
-          return { price: p.length > 1 && p[1] < p[0] && p[1] / p[0] > 0.5 ? p[1] : p[0], title: lines[i], evidence: sn.join(" ⏎ ").slice(0, 260) }; }
-      }
+    if (!(judge(spec, lines[i], "new").ok || judge({ ...spec, refurb: true }, lines[i], "new").ok)) continue;
+    const all = collectPrices(lines, i), evidence = lines.slice(i, i + 8).join(" ⏎ ").slice(0, 260);
+    if (!all.length) continue;
+    if (hint) {                                       // the product page must show a price close to what the search page showed
+      const near = all.filter(p => p >= hint * 0.6 && p <= hint * 1.2).sort((a, b) => Math.abs(a - hint) - Math.abs(b - hint) || a - b);
+      if (near.length) return { price: near[0], title: lines[i], evidence };
+      return { price: null, mismatch: true, observed: all.slice(0, 4), title: lines[i], evidence };
     }
+    return { price: pickCurrent(all), title: lines[i], evidence };
   }
   return null;
 }
@@ -298,4 +318,4 @@ function expandTemplate(tpl, q) {
 const GUESS_PATTERNS = { BE: ["/zoeken?q={q}", "/search?q={q}", "/recherche?q={q}"], NL: ["/zoeken?q={q}", "/search?q={q}", "/zoeken?query={q}"],
   FR: ["/recherche?q={q}", "/search?q={q}", "/catalogsearch/result/?q={q}"], DE: ["/suche?q={q}", "/search?q={q}", "/catalogsearch/result/?q={q}"] };
 
-if (typeof module !== "undefined") module.exports = { splitStorage, cleanStructure, shopBrand, storageStated, flagOutliers, parseStorage, normalize, tokens, parsePrice, pricesInLine, judge, searchQueries, identify, listingsFromText, urlForTitle, urlsFrom, priceFromProductText, expandTemplate, looksBlocked, GUESS_PATTERNS };
+if (typeof module !== "undefined") module.exports = { pickCurrent, collectPrices, splitStorage, cleanStructure, shopBrand, storageStated, flagOutliers, parseStorage, normalize, tokens, parsePrice, pricesInLine, judge, searchQueries, identify, listingsFromText, urlForTitle, urlsFrom, priceFromProductText, expandTemplate, looksBlocked, GUESS_PATTERNS };

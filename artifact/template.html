@@ -544,9 +544,10 @@ async function runShop(r, tab, spec, queries, opts) {
     if (!purl) why = "no product-page link found to confirm the price";
     else {
       try {
-        await tab.open(purl); let pt = await tab.text(); if (opts.cookies && !looksBlocked(pt)) pt = await consent(tab, purl, pt); const pp = priceFromProductText(pt, spec);
+        await tab.open(purl); let pt = await tab.text(); if (opts.cookies && !looksBlocked(pt)) pt = await consent(tab, purl, pt); const pp = priceFromProductText(pt, spec, l.price);          // the product page must agree with the listing's price
         url = purl; readAt = Date.now();
         if (!pp) why = "price not found on the product page";
+        else if (pp.mismatch) { evidence = pp.evidence; why = `the product page shows ${pp.observed.map(v => eur.format(v)).join(" / ")}, which does not match the search page's ${eur.format(l.price)}`; }
         else {
           evidence = pp.evidence; price = pp.price;
           if (Math.abs(pp.price - l.price) > 0.005) note = `search page showed ${eur.format(l.price)}`;

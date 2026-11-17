@@ -16,7 +16,7 @@ const ok = (c, m) => { console.log((c ? "PASS " : "FAIL ") + m); if (!c) process
   await p.waitForFunction(() => /^(\d+)\/\1 shops read/.test(document.querySelector("#progress").textContent) && !S.running, null, { timeout: 90000 });
   const rows = await p.evaluate(() => [...S.results.values()].map(r => ({ shop: r.rid, price: r.price, title: r.title, confirmed: r.confirmed, why: r.why })));
   const cb = rows.filter(r => r.shop === "coolblue-be");
-  ok(cb.length === 1 && cb[0].price === 1249 && cb[0].confirmed && /X10 Pro Max/.test(cb[0].title), "Coolblue.be: 'Oppo Find X10 Pro Max 512 Go' found via read_page and confirmed on its product page at 1249: " + JSON.stringify(cb));
+  ok(cb.length === 1 && cb[0].price === 1299 && cb[0].confirmed && /X10 Pro Max/.test(cb[0].title), "Coolblue.be: 'Oppo Find X10 Pro Max 512 Go' found via read_page and confirmed on its product page at 1299 (the €55 side amounts ignored): " + JSON.stringify(cb));
   ok(!rows.some(r => /Coque/.test(r.title)), "the accessory 'Coque pour Oppo Find X10 Pro' is not offered");
   const reps = await p.evaluate(() => Object.fromEntries([...S.reports].map(([k, v]) => [k, v.status])));
   ok(reps["apple-be"] === "skipped" && reps["samsung-be"] === "skipped", "Apple/Samsung brand stores are skipped for an Oppo search");

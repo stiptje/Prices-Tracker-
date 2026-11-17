@@ -11,7 +11,7 @@ const MOCK = () => {
     if (h === "coolblue.nl" && p.startsWith("/product/")) return `${filler}\nApple iPhone 15 Pro 256GB Zwart\n★★★★★ 4,8 (212)\n€ 1.199,00\n€ 1.089,00\nVandaag besteld, morgen in huis`;
     // JavaScript shop: get_page_text only returns a thin header, the results are only visible in read_page
     if (h === "coolblue.be" && p.includes("/zoeken")) return `Title: Zoeken | Coolblue URL: ${u} Source element: main`;
-    if (h === "coolblue.be" && p.includes("/produit/")) return `${filler}\nOppo Find X10 Pro Max 512 Go Gris 5G\n★★★★☆ 4,6\n€ 1.299,00\n€ 1.249,00\nEn stock`;
+    if (h === "coolblue.be" && p.includes("/produit/")) return `${filler}\nOppo Find X10 Pro Max 512 Go Gris 5G\n★★★★☆ 4,6 (55)\n€ 55 cashback à la reprise\n€ 55,-\n€ 1.349,00\n€ 1.299,00\nEn stock\nProduits similaires\nOppo Find X10 Pro 256 Go\n€ 899,00`;
     if (h === "cdiscount.com") return window.__cd.consent
       ? `Cdiscount\nRésultats pour iphone 15 pro\n${filler}\nApple iPhone 15 Pro 256 Go\n1 079,00 €\nLivraison offerte`
       : `Cdiscount ${filler}\nCookies et traceurs\nNous utilisons des cookies pour personnaliser votre expérience. Tout accepter / Continuer sans accepter ${filler}`;
