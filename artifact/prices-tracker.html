@@ -691,15 +691,18 @@ class Tab {
   constructor() { this.id = null; }
   async open(url) {
     S.tabs = (S.tabs || 0) + 1; this.id = null;
+    const host = hostOf(url).replace(/^www\./, "");
     for (let attempt = 0; ; attempt++) {
       try { this.id = findTabId(await Bridge.call("preview_start", { url })); return; }
       catch (e) {
         if (e?.pageChanged) { logDiag("preview_start", { url }, "page kept changing (redirects); reading it once it settles"); await sleep(2500); return; }
-        if (e?.code === "tool_error" && attempt < 2) {            // the app says: "Use read_page to check the pane, then retry"
-          logDiag("preview_start", { url }, `could not run on this page, checking the pane and retrying (${attempt + 1}/2)`);
-          await sleep(window.__ptBackoff ?? 2500); try { await Bridge.call("read_page", {}); } catch { /* best effort */ } continue;
-        }
-        throw e;
+        if (e?.code !== "tool_error") throw e;
+        // The app says: "preview_start could not run on this page. Use read_page to check the pane, then retry."
+        let pane = ""; try { pane = resText(await Bridge.call("read_page", {})); } catch { /* best effort */ }
+        logDiag("pane check", { url: host }, `${pane.length} chars · ${pane.slice(0, 160).replace(/\s+/g, " ") || "(empty)"}`);
+        if (pane.length > 200 && pane.toLowerCase().includes(host) && !looksBlocked(pane)) { logDiag("preview_start", { url }, "the page did open despite the error; reading it"); return; }   // opened anyway: use the active tab
+        if (attempt >= 1 || looksBlocked(pane)) throw Object.assign(e, { openRefused: true, pane: pane.slice(0, 140) });
+        await sleep(window.__ptBackoff ?? 2500);
       }
     }
   }
@@ -828,7 +831,7 @@ async function runShop(r, tab, spec, queries, opts) {
     for (const tpl of (working ? [working] : guesses)) {
       if (S.cancel) return finish("skipped", "stopped");
       const url = expandTemplate(tpl, q);
-      try { await tab.open(url); } catch (e) { if (e?.pageChanged) return finish("error", "the page kept redirecting or reloading (often a cookie banner or bot check)"); if (e?.code === "cancelled") throw new Declined(e, url); return finish("error", `the browser could not open the page (${e?.code || "error"}: ${String(e?.message || "").slice(0, 110)})`); }
+      try { await tab.open(url); } catch (e) { if (e?.openRefused) return finish("blocked", `the built-in browser refused to open this shop (“${String(e.message).slice(0, 90)}”). It probably blocks embedded browsers, so open it manually with the button on the right.${e.pane ? ` Pane showed: ${e.pane.replace(/\s+/g, " ")}` : ""}`); if (e?.pageChanged) return finish("error", "the page kept redirecting or reloading (often a cookie banner or bot check)"); if (e?.code === "cancelled") throw new Declined(e, url); return finish("error", `the browser could not open the page (${e?.code || "error"}: ${String(e?.message || "").slice(0, 110)})`); }
       let text; try { text = await tab.text(); } catch (e) { if (e?.pageChanged) return finish("error", "the page kept redirecting or reloading (often a cookie banner or bot check)"); if (e?.code === "cancelled") throw new Declined(e, url); return finish("error", `could not read the page (${e?.code || "error"})`); }
       if (opts.cookies && !looksBlocked(text)) text = await consent(tab, url, text);
       if (looksBlocked(text)) { blocked = true; if (working) break; continue; }
@@ -1024,7 +1027,7 @@ async function recheck(btn) {
   finally { S.running = false; renderResults(); setProgress(); }
 }
 
-const ST = { declined: "not approved", unconfirmed: "unconfirmed", ok: "price confirmed", no_match: "no exact match", blocked: "bot check", timeout: "timed out", error: "error", skipped: "not searched", nosearch: "no search URL" };
+const ST = { declined: "not approved", unconfirmed: "unconfirmed", ok: "price confirmed", no_match: "no exact match", blocked: "blocked", timeout: "timed out", error: "error", skipped: "not searched", nosearch: "no search URL" };
 function renderLog() {
   const rows = [...S.reports.values()].sort((a, b) => (a.status === "ok" ? 0 : 1) - (b.status === "ok" ? 0 : 1) || shopsById[a.id].name.localeCompare(shopsById[b.id].name));
   $("#logTable tbody").innerHTML = rows.map(rep => { const r = shopsById[rep.id], u = searchUrl(r, S.spec.name) || r.web;
