@@ -185,6 +185,8 @@ footer{padding-block:10px 40px}
     <div class="tablewrap"><table id="resTable"><thead><tr><th>#</th><th class="num">Price</th><th>Shop</th><th>Product as listed</th><th>Condition</th><th>Read</th><th></th></tr></thead><tbody></tbody></table></div>
     <p id="noFilt" class="empty" hidden></p>
     <p id="noRes" class="empty" hidden></p>
+    <div id="coverage" hidden></div>
+    <div id="btBox" hidden></div>
     <div id="manual" hidden></div>
     <details class="more" id="logBox"><summary>Shop-by-shop log <span id="logSummary" class="muted"></span></summary>
       <div class="tablewrap"><table id="logTable"><thead><tr><th>Shop</th><th>Status</th><th>Details</th><th class="num">Time</th><th></th></tr></thead><tbody></tbody></table></div></details>
@@ -236,7 +238,7 @@ const lsSet = (k, v) => { try { localStorage.setItem(k, JSON.stringify(v)); } ca
 
 const S = { countries: new Set(lsGet("pt.countries", Object.keys(COUNTRIES))), kinds: new Set(Object.keys(KINDS).filter(k => !DEFAULT_OFF.has(k))), shops: new Set(),
   cand: null, storage: null, aliases: [], models: [], results: new Map(), reports: new Map(), done: 0, total: 0, running: false, cancel: false, spec: null, opts: null,
-  discovered: lsGet("pt.discovered", {}), refused: lsGet("pt.refused", {}), openLog: [], pendingRef: [], controlOk: false, checks: lsGet("pt.checks", {}), sample: null, downloads: null };
+  discovered: lsGet("pt.discovered", {}), refused: lsGet("pt.refused", {}), works: lsGet("pt.works", {}), openLog: [], pendingRef: [], controlOk: false, checks: lsGet("pt.checks", {}), sample: null, downloads: null };
 
 /* ============================================================ browser bridge */
 const diag = [];
@@ -374,7 +376,7 @@ async function consent(tab, url, text) {
     refuses `navigate` from an artifact, so tabs cannot be reused; they stay open until you close them. */
 class Tab {
   constructor() { this.id = null; }
-  async open(url) {
+  async open(url, opts = {}) {
     S.tabs = (S.tabs || 0) + 1; this.id = null;
     const host = hostOf(url).replace(/^www\./, ""), t0 = Date.now();
     try { this.id = findTabId(await Bridge.call("preview_start", { url })); S.openLog.push({ host, ok: true, tabs: S.tabs, ms: Date.now() - t0 }); return; }
@@ -383,7 +385,7 @@ class Tab {
       if (e?.code !== "tool_error") throw e;
       // "preview_start could not run on this page. Use read_page to check the pane, then retry."  Retrying the same call never helped
       // in the field, so check the pane once: if the page did open anyway read it, otherwise the shop refuses the embedded browser.
-      let pane = ""; try { pane = resText(await Bridge.call("read_page", {})); } catch { /* best effort */ }
+      let pane = ""; if (opts.forcePane || (S.paneChecks = (S.paneChecks || 0) + 1) <= 3) { try { pane = resText(await Bridge.call("read_page", {})); } catch { /* best effort */ } }
       logDiag("pane check", { url: host }, `${pane.length} chars · ${pane.slice(0, 160).replace(/\s+/g, " ") || "(empty)"}`);
       if (pane.length > 200 && pane.toLowerCase().includes(host) && !looksBlocked(pane)) { logDiag("preview_start", { url }, "the page did open despite the error; reading it"); S.openLog.push({ host, ok: true, openedAnyway: true, tabs: S.tabs, ms: Date.now() - t0 }); return; }
       S.openLog.push({ host, ok: false, error: String(e.message).slice(0, 80), tabs: S.tabs, ms: Date.now() - t0 });
@@ -515,7 +517,7 @@ async function runShop(r, tab, spec, queries, opts) {
     for (const tpl of (working ? [working] : guesses)) {
       if (S.cancel) return finish("skipped", "stopped");
       const url = expandTemplate(tpl, q);
-      try { await tab.open(url); rep.opened = true; S.okUrl = origin + "/"; } catch (e) { if (e?.openRefused) { rep.refused = true; return finish("blocked", `the built-in browser refused to open this shop (the app said: “${String(e.message).split(".")[0].slice(0, 80)}”), probably bot protection. Open it yourself or paste its page text.`); } if (e?.pageChanged) return finish("error", "the page kept redirecting or reloading (often a cookie banner or bot check)"); if (e?.code === "cancelled") throw new Declined(e, url); return finish("error", `the browser could not open the page (${e?.code || "error"}: ${String(e?.message || "").slice(0, 110)})`); }
+      try { await tab.open(url); rep.opened = true; S.okUrl = origin + "/"; if (!S.works[r.id]) { S.works[r.id] = Date.now(); lsSet("pt.works", S.works); } } catch (e) { if (e?.openRefused) { rep.refused = true; return finish("blocked", `the built-in browser refused to open this shop (the app said: “${String(e.message).split(".")[0].slice(0, 80)}”), probably bot protection. Open it yourself or paste its page text.`); } if (e?.pageChanged) return finish("error", "the page kept redirecting or reloading (often a cookie banner or bot check)"); if (e?.code === "cancelled") throw new Declined(e, url); return finish("error", `the browser could not open the page (${e?.code || "error"}: ${String(e?.message || "").slice(0, 110)})`); }
       let text; try { text = await tab.text(); } catch (e) { if (e?.pageChanged) return finish("error", "the page kept redirecting or reloading (often a cookie banner or bot check)"); if (e?.code === "cancelled") throw new Declined(e, url); return finish("error", `could not read the page (${e?.code || "error"})`); }
       if (opts.cookies && !looksBlocked(text)) text = await consent(tab, url, text);
       if (looksBlocked(text)) { blocked = true; if (working) break; continue; }
@@ -582,9 +584,9 @@ async function startSearch() {
   const wantBrand = (spec.brand || "").toLowerCase(), isOther = r => wantBrand && shopBrand(r) && shopBrand(r) !== wantBrand;
   const retryRef = $("#optRetryRef").checked;
   const refusedSkip = retryRef ? [] : all.filter(r => !isOther(r) && refusedFresh(r.id));
-  const shops = all.filter(r => !isOther(r) && !refusedSkip.includes(r)), skipped = all.filter(isOther);
+  const shops = all.filter(r => !isOther(r) && !refusedSkip.includes(r)).sort((a, b) => (S.works[b.id] ? 1 : 0) - (S.works[a.id] ? 1 : 0)), skipped = all.filter(isOther);   // shops that opened before go first
   S.spec = spec; S.opts = { claude: !!S.sample && $("#optClaude").checked, all: $("#optAll").checked, cookies: $("#optCookies").checked };
-  S.results.clear(); S.reports.clear(); S.declined = []; S.tabs = 0; S.done = 0; S.total = shops.length; S.cancel = false; S.running = true;
+  S.results.clear(); S.reports.clear(); S.declined = []; S.tabs = 0; S.paneChecks = 0; S.done = 0; S.total = shops.length; S.cancel = false; S.running = true;
   $("#resultsCard").hidden = false; $("#resultsCard").scrollIntoView({ behavior: "smooth", block: "start" });
   $("#resTitle").textContent = `· ${S.cand.display}${S.storage ? " " + (S.storage >= 1024 ? S.storage / 1024 + " TB" : S.storage + " GB") : ""}`;
   $("#noRes").hidden = true; $("#logTable tbody").innerHTML = ""; $("#resTable tbody").innerHTML = ""; $("#manual").hidden = true; $("#stopBtn").hidden = false; $("#goBtn").disabled = true;
@@ -606,9 +608,15 @@ function commitRefused(shops) {
 }
 /** Re-open a page that worked a moment ago. If that works, the shops that were refused are blocking the embedded browser;
     if it fails too, the browser itself is stuck and the shops must not be blamed. */
+/** a page to re-open as the control: the last one that opened in this run, else a shop that opened before, else a neutral site */
+function controlUrl() {
+  if (S.okUrl) return S.okUrl;
+  const before = Object.keys(S.works).map(id => shopsById[id]).filter(Boolean).map(r => new URL(r.web).origin + "/")[0];
+  return before || "https://example.com/";
+}
 async function controlProbe() {
-  const url = S.okUrl || "https://www.coolblue.nl/";
-  try { await new Tab().open(url); logDiag("control test", { page: hostOf(url) }, "a page that normally opens did open: the browser works"); return true; }
+  const url = controlUrl();
+  try { await new Tab().open(url, { forcePane: true }); logDiag("control test", { page: hostOf(url) }, "a page that normally opens did open: the browser works"); return true; }
   catch (e) { logDiag("control test", { page: hostOf(url) }, `FAILED (${e?.code || e}): the browser itself is not opening pages`); return false; }
 }
 async function classifyRefusals() {
@@ -617,7 +625,7 @@ async function classifyRefusals() {
   return false;
 }
 async function runQueue() {
-  S.running = true; S.cancel = false; S.halted = false; S.declStreak = 0; S.pendingRef = []; S.controlOk = false; $("#haltBox").hidden = true; $("#stopBtn").hidden = false; $("#goBtn") && ($("#goBtn").disabled = true);
+  S.running = true; S.cancel = false; S.halted = false; S.declStreak = 0; S.pendingRef = []; S.controlOk = false; S.paneChecks = 0; $("#haltBox").hidden = true; $("#stopBtn").hidden = false; $("#goBtn") && ($("#goBtn").disabled = true);
   const tab = new Tab();
   while (S.queue.length && !S.cancel) {
     const r = S.queue[0]; let rep;
@@ -645,7 +653,7 @@ async function runQueue() {
 function showStuck() {
   const box = $("#haltBox"); box.hidden = false;
   box.innerHTML = `<div class="banner"><b>Paused: the built-in browser stopped opening pages.</b>
-    <p class="small" style="margin:6px 0">${S.stuckBack} shops in a row refused to open. I then tried a page that had opened fine moments ago (<code>${esc(hostOf(S.okUrl || "https://www.coolblue.nl/"))}</code>) and that failed too, so the problem is the browser pane, not those shops, and they are not marked as blocked.
+    <p class="small" style="margin:6px 0">${S.stuckBack} shops in a row refused to open. I then tried a page that had opened fine moments ago (<code>${esc(hostOf(controlUrl()))}</code>) and that failed too, so the problem is the browser pane, not those shops, and they are not marked as blocked.
     This page has opened ${S.tabs} tabs in the pane. Close them there (or restart the pane), then press Continue. ${S.queue.length} shop${S.queue.length === 1 ? "" : "s"} still to do.</p>
     <div class="row"><button class="primary" id="resumeBtn">Continue</button><button id="dropBtn">Stop here</button></div></div>`;
   $("#resumeBtn").onclick = () => runQueue();
@@ -667,8 +675,49 @@ function showHalt() {
   $("#manual").hidden = false;
 }
 function setProgress() { $("#progress").textContent = `${S.done}/${S.total} shops read · ${S.results.size} price${S.results.size === 1 ? "" : "s"}${S.tabs ? ` · ${S.tabs} tab${S.tabs === 1 ? "" : "s"} opened` : ""}`; $("#bar").style.width = (S.total ? 100 * S.done / S.total : 0) + "%"; }
+function renderCoverage() {
+  const box = $("#coverage"), reps = [...S.reports.values()];
+  const readable = reps.filter(r => r.opened).length, refused = reps.filter(r => r.refused || r.refusedBefore), names = a => a.map(r => shopsById[r.id].name).join(", ");
+  if (!reps.length || refused.length < 3) { box.hidden = true; return; }
+  box.hidden = false;
+  box.innerHTML = `<div class="banner"><b>${refused.length} of ${S.total} shops would not open in the built-in browser; ${readable} did.</b>
+    <p class="small" style="margin:6px 0">Refused: ${esc(names(refused))}. These were checked, not skipped by mistake: the Claude app answered “could not run on this page” for each, while other pages opened normally.
+    Use <b>Paste text</b> in the log below for the shops you care about, or run the browser test to see why they are refused.</p>
+    <div class="row"><button id="testBrowser" class="sm">Test the browser (about 30 s)</button></div></div>`;
+  $("#testBrowser").onclick = runBrowserTest;
+}
+/** Opens a few neutral sites and a few shops (homepage vs search page) and says what the pattern means. */
+async function runBrowserTest() {
+  if (Bridge.state !== "ready" || S.running) return;
+  const box = $("#btBox"); box.hidden = false; box.innerHTML = `<p class="muted small">Testing… each line opens one page in the built-in browser.</p>`;
+  const tests = [["neutral site", "https://example.com/"], ["neutral site", "https://www.wikipedia.org/"], ["opened before", "https://www.coolblue.be/"], ["opened before", "https://www.alternate.be/"],
+    ["refused shop, homepage", "https://www.boulanger.com/"], ["same shop, search page", "https://www.boulanger.com/resultats?tr=iphone"], ["refused shop, homepage", "https://www.fnac.com/"], ["refused shop, homepage", "https://www.amazon.fr/"], ["refused shop, homepage", "https://www.ldlc.com/"]];
+  S.running = true; S.browserTest = [];
+  for (const [label, url] of tests) {
+    const t = new Tab(); let row = { label, host: hostOf(url).replace(/^www\./, ""), url, ok: false, note: "" };
+    try { await t.open(url); row.ok = true; try { row.note = `${resText(await Bridge.call("get_page_text", t.id != null ? { tabId: t.id } : {})).length} characters of text`; } catch { row.note = "opened"; } }
+    catch (e) { row.note = `${e?.code || "error"}: ${String(e?.message || "").split(".")[0].slice(0, 70)}`; }
+    S.browserTest.push(row); drawBrowserTest(false);
+  }
+  S.running = false; drawBrowserTest(true);
+}
+function drawBrowserTest(done) {
+  const rows = S.browserTest, box = $("#btBox"), neutralOk = rows.filter(r => r.label === "neutral site" && r.ok).length, neutral = rows.filter(r => r.label === "neutral site").length;
+  const shopsFail = rows.filter(r => /shop/.test(r.label) && !r.ok), homeOk = rows.some(r => r.label === "refused shop, homepage" && r.ok), searchBad = rows.some(r => r.label === "same shop, search page" && !r.ok), searchOk = rows.some(r => r.label === "same shop, search page" && r.ok);
+  let verdict = "";
+  if (done) {
+    if (neutral && neutralOk === 0) verdict = "Even simple neutral sites were refused. That points to the Claude app only opening websites you have approved for the browser. Open one of the refused shops yourself in the browser pane, accept any prompt, and run a search again. (This is my reading of the pattern, not something the app states.)";
+    else if (shopsFail.length && !homeOk && !searchOk) verdict = "Neutral sites open but these shops do not, not even their homepage. So the shops (or the app's handling of them) refuse the embedded browser. This page cannot change that: use Paste text for the shops you need.";
+    else if (searchBad && homeOk) verdict = "The shop's homepage opens but its search address is refused: the search page is what is blocked. Paste text for that shop, or open its search yourself.";
+    else if (!shopsFail.length) verdict = "Every page in the test opened. If a search still reports refusals, run it again and copy the full report.";
+    else verdict = "Mixed result: see the table. Copy the full report and send it to me.";
+  }
+  box.innerHTML = `<table><thead><tr><th>Page</th><th>Opened</th><th>Detail</th></tr></thead><tbody>${rows.map(r => `<tr><td>${esc(r.host)}<br><span class="muted small">${esc(r.label)}</span></td><td class="st ${r.ok ? "ok" : "blocked"}">${r.ok ? "yes" : "refused"}</td><td class="small">${esc(r.note)}</td></tr>`).join("")}</tbody></table>${done ? `<p class="banner" style="margin-top:8px">${esc(verdict)}</p>` : ""}`;
+}
+
 function finishUi(noBridge) {
   setProgress();
+  if (!noBridge) renderCoverage();
   if (noBridge) { $("#noRes").hidden = false; $("#noRes").textContent = "Live reading is not available in this view (see the note at the top). Use the direct search links below to check the shops yourself."; $("#manual").hidden = false; return; }
   const nConf = [...S.results.values()].filter(r => r.confirmed).length;
   if (!S.results.size) { $("#noRes").hidden = false; $("#noRes").textContent = `No exact price found at ${S.reports.size} shop(s). The log below says why for each one.`; $("#logBox").open = true; }
@@ -819,7 +868,7 @@ function readPasted(id) {
 function buildReport() {
   return JSON.stringify({
     app: "Prices Tracker artifact", at: new Date().toISOString(), tools: Bridge.tools, argumentNames: Object.fromEntries(Object.entries(Bridge.schema).map(([k, v]) => [k, Object.keys(v?.properties || {})])),
-    tabsOpened: S.tabs || 0, rateLimitWaits: S.rateWaits || 0, controlTestPassed: S.controlOk, refusedBefore: Object.keys(S.refused),
+    browserTest: S.browserTest || null, opened_ok_before: Object.keys(S.works), tabsOpened: S.tabs || 0, rateLimitWaits: S.rateWaits || 0, controlTestPassed: S.controlOk, refusedBefore: Object.keys(S.refused),
     search: S.spec && { name: S.spec.name, loose: !!S.spec.loose, storage: S.spec.storage },
     shops: [...S.reports.values()].map(r => ({ id: r.id, status: r.status, opened: !!r.opened, refused: !!r.refused, ms: r.ms, message: String(r.message).slice(0, 220) })),
     opens: S.openLog, calls: diag.slice(0, 300),

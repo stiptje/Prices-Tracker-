@@ -37,7 +37,7 @@ const MOCK = () => {
           await new Promise(r => setTimeout(r, 5));
           if (tool === "navigate") throw err("cancelled", "The Artifact can't navigate that tab (the active one if none was named); open the site with preview_start instead.");
           if (tool === "preview_start") {
-            const now = Date.now(); window.__opens = (window.__opens || 0) + 1;
+            const now = Date.now(); window.__opens = (window.__opens || 0) + 1; (window.__urls = window.__urls || []).push(input.url);
             if (now - lastOpenAt < 40) { window.__rateLimited = (window.__rateLimited || 0) + 1; throw err("rate_limited", "Host tool rate limit exceeded — try again shortly."); }
             if (window.__forceRate === window.__opens) { window.__forceRate = null; window.__rateLimited = (window.__rateLimited || 0) + 1; throw err("rate_limited", "Host tool rate limit exceeded — try again shortly."); }
             lastOpenAt = now;
