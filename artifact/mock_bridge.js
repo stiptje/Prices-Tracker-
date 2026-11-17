@@ -45,7 +45,8 @@ const MOCK = () => {
             if ((d.at && d.at.includes(window.__opens)) || (d.from && window.__opens >= d.from && !d.off)) throw err("cancelled", "user declined");
             if (/cdiscount/.test(input.url)) { window.__cdNav = (window.__cdNav || 0) + 1; if (window.__cd.pcOnce) { window.__cd.pcOnce = false; throw err("cancelled", "The page changed; retry."); } }
             const TE = () => err("tool_error", "preview_start could not run on this page. Use read_page to check the pane, then retry.");
-            if (/ebay\.nl/.test(input.url)) throw TE();                                        // bot-protected shop: never opens
+            if (/ebay\.nl/.test(input.url) || (window.__refuse || []).some(h => input.url.includes(h))) throw TE();   // bot-protected shops: never open
+            if (window.__stuckFrom && window.__opens >= window.__stuckFrom && !window.__stuckOff) throw TE();   // the browser pane itself is stuck: nothing opens
             const id = nextTab++; cur[id] = input.url; window.__active = id;
             if (/mediamarkt\.nl/.test(input.url)) throw TE();                                  // error reported, but the page did open
             if (/alternate/.test(input.url)) throw err("cancelled", "The page changed; retry.");                  // redirecting shop: the tab still opens

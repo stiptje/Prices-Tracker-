@@ -102,6 +102,7 @@ code{font:12px var(--mono);word-break:break-all}
 .rfgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(185px,1fr));gap:8px 12px}
 .rfgrid label{display:grid;gap:3px;font:600 11px var(--font);text-transform:uppercase;letter-spacing:.05em;color:var(--muted);min-width:0}
 .rfgrid select,.rfgrid input{font:400 14px var(--font);text-transform:none;letter-spacing:0;color:var(--ink);width:100%}
+textarea{width:100%;min-width:0;padding:9px 11px;border-radius:8px;border:1px solid var(--line);background:var(--bg);color:var(--ink);font:12.5px/1.45 var(--mono);margin:6px 0}
 .price.dim{color:var(--muted)}.badge.bad{background:var(--bad-soft);color:var(--bad)}
 details.how{margin-top:3px}details.how>summary{cursor:pointer;font-size:12px;color:var(--muted)}
 .st.declined,.st.unconfirmed{color:var(--warn)}
@@ -139,6 +140,8 @@ footer{padding-block:10px 40px}
             <span class="hint">The page has to guess their search address: slower and more browser prompts. Off = only shops with a known one.</span></label>
           <label class="chk"><input type="checkbox" id="optCookies" checked> Accept only essential cookies automatically
             <span class="hint">Clicks “only necessary” or “reject all” on cookie banners, never “accept all”. The browser remembers the choice per shop.</span></label>
+          <label class="chk"><input type="checkbox" id="optRetryRef"> Retry shops the built-in browser refused before
+            <span class="hint">Shops that refuse to open in the embedded browser are remembered for 7 days and skipped. <button type="button" class="link" id="clearRef">Forget them now</button></span></label>
           <label class="chk"><input type="checkbox" id="optClaude" checked> Let Claude read pages my pattern matching cannot
             <span class="hint">Only prices literally present on the page are accepted.</span></label>
           <label class="chk"><input type="checkbox" id="optAll"> Try every alternate name at every shop
@@ -185,6 +188,9 @@ footer{padding-block:10px 40px}
     <div id="manual" hidden></div>
     <details class="more" id="logBox"><summary>Shop-by-shop log <span id="logSummary" class="muted"></span></summary>
       <div class="tablewrap"><table id="logTable"><thead><tr><th>Shop</th><th>Status</th><th>Details</th><th class="num">Time</th><th></th></tr></thead><tbody></tbody></table></div></details>
+    <div id="pasteBox" class="rf" hidden></div>
+    <div class="row" style="margin:10px 0 0"><button id="copyReport" class="sm">Copy full report</button><span id="reportNote" class="muted small">Something wrong? One click copies everything needed to diagnose it: each shop's outcome, tab counts and the last 300 browser calls. Paste it into the chat.</span></div>
+    <textarea id="reportBox" rows="6" hidden readonly></textarea>
     <details class="more"><summary>Diagnostics (browser tool calls)</summary>
       <p class="hint">The last calls to the built-in browser and what came back. Useful if a shop reads wrong.</p><pre class="diag" id="diag">no calls yet</pre></details>
   </div>
@@ -551,13 +557,13 @@ const lsSet = (k, v) => { try { localStorage.setItem(k, JSON.stringify(v)); } ca
 
 const S = { countries: new Set(lsGet("pt.countries", Object.keys(COUNTRIES))), kinds: new Set(Object.keys(KINDS).filter(k => !DEFAULT_OFF.has(k))), shops: new Set(),
   cand: null, storage: null, aliases: [], models: [], results: new Map(), reports: new Map(), done: 0, total: 0, running: false, cancel: false, spec: null, opts: null,
-  discovered: lsGet("pt.discovered", {}), checks: lsGet("pt.checks", {}), sample: null, downloads: null };
+  discovered: lsGet("pt.discovered", {}), refused: lsGet("pt.refused", {}), openLog: [], pendingRef: [], controlOk: false, checks: lsGet("pt.checks", {}), sample: null, downloads: null };
 
 /* ============================================================ browser bridge */
 const diag = [];
 function logDiag(tool, input, outcome) {
-  diag.unshift(`${new Date().toLocaleTimeString()}  ${tool} ${JSON.stringify(input).slice(0, 140)}\n   → ${outcome}`); diag.length = Math.min(diag.length, 30);
-  const el = $("#diag"); if (el) el.textContent = diag.join("\n");
+  diag.unshift(`${new Date().toLocaleTimeString()}  ${tool} ${JSON.stringify(input).slice(0, 140)}\n   → ${outcome}`); diag.length = Math.min(diag.length, 300);
+  const el = $("#diag"); if (el) el.textContent = diag.slice(0, 40).join("\n");
 }
 const OPEN_TOOLS = new Set(["preview_start"]);          // the app only lets an artifact open pages with preview_start (navigate is refused)
 class Declined extends Error {
@@ -691,19 +697,18 @@ class Tab {
   constructor() { this.id = null; }
   async open(url) {
     S.tabs = (S.tabs || 0) + 1; this.id = null;
-    const host = hostOf(url).replace(/^www\./, "");
-    for (let attempt = 0; ; attempt++) {
-      try { this.id = findTabId(await Bridge.call("preview_start", { url })); return; }
-      catch (e) {
-        if (e?.pageChanged) { logDiag("preview_start", { url }, "page kept changing (redirects); reading it once it settles"); await sleep(2500); return; }
-        if (e?.code !== "tool_error") throw e;
-        // The app says: "preview_start could not run on this page. Use read_page to check the pane, then retry."
-        let pane = ""; try { pane = resText(await Bridge.call("read_page", {})); } catch { /* best effort */ }
-        logDiag("pane check", { url: host }, `${pane.length} chars · ${pane.slice(0, 160).replace(/\s+/g, " ") || "(empty)"}`);
-        if (pane.length > 200 && pane.toLowerCase().includes(host) && !looksBlocked(pane)) { logDiag("preview_start", { url }, "the page did open despite the error; reading it"); return; }   // opened anyway: use the active tab
-        if (attempt >= 1 || looksBlocked(pane)) throw Object.assign(e, { openRefused: true, pane: pane.slice(0, 140) });
-        await sleep(window.__ptBackoff ?? 2500);
-      }
+    const host = hostOf(url).replace(/^www\./, ""), t0 = Date.now();
+    try { this.id = findTabId(await Bridge.call("preview_start", { url })); S.openLog.push({ host, ok: true, tabs: S.tabs, ms: Date.now() - t0 }); return; }
+    catch (e) {
+      if (e?.pageChanged) { logDiag("preview_start", { url }, "page kept changing (redirects); reading it once it settles"); await sleep(2500); S.openLog.push({ host, ok: true, redirected: true, tabs: S.tabs, ms: Date.now() - t0 }); return; }
+      if (e?.code !== "tool_error") throw e;
+      // "preview_start could not run on this page. Use read_page to check the pane, then retry."  Retrying the same call never helped
+      // in the field, so check the pane once: if the page did open anyway read it, otherwise the shop refuses the embedded browser.
+      let pane = ""; try { pane = resText(await Bridge.call("read_page", {})); } catch { /* best effort */ }
+      logDiag("pane check", { url: host }, `${pane.length} chars · ${pane.slice(0, 160).replace(/\s+/g, " ") || "(empty)"}`);
+      if (pane.length > 200 && pane.toLowerCase().includes(host) && !looksBlocked(pane)) { logDiag("preview_start", { url }, "the page did open despite the error; reading it"); S.openLog.push({ host, ok: true, openedAnyway: true, tabs: S.tabs, ms: Date.now() - t0 }); return; }
+      S.openLog.push({ host, ok: false, error: String(e.message).slice(0, 80), tabs: S.tabs, ms: Date.now() - t0 });
+      throw Object.assign(e, { openRefused: true, pane: pane.slice(0, 140) });
     }
   }
   async text() {
@@ -738,7 +743,7 @@ const visibleShops = () => RETAILERS.filter(r => S.countries.has(r.cc) && S.kind
 function renderShopList(keep) {
   const vis = visibleShops();
   S.shops = keep ? new Set([...S.shops].filter(id => vis.some(r => r.id === id))) : new Set(vis.map(r => r.id));
-  $("#shopList").innerHTML = vis.map(r => `<label title="${esc(r.web)}"><input type="checkbox" data-id="${r.id}" ${S.shops.has(r.id) ? "checked" : ""}> <span class="cc">${r.cc}</span>${esc(r.name)}</label>`).join("");
+  $("#shopList").innerHTML = vis.map(r => `<label title="${esc(r.web)}"><input type="checkbox" data-id="${r.id}" ${S.shops.has(r.id) ? "checked" : ""}> <span class="cc">${r.cc}</span>${esc(r.name)}${refusedFresh(r.id) ? ' <span class="muted small">· refused before</span>' : ""}</label>`).join("");
   $$("#shopList input").forEach(el => el.onchange = () => { el.checked ? S.shops.add(el.dataset.id) : S.shops.delete(el.dataset.id); updSummary(); });
   updSummary();
 }
@@ -831,7 +836,7 @@ async function runShop(r, tab, spec, queries, opts) {
     for (const tpl of (working ? [working] : guesses)) {
       if (S.cancel) return finish("skipped", "stopped");
       const url = expandTemplate(tpl, q);
-      try { await tab.open(url); } catch (e) { if (e?.openRefused) return finish("blocked", `the built-in browser refused to open this shop (“${String(e.message).slice(0, 90)}”). It probably blocks embedded browsers, so open it manually with the button on the right.${e.pane ? ` Pane showed: ${e.pane.replace(/\s+/g, " ")}` : ""}`); if (e?.pageChanged) return finish("error", "the page kept redirecting or reloading (often a cookie banner or bot check)"); if (e?.code === "cancelled") throw new Declined(e, url); return finish("error", `the browser could not open the page (${e?.code || "error"}: ${String(e?.message || "").slice(0, 110)})`); }
+      try { await tab.open(url); rep.opened = true; S.okUrl = origin + "/"; } catch (e) { if (e?.openRefused) { rep.refused = true; return finish("blocked", `the built-in browser refused to open this shop (the app said: “${String(e.message).split(".")[0].slice(0, 80)}”), probably bot protection. Open it yourself or paste its page text.`); } if (e?.pageChanged) return finish("error", "the page kept redirecting or reloading (often a cookie banner or bot check)"); if (e?.code === "cancelled") throw new Declined(e, url); return finish("error", `the browser could not open the page (${e?.code || "error"}: ${String(e?.message || "").slice(0, 110)})`); }
       let text; try { text = await tab.text(); } catch (e) { if (e?.pageChanged) return finish("error", "the page kept redirecting or reloading (often a cookie banner or bot check)"); if (e?.code === "cancelled") throw new Declined(e, url); return finish("error", `could not read the page (${e?.code || "error"})`); }
       if (opts.cookies && !looksBlocked(text)) text = await consent(tab, url, text);
       if (looksBlocked(text)) { blocked = true; if (working) break; continue; }
@@ -896,7 +901,9 @@ async function startSearch() {
   if (!S.cand || !S.shops.size || S.running) return;
   const spec = currentSpec(), queries = previewQueries(), all = [...S.shops].map(id => shopsById[id]);
   const wantBrand = (spec.brand || "").toLowerCase(), isOther = r => wantBrand && shopBrand(r) && shopBrand(r) !== wantBrand;
-  const shops = all.filter(r => !isOther(r)), skipped = all.filter(isOther);
+  const retryRef = $("#optRetryRef").checked;
+  const refusedSkip = retryRef ? [] : all.filter(r => !isOther(r) && refusedFresh(r.id));
+  const shops = all.filter(r => !isOther(r) && !refusedSkip.includes(r)), skipped = all.filter(isOther);
   S.spec = spec; S.opts = { claude: !!S.sample && $("#optClaude").checked, all: $("#optAll").checked, cookies: $("#optCookies").checked };
   S.results.clear(); S.reports.clear(); S.declined = []; S.tabs = 0; S.done = 0; S.total = shops.length; S.cancel = false; S.running = true;
   $("#resultsCard").hidden = false; $("#resultsCard").scrollIntoView({ behavior: "smooth", block: "start" });
@@ -905,14 +912,33 @@ async function startSearch() {
   renderManual(shops, queries[0]); setProgress();
   if (Bridge.state !== "ready") { S.running = false; $("#stopBtn").hidden = true; $("#goBtn").disabled = false; finishUi(true); return; }
   S.queue = [...shops]; S.queries = queries;
-  skipped.forEach(r => { S.reports.set(r.id, { id: r.id, status: "skipped", message: `brand store of ${shopBrand(r)}, not ${spec.brand}: not searched`, queries: [], ms: 0 }); S.done++; });
+  skipped.forEach(r => { S.reports.set(r.id, { id: r.id, status: "skipped", brandSkip: true, message: `brand store of ${shopBrand(r)}, not ${spec.brand}: not searched`, queries: [], ms: 0 }); S.done++; });
+  refusedSkip.forEach(r => { S.reports.set(r.id, { id: r.id, status: "skipped", refusedBefore: true, message: `the built-in browser refused this shop on ${new Date(S.refused[r.id]).toLocaleDateString()}, so it is not tried again for 7 days. Use “Open shop” or paste its page text.`, queries: [], ms: 0 }); S.done++; });
   S.total = all.length; setProgress(); renderLog();
   await runQueue();
 }
 /** One shop at a time in one browser tab. A refused browser action marks that shop "not approved" and moves on;
     three refusals in a row pause the run, because the Claude app is then clearly waiting for you. */
+const REFUSED_TTL = 7 * 864e5;
+const refusedFresh = id => { const t = S.refused[id]; return !!t && Date.now() - t < REFUSED_TTL; };
+function commitRefused(shops) {
+  for (const r of shops) { S.refused[r.id] = Date.now(); const rep = S.reports.get(r.id); if (rep && !/Remembered/.test(rep.message)) rep.message += " Remembered: skipped for 7 days."; }
+  lsSet("pt.refused", S.refused); renderLog(); renderShopList(true);
+}
+/** Re-open a page that worked a moment ago. If that works, the shops that were refused are blocking the embedded browser;
+    if it fails too, the browser itself is stuck and the shops must not be blamed. */
+async function controlProbe() {
+  const url = S.okUrl || "https://www.coolblue.nl/";
+  try { await new Tab().open(url); logDiag("control test", { page: hostOf(url) }, "a page that normally opens did open: the browser works"); return true; }
+  catch (e) { logDiag("control test", { page: hostOf(url) }, `FAILED (${e?.code || e}): the browser itself is not opening pages`); return false; }
+}
+async function classifyRefusals() {
+  if (await controlProbe()) { S.controlOk = true; commitRefused(S.pendingRef.splice(0)); return true; }
+  const back = S.pendingRef.splice(0); back.forEach(r => { S.reports.delete(r.id); S.done--; }); S.queue.unshift(...back); S.stuckBack = back.length; setProgress(); renderLog();
+  return false;
+}
 async function runQueue() {
-  S.running = true; S.cancel = false; S.halted = false; S.declStreak = 0; $("#haltBox").hidden = true; $("#stopBtn").hidden = false; $("#goBtn") && ($("#goBtn").disabled = true);
+  S.running = true; S.cancel = false; S.halted = false; S.declStreak = 0; S.pendingRef = []; S.controlOk = false; $("#haltBox").hidden = true; $("#stopBtn").hidden = false; $("#goBtn") && ($("#goBtn").disabled = true);
   const tab = new Tab();
   while (S.queue.length && !S.cancel) {
     const r = S.queue[0]; let rep;
@@ -921,16 +947,31 @@ async function runQueue() {
       if (e instanceof Declined) {
         S.declStreak++; S.last = e; (S.declined = S.declined || []).push(r.id);
         rep = { id: r.id, status: "declined", message: `the Claude app did not approve opening ${hostOf(e.url)} (error code “${e.code}”${e.detail ? `, message “${e.detail}”` : ""})`, queries: [], ms: 0 };
-        for (const t of [tab]) t.id = null;                        // next shop starts from a fresh tab
+        tab.id = null;
       } else rep = { id: r.id, status: "error", message: `internal error: ${e?.message || e}`, queries: [], ms: 0 };
     }
     S.queue.shift(); S.reports.set(r.id, rep); S.done++; setProgress(); renderLog();
-    if (S.declStreak >= 3) { S.halted = true; break; }
+    if (S.declStreak >= 3) { S.halted = "declined"; break; }
+    if (rep.refused) {
+      S.pendingRef.push(r);                                                         // blocked shop, or a stuck browser? every streak of 3 gets its own control test
+      if (S.pendingRef.length >= 3 && !(await classifyRefusals())) { S.halted = "stuck"; break; }
+    } else if (rep.opened) { S.controlOk = true; if (S.pendingRef.length) commitRefused(S.pendingRef.splice(0)); }   // another shop opened fine, so the earlier ones are site-specific
   }
+  if (!S.halted && S.pendingRef.length && !S.cancel && !(await classifyRefusals())) S.halted = "stuck";
   S.running = false; $("#stopBtn").hidden = true; $("#goBtn") && ($("#goBtn").disabled = false);
   if (S.cancel) S.queue = [];
-  if (S.halted || (S.declined || []).length) showHalt();
+  if (S.halted === "stuck") showStuck(); else if (S.halted || (S.declined || []).length) showHalt();
   if (!S.halted) finishUi(false);
+}
+function showStuck() {
+  const box = $("#haltBox"); box.hidden = false;
+  box.innerHTML = `<div class="banner"><b>Paused: the built-in browser stopped opening pages.</b>
+    <p class="small" style="margin:6px 0">${S.stuckBack} shops in a row refused to open. I then tried a page that had opened fine moments ago (<code>${esc(hostOf(S.okUrl || "https://www.coolblue.nl/"))}</code>) and that failed too, so the problem is the browser pane, not those shops, and they are not marked as blocked.
+    This page has opened ${S.tabs} tabs in the pane. Close them there (or restart the pane), then press Continue. ${S.queue.length} shop${S.queue.length === 1 ? "" : "s"} still to do.</p>
+    <div class="row"><button class="primary" id="resumeBtn">Continue</button><button id="dropBtn">Stop here</button></div></div>`;
+  $("#resumeBtn").onclick = () => runQueue();
+  $("#dropBtn").onclick = () => { S.queue = []; box.hidden = true; finishUi(false); };
+  $("#manual").hidden = false;
 }
 function showHalt() {
   const box = $("#haltBox"), n = (S.declined || []).length, e = S.last;
@@ -1033,7 +1074,8 @@ function renderLog() {
   $("#logTable tbody").innerHTML = rows.map(rep => { const r = shopsById[rep.id], u = searchUrl(r, S.spec.name) || r.web;
     return `<tr><td><span class="cc">${r.cc}</span>${esc(r.name)}</td><td class="st ${rep.status}">${ST[rep.status] || rep.status}</td>
       <td class="small">${esc(rep.message)}${rep.queries?.length ? `<br><span class="muted">searched: ${esc(rep.queries.join(" | "))}</span>` : ""}</td><td class="num muted small">${(rep.ms / 1000).toFixed(1)}s</td>
-      <td><a class="btn sm" href="${esc(u)}" target="_blank" rel="noopener noreferrer">Open shop ↗</a></td></tr>`; }).join("");
+      <td><a class="btn sm" href="${esc(u)}" target="_blank" rel="noopener noreferrer">Open shop ↗</a>${["blocked", "error", "nosearch", "skipped", "no_match"].includes(rep.status) && !rep.brandSkip ? ` <button class="sm paste" data-id="${r.id}">Paste text</button>` : ""}</td></tr>`; }).join("");
+  $$("#logTable .paste").forEach(b => b.onclick = () => openPaste(b.dataset.id));
   const c = {}; S.reports.forEach(r => c[r.status] = (c[r.status] || 0) + 1);
   $("#logSummary").textContent = "· " + Object.entries(c).map(([k, v]) => `${v} ${ST[k] || k}`).join(", ");
 }
@@ -1052,6 +1094,62 @@ function renderBridge() {
   set("warn", "live reading unavailable");
   note.hidden = false;
   note.innerHTML = `<div class="banner"><b>Live prices need the Claude desktop app.</b> ${esc(why)} This page reads each shop in the app's built-in browser, so it only works when the artifact is open in the Claude desktop app, by its owner, with the browser enabled. You can still identify the product and use the direct search links for every shop.</div>`;
+}
+
+/* ============================================================ paste mode */
+/** For shops the built-in browser cannot open: the person opens the shop in their own browser, copies the page text and
+    pastes it here; the same matcher reads it. Needs no browser permission at all. */
+function openPaste(id) {
+  const r = shopsById[id], u = searchUrl(r, S.spec.name) || r.web, box = $("#pasteBox");
+  box.hidden = false; box.dataset.id = id;
+  box.innerHTML = `<h3>Paste page text from ${esc(r.name)}</h3>
+    <ol class="small" style="margin:4px 0 8px;padding-left:18px"><li>Open the shop: <a class="btn sm" href="${esc(u)}" target="_blank" rel="noopener noreferrer">Open ${esc(r.name)} ↗</a></li>
+      <li>On that page press <b>Ctrl+A</b>, then <b>Ctrl+C</b> (<b>⌘A</b>, <b>⌘C</b> on a Mac).</li><li>Paste it below and press Read.</li></ol>
+    <div class="rfgrid"><label>What did you copy<select id="pasteKind"><option value="list">A search-results page</option><option value="product">One product page</option></select></label>
+      <label>Product page address (optional)<input type="text" id="pasteUrl" placeholder="https://…"></label></div>
+    <textarea id="pasteText" rows="8" placeholder="Paste the page text here" aria-label="Pasted page text"></textarea>
+    <div class="row"><button class="primary" id="pasteGo">Read pasted text</button><button id="pasteClose">Close</button><span id="pasteMsg" class="muted small"></span></div>`;
+  $("#pasteClose").onclick = () => { box.hidden = true; };
+  $("#pasteGo").onclick = () => readPasted(id);
+  box.scrollIntoView({ behavior: "smooth", block: "nearest" });
+}
+function readPasted(id) {
+  const r = shopsById[id], text = $("#pasteText").value, kind = $("#pasteKind").value, msg = $("#pasteMsg"), spec = S.spec;
+  if (text.trim().length < 40) { msg.textContent = "Paste the page text first."; return; }
+  const rc = r.cond === "refurbished" ? "refurbished" : "new", base = { rid: r.id, retailer: r.name, cc: r.cc, kind: r.kind, basis: r.basis, readAt: Date.now(), byClaude: false, pasted: true };
+  let n = 0;
+  if (kind === "product") {
+    const pp = priceFromProductText(text, spec);
+    if (!pp?.price) { msg.textContent = `I could not find “${spec.name}” with a price in that text. Is it the product page, and is it the model you chose?`; return; }
+    const v = judge(spec, pp.title, rc), url = $("#pasteUrl").value.trim() || r.web, stor = storageStated(spec, pp.title);
+    emit({ type: "result", result: { ...base, key: `${r.id}|${pp.title}|paste-p`, title: pp.title, price: pp.price, cond: v.cond || "new", storage: v.storage, url: /^https?:\/\//.test(url) ? url : r.web,
+      confirmed: stor, why: stor ? "" : `${spec.storage} GB is not stated in the pasted page`, evidence: "pasted by you · " + pp.evidence, note: "from a product page you pasted" } }); n = 1;
+  } else {
+    for (const l of listingsFromText(text, spec, rc).sort((a, b) => a.price - b.price).slice(0, 4)) {
+      emit({ type: "result", result: { ...base, key: `${r.id}|${l.title}|paste-l`, title: l.title, price: l.price, cond: l.cond, storage: l.storage, url: searchUrl(r, spec.name) || r.web, confirmed: false,
+        why: "you pasted a search-results page; the price is not confirmed on a product page", evidence: "pasted by you · " + l.evidence, note: "" } }); n++;
+    }
+  }
+  if (!n) { msg.textContent = `No listing in that text is exactly “${spec.name}”${spec.storage ? ` with ${spec.storage} GB` : ""}.`; return; }
+  const rep = S.reports.get(id); if (rep) { rep.status = kind === "product" ? "ok" : "unconfirmed"; rep.message = `${n} price(s) read from text you pasted.`; renderLog(); }
+  msg.textContent = `Added ${n} price${n === 1 ? "" : "s"} to the table${kind === "list" ? ". Choose “Include unconfirmed” in the filters to see search-page prices." : "."}`; $("#pasteText").value = "";
+  setProgress();
+}
+
+/* ============================================================ diagnostics report */
+function buildReport() {
+  return JSON.stringify({
+    app: "Prices Tracker artifact", at: new Date().toISOString(), tools: Bridge.tools, argumentNames: Object.fromEntries(Object.entries(Bridge.schema).map(([k, v]) => [k, Object.keys(v?.properties || {})])),
+    tabsOpened: S.tabs || 0, rateLimitWaits: S.rateWaits || 0, controlTestPassed: S.controlOk, refusedBefore: Object.keys(S.refused),
+    search: S.spec && { name: S.spec.name, loose: !!S.spec.loose, storage: S.spec.storage },
+    shops: [...S.reports.values()].map(r => ({ id: r.id, status: r.status, opened: !!r.opened, refused: !!r.refused, ms: r.ms, message: String(r.message).slice(0, 220) })),
+    opens: S.openLog, calls: diag.slice(0, 300),
+  }, null, 1);
+}
+async function copyReport() {
+  const text = buildReport(), box = $("#reportBox"), note = $("#reportNote");
+  try { await navigator.clipboard.writeText(text); note.textContent = "Copied. Paste it into the chat."; }
+  catch { box.hidden = false; box.value = text; box.focus(); box.select(); note.textContent = "Select all in the box below and copy it (Ctrl+C)."; }
 }
 
 /* ============================================================ database tab */
@@ -1103,7 +1201,8 @@ $$(".tab").forEach(b => b.onclick = () => { $$(".tab").forEach(x => x.setAttribu
 ["optEU", "optRefurb", "optNoUrl"].forEach(id => $("#" + id).onchange = () => renderShopList());
 $("#allShops").onclick = () => { visibleShops().forEach(r => S.shops.add(r.id)); renderShopList(true); };
 $("#noShops").onclick = () => { S.shops.clear(); renderShopList(true); };
-bindFilters(); $("#idForm").onsubmit = onIdentify; $("#stopBtn").onclick = () => { S.cancel = true; };
+bindFilters(); $("#copyReport").onclick = copyReport; $("#clearRef")?.addEventListener("click", () => { S.refused = {}; lsSet("pt.refused", {}); renderShopList(true); });
+$("#idForm").onsubmit = onIdentify; $("#stopBtn").onclick = () => { S.cancel = true; };
 (async () => {
   await Bridge.init(); renderBridge();
   try { S.sample = await window.claude?.use?.("sample"); } catch { S.sample = null; }
