@@ -57,6 +57,27 @@ t("identify", () => {
 });
 t("queries", () => { const q = C.searchQueries({ name: "Galaxy S24 Ultra", brand: "Samsung", aliases: ["Samsung Galaxy S24 Ultra"], models: ["SM-S928B"] }); assert.deepStrictEqual(q, ["Samsung Galaxy S24 Ultra", "Galaxy S24 Ultra", "SM-S928B"]); });
 
+t("loose free-text match (the Coolblue 'oppo x10' case)", () => {
+  const L = (o = {}) => ({ name: "oppo x10", brand: "Oppo", loose: true, aliases: [], models: [], ...o });
+  assert(C.judge(L(), "Oppo Find X10 Pro Max 512 Go Gris 5G").ok);
+  assert(C.judge(L({ storage: 512 }), "Oppo Find X10 Pro Max 512 Go Gris 5G").ok);
+  assert(!C.judge(L({ storage: 256 }), "Oppo Find X10 Pro Max 512 Go Gris 5G").ok);
+  assert(!C.judge(L(), "Hoesje voor Oppo Find X10 Pro").ok);
+  assert(!C.judge(L(), "Oppo A10 128GB").ok);
+  assert(!C.judge(L(), "Samsung Galaxy S24 Ultra").ok);
+  assert(!C.judge(L(), "Oppo Find X10 Pro Max Refurbished").ok);
+});
+t("splitStorage", () => {
+  assert.deepStrictEqual(C.splitStorage("oppo x10 512 gb"), { name: "oppo x10", storage: 512 });
+  assert.deepStrictEqual(C.splitStorage("iphone 15 pro 1TB black"), { name: "iphone 15 pro black", storage: 1024 });
+  assert.deepStrictEqual(C.splitStorage("oppo x10"), { name: "oppo x10", storage: null });
+});
+t("cleanStructure", () => {
+  const raw = `- link "Oppo Find X10 Pro Max 512 Go Gris 5G" [ref=e12] [cursor=pointer]:\n  - /url: /fr/produit/986601/oppo.html\n- text: 1 299,00 €\nbutton "Ajouter au panier" [ref_5]`;
+  const out = C.cleanStructure(raw).split("\n");
+  assert.deepStrictEqual(out, ["Oppo Find X10 Pro Max 512 Go Gris 5G", "text: 1 299,00 €".replace(/^text: /, ""), "Ajouter au panier"].map(x => x));
+});
+t("shopBrand", () => { assert.strictEqual(C.shopBrand({ id: "apple-nl", kind: "brand_store" }), "apple"); assert.strictEqual(C.shopBrand({ id: "coolblue-nl", kind: "online_electronics" }), ""); });
 const PAGE = `Coolblue
 Zoekresultaten voor iphone 15 pro
 Filters
@@ -93,6 +114,10 @@ t("storageStated / outliers", () => {
 t("relative product links", () => {
   const raw = `link "Apple iPhone 15 Pro 256GB Zwart" href="/product/123/apple-iphone-15-pro.html"`;
   assert.strictEqual(C.urlForTitle(raw, "Apple iPhone 15 Pro 256GB Zwart", "coolblue.nl", "https://www.coolblue.nl"), "https://www.coolblue.nl/product/123/apple-iphone-15-pro.html");
+});
+t("product link is the one AFTER the title, never the cart link before it", () => {
+  const raw = `- link "Panier" [ref=e3]:\n  - /url: /fr/panier\n- link "Oppo Find X10 Pro Max 512 Go Gris 5G" [ref=e12]:\n  - /url: /fr/produit/986601/oppo-find-x10-pro-max-512-go-gris-5g.html\n- link "Connexion":\n  - /url: /fr/login`;
+  assert.strictEqual(C.urlForTitle(raw, "Oppo Find X10 Pro Max 512 Go Gris 5G", "coolblue.be", "https://www.coolblue.be"), "https://www.coolblue.be/fr/produit/986601/oppo-find-x10-pro-max-512-go-gris-5g.html");
 });
 t("urlForTitle", () => {
   const raw = `link "Apple iPhone 15 Pro 256GB Zwart" href=https://www.coolblue.nl/product/123/apple-iphone-15-pro.html\nlink "Apple iPhone 15 Pro Max" https://www.coolblue.nl/product/999/max.html`;

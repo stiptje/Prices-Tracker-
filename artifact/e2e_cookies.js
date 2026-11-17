@@ -1,7 +1,6 @@
 // Cdiscount-like shop: first load fails with "cancelled · The page changed; retry." and shows a cookie wall.
 const { chromium } = require("playwright"); const fs = require("fs"); const path = require("path");
-const src = fs.readFileSync(path.join(__dirname, "e2e_mock.js"), "utf8");
-const MOCK = src.slice(src.indexOf("const MOCK = () => {") + "const MOCK = ".length, src.indexOf("(async () => {")).trim().replace(/;$/, "");
+const { MOCK } = require("./mock_bridge");
 const ok = (c, m) => { console.log((c ? "PASS " : "FAIL ") + m); if (!c) process.exitCode = 1; };
 const run = async (b, cookies) => {
   const p = await b.newPage({ viewport: { width: 1200, height: 900 } }); const errs = []; p.on("pageerror", e => errs.push(e.message));

@@ -85,7 +85,12 @@ function judge(spec, title, retailerCond = "new") {
   const norm = toks.join(" ");
   for (const ex of spec.exclude || []) { const et = tokens(ex); if (et.length && findSeq(toks, et) >= 0) return { ok: false, reason: "excluded term" }; }
   let pos = -1, matched = null, viaNum = false;
-  for (const s of nameSeqs(spec)) { const i = findSeq(toks, s); if (i >= 0) { pos = i; matched = s; break; } }
+  if (spec.loose) {                                   // free text: every word the user typed must be in the title, in any order
+    const need = tokens(spec.name);
+    const idx = need.map(t => toks.indexOf(t));
+    if (need.length && idx.every(i => i >= 0)) { pos = Math.min(...idx); matched = [toks[pos]]; viaNum = true; }
+  }
+  if (pos < 0) for (const s of nameSeqs(spec)) { const i = findSeq(toks, s); if (i >= 0) { pos = i; matched = s; break; } }
   if (pos < 0) for (const m of spec.models || []) { const s = tokens(m); const i = s.length ? findSeq(toks, s) : -1; if (i >= 0) { pos = i; matched = s; viaNum = true; break; } }
   if (pos < 0) return { ok: false, reason: "model not in title" };
   const end = pos + matched.length, own = new Set(tokens(spec.name));
@@ -222,13 +227,16 @@ function urlsFrom(raw, domain, origin) {
   return found;
 }
 /** nearest URL to where `title` occurs in `raw` (read_page / find output) */
+const NOISE_URL = /\/(cart|basket|panier|winkelwagen|warenkorb|checkout|login|account|compte|konto|wishlist|compare|help|contact|privacy|cookie)(\/|\?|$|\.)/i;
 function urlForTitle(raw, title, domain, origin) {
-  const urls = urlsFrom(raw, domain, origin); if (!urls.length) return null;
+  const urls = urlsFrom(raw, domain, origin).filter(u => !NOISE_URL.test(u.url)); if (!urls.length) return null;
   const at = String(raw).indexOf(title.slice(0, 30));
   if (at < 0) return null;
-  let best = null, bd = 900;
-  for (const u of urls) { const d = Math.abs(u.at - at); if (d < bd) { bd = d; best = u.url; } }
-  return best;
+  // in page-structure dumps a link's URL follows its label, so prefer the first URL after the title
+  const after = urls.filter(u => u.at >= at && u.at - at < 700).sort((a, b) => a.at - b.at)[0];
+  if (after) return after.url;
+  const before = urls.filter(u => u.at < at && at - u.at < 300).sort((a, b) => b.at - a.at)[0];   // "<a href=...>title</a>" style
+  return before ? before.url : null;
 }
 
 /** price on a product page's text: first valid current price within the first lines after the model title */
@@ -259,6 +267,30 @@ function flagOutliers(prices) {
   return p => p < med * 0.6;
 }
 
+/** "oppo x10 512 gb" -> { name: "oppo x10", storage: 512 } (the size becomes a filter, not part of the name) */
+function splitStorage(text) {
+  const norm = String(text || "");
+  const m = /(?:^|\s)(\d{1,4})\s?(gb|go|tb|to)\b/i.exec(norm);
+  if (!m) return { name: norm.trim(), storage: null };
+  const n = +m[1] * (/^t/i.test(m[2]) ? 1024 : 1);
+  return { name: (norm.slice(0, m.index) + " " + norm.slice(m.index + m[0].length)).replace(/\s+/g, " ").trim(), storage: n };
+}
+
+/** read_page output (an accessibility tree) -> plain visible-text lines, one per element label */
+function cleanStructure(t) {
+  return String(t || "").split(/\r?\n/).map(raw => {
+    const l = raw.replace(/^[\s\-*]+/, "");
+    if (/^\/?url\s*:/i.test(l)) return "";
+    const q = [...l.matchAll(/"([^"]{2,240})"/g)].map(m => m[1]);
+    if (q.length) return q.join(" ");
+    return l.replace(/\[[^\]]*\]/g, "").replace(/^(link|button|heading|text|img|image|generic|paragraph|listitem|StaticText|static text)\b\s*:?\s*/i, "").replace(/:$/, "").trim();
+  }).filter(Boolean).join("\n");
+}
+
+const STORE_BRANDS = new Set("apple samsung google xiaomi oneplus fairphone motorola honor huawei medion".split(" "));
+/** brand of a brand-store shop (id prefix), or "" for general retailers */
+const shopBrand = r => r.kind === "brand_store" ? (STORE_BRANDS.has(r.id.split("-")[0]) ? r.id.split("-")[0] : "") : "";
+
 function expandTemplate(tpl, q) {
   const dash = tokens(q).join("-") || encodeURIComponent(q);
   return tpl.replace("{q_path}", encodeURIComponent(q)).replace("{q_dash}", dash).replace("{q}", encodeURIComponent(q).replace(/%20/g, "+"));
@@ -266,4 +298,4 @@ function expandTemplate(tpl, q) {
 const GUESS_PATTERNS = { BE: ["/zoeken?q={q}", "/search?q={q}", "/recherche?q={q}"], NL: ["/zoeken?q={q}", "/search?q={q}", "/zoeken?query={q}"],
   FR: ["/recherche?q={q}", "/search?q={q}", "/catalogsearch/result/?q={q}"], DE: ["/suche?q={q}", "/search?q={q}", "/catalogsearch/result/?q={q}"] };
 
-if (typeof module !== "undefined") module.exports = { storageStated, flagOutliers, parseStorage, normalize, tokens, parsePrice, pricesInLine, judge, searchQueries, identify, listingsFromText, urlForTitle, urlsFrom, priceFromProductText, expandTemplate, looksBlocked, GUESS_PATTERNS };
+if (typeof module !== "undefined") module.exports = { splitStorage, cleanStructure, shopBrand, storageStated, flagOutliers, parseStorage, normalize, tokens, parsePrice, pricesInLine, judge, searchQueries, identify, listingsFromText, urlForTitle, urlsFrom, priceFromProductText, expandTemplate, looksBlocked, GUESS_PATTERNS };

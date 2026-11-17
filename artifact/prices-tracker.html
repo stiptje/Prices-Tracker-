@@ -295,7 +295,12 @@ function judge(spec, title, retailerCond = "new") {
   const norm = toks.join(" ");
   for (const ex of spec.exclude || []) { const et = tokens(ex); if (et.length && findSeq(toks, et) >= 0) return { ok: false, reason: "excluded term" }; }
   let pos = -1, matched = null, viaNum = false;
-  for (const s of nameSeqs(spec)) { const i = findSeq(toks, s); if (i >= 0) { pos = i; matched = s; break; } }
+  if (spec.loose) {                                   // free text: every word the user typed must be in the title, in any order
+    const need = tokens(spec.name);
+    const idx = need.map(t => toks.indexOf(t));
+    if (need.length && idx.every(i => i >= 0)) { pos = Math.min(...idx); matched = [toks[pos]]; viaNum = true; }
+  }
+  if (pos < 0) for (const s of nameSeqs(spec)) { const i = findSeq(toks, s); if (i >= 0) { pos = i; matched = s; break; } }
   if (pos < 0) for (const m of spec.models || []) { const s = tokens(m); const i = s.length ? findSeq(toks, s) : -1; if (i >= 0) { pos = i; matched = s; viaNum = true; break; } }
   if (pos < 0) return { ok: false, reason: "model not in title" };
   const end = pos + matched.length, own = new Set(tokens(spec.name));
@@ -432,13 +437,16 @@ function urlsFrom(raw, domain, origin) {
   return found;
 }
 /** nearest URL to where `title` occurs in `raw` (read_page / find output) */
+const NOISE_URL = /\/(cart|basket|panier|winkelwagen|warenkorb|checkout|login|account|compte|konto|wishlist|compare|help|contact|privacy|cookie)(\/|\?|$|\.)/i;
 function urlForTitle(raw, title, domain, origin) {
-  const urls = urlsFrom(raw, domain, origin); if (!urls.length) return null;
+  const urls = urlsFrom(raw, domain, origin).filter(u => !NOISE_URL.test(u.url)); if (!urls.length) return null;
   const at = String(raw).indexOf(title.slice(0, 30));
   if (at < 0) return null;
-  let best = null, bd = 900;
-  for (const u of urls) { const d = Math.abs(u.at - at); if (d < bd) { bd = d; best = u.url; } }
-  return best;
+  // in page-structure dumps a link's URL follows its label, so prefer the first URL after the title
+  const after = urls.filter(u => u.at >= at && u.at - at < 700).sort((a, b) => a.at - b.at)[0];
+  if (after) return after.url;
+  const before = urls.filter(u => u.at < at && at - u.at < 300).sort((a, b) => b.at - a.at)[0];   // "<a href=...>title</a>" style
+  return before ? before.url : null;
 }
 
 /** price on a product page's text: first valid current price within the first lines after the model title */
@@ -469,6 +477,30 @@ function flagOutliers(prices) {
   return p => p < med * 0.6;
 }
 
+/** "oppo x10 512 gb" -> { name: "oppo x10", storage: 512 } (the size becomes a filter, not part of the name) */
+function splitStorage(text) {
+  const norm = String(text || "");
+  const m = /(?:^|\s)(\d{1,4})\s?(gb|go|tb|to)\b/i.exec(norm);
+  if (!m) return { name: norm.trim(), storage: null };
+  const n = +m[1] * (/^t/i.test(m[2]) ? 1024 : 1);
+  return { name: (norm.slice(0, m.index) + " " + norm.slice(m.index + m[0].length)).replace(/\s+/g, " ").trim(), storage: n };
+}
+
+/** read_page output (an accessibility tree) -> plain visible-text lines, one per element label */
+function cleanStructure(t) {
+  return String(t || "").split(/\r?\n/).map(raw => {
+    const l = raw.replace(/^[\s\-*]+/, "");
+    if (/^\/?url\s*:/i.test(l)) return "";
+    const q = [...l.matchAll(/"([^"]{2,240})"/g)].map(m => m[1]);
+    if (q.length) return q.join(" ");
+    return l.replace(/\[[^\]]*\]/g, "").replace(/^(link|button|heading|text|img|image|generic|paragraph|listitem|StaticText|static text)\b\s*:?\s*/i, "").replace(/:$/, "").trim();
+  }).filter(Boolean).join("\n");
+}
+
+const STORE_BRANDS = new Set("apple samsung google xiaomi oneplus fairphone motorola honor huawei medion".split(" "));
+/** brand of a brand-store shop (id prefix), or "" for general retailers */
+const shopBrand = r => r.kind === "brand_store" ? (STORE_BRANDS.has(r.id.split("-")[0]) ? r.id.split("-")[0] : "") : "";
+
 function expandTemplate(tpl, q) {
   const dash = tokens(q).join("-") || encodeURIComponent(q);
   return tpl.replace("{q_path}", encodeURIComponent(q)).replace("{q_dash}", dash).replace("{q}", encodeURIComponent(q).replace(/%20/g, "+"));
@@ -476,7 +508,7 @@ function expandTemplate(tpl, q) {
 const GUESS_PATTERNS = { BE: ["/zoeken?q={q}", "/search?q={q}", "/recherche?q={q}"], NL: ["/zoeken?q={q}", "/search?q={q}", "/zoeken?query={q}"],
   FR: ["/recherche?q={q}", "/search?q={q}", "/catalogsearch/result/?q={q}"], DE: ["/suche?q={q}", "/search?q={q}", "/catalogsearch/result/?q={q}"] };
 
-if (typeof module !== "undefined") module.exports = { storageStated, flagOutliers, parseStorage, normalize, tokens, parsePrice, pricesInLine, judge, searchQueries, identify, listingsFromText, urlForTitle, urlsFrom, priceFromProductText, expandTemplate, looksBlocked, GUESS_PATTERNS };
+if (typeof module !== "undefined") module.exports = { splitStorage, cleanStructure, shopBrand, storageStated, flagOutliers, parseStorage, normalize, tokens, parsePrice, pricesInLine, judge, searchQueries, identify, listingsFromText, urlForTitle, urlsFrom, priceFromProductText, expandTemplate, looksBlocked, GUESS_PATTERNS };
 
 </script>
 <script>
@@ -541,8 +573,17 @@ const Bridge = {
     if (out.action && Array.isArray(en) && !en.includes(out.action)) out.action = en.find(x => /^(left_)?click$/.test(x)) || en.find(x => /click/.test(x) && !/double|right|triple|middle/.test(x)) || out.action;
     return out;
   },
+  last: { any: 0, open: 0 }, coolUntil: 0,
+  /** The app rate-limits host tools (a burst of preview_start calls was refused), so space calls out. */
+  async pace(tool) {
+    const gapOpen = window.__ptOpenGap ?? 2200, gapAny = window.__ptAnyGap ?? 500, now = Date.now();
+    const at = Math.max(this.coolUntil, this.last.any + gapAny, tool === "preview_start" ? this.last.open + gapOpen : 0);
+    if (at > now) await sleep(at - now);
+    this.last.any = Date.now(); if (tool === "preview_start") this.last.open = this.last.any;
+  },
   async call(tool, input) {
     for (let attempt = 0; ; attempt++) {
+      await this.pace(tool);
       try {
         // Opening a page may wait for the viewer to approve it in the Claude app, so it gets no deadline.
         // Reads get one of our own (not an AbortSignal: an aborted call is reported as "cancelled").
@@ -551,6 +592,10 @@ const Bridge = {
         logDiag(tool, input, `ok · ${resText(r).length} chars · ${resText(r).slice(0, 90).replace(/\s+/g, " ")}`);
         return r;
       } catch (e) {
+        if (e?.code === "rate_limited" && attempt < 5) {
+          const wait = Math.max(+e.retryAfterMs || 0, (window.__ptBackoff ?? 4000) * (attempt + 1)); this.coolUntil = Date.now() + wait;
+          logDiag(tool, input, `rate limited, waiting ${(wait / 1000).toFixed(1)} s (retry ${attempt + 1}/5)`); S.rateWaits = (S.rateWaits || 0) + 1; continue;
+        }
         if (isPageChanged(e) && attempt < 2) { logDiag(tool, input, `page changed, retrying (${attempt + 1}/2)`); await sleep(1200 * (attempt + 1)); continue; }
         logDiag(tool, input, `ERROR ${e?.code || ""} ${String(e?.message || e).slice(0, 160)}`);
         if (isPageChanged(e)) e.pageChanged = true;
@@ -577,7 +622,7 @@ function findTabId(r) {
   (function walk(o) { if (found != null || !o || typeof o !== "object") return;
     for (const [k, v] of Object.entries(o)) { if (/^tab_?id$/i.test(k) && (typeof v === "number" || typeof v === "string")) { found = v; return; } walk(v); } })(r?.payload ?? r?.structuredContent);
   if (found != null) return found;
-  const m = /tab[\s_-]?id\D{0,6}(\d+)/i.exec(resText(r)); return m ? +m[1] : null;
+  const m = /tab[\s_-]?id\W{0,3}([A-Za-z]*[-_]?\d+)/i.exec(resText(r)); return m ? m[1] : null;     // keep the app's own form, e.g. "tab-8"
 }
 /* ---- cookie banners: accept ONLY essential cookies (or reject all); never "accept all" ---- */
 const CONSENT_HINT = /cookie|consent|toestemming|einwilligung|datenschutz|consentement|privacy/i;
@@ -626,17 +671,28 @@ class Tab {
   constructor() { this.id = null; }
   async open(url) {
     S.tabs = (S.tabs || 0) + 1; this.id = null;
-    try { this.id = findTabId(await Bridge.call("preview_start", { url })); }
-    catch (e) { if (!e?.pageChanged) throw e; logDiag("preview_start", { url }, "page kept changing (redirects); reading it once it settles"); await sleep(2500); }
+    for (let attempt = 0; ; attempt++) {
+      try { this.id = findTabId(await Bridge.call("preview_start", { url })); return; }
+      catch (e) {
+        if (e?.pageChanged) { logDiag("preview_start", { url }, "page kept changing (redirects); reading it once it settles"); await sleep(2500); return; }
+        if (e?.code === "tool_error" && attempt < 2) {            // the app says: "Use read_page to check the pane, then retry"
+          logDiag("preview_start", { url }, `could not run on this page, checking the pane and retrying (${attempt + 1}/2)`);
+          await sleep(window.__ptBackoff ?? 2500); try { await Bridge.call("read_page", {}); } catch { /* best effort */ } continue;
+        }
+        throw e;
+      }
+    }
   }
   async text() {
     for (let round = 0; ; round++) {
       try {
-        let t = "";
-        for (let i = 0; i < 4; i++) {
+        let t = "", same = 0, prev = -1;
+        for (let i = 0; i < 8; i++) {
           t = resText(await Bridge.call("get_page_text", this.id != null ? { tabId: this.id } : {}));
-          if (t.length > 600 || looksBlocked(t)) break;
-          await sleep(1500);                                          // JavaScript-rendered results need a moment
+          if (looksBlocked(t) || t.length > 2500) break;
+          same = t.length === prev ? same + 1 : 0; prev = t.length;
+          if (same >= 2 && t.length > 150) break;                       // unchanged for two more reads: it has settled
+          await sleep(window.__ptSettle ?? 1500);                       // JavaScript-rendered results need a moment
         }
         return t;
       } catch (e) { if (e?.pageChanged && round < 2) { await sleep(3000); continue; } throw e; }
@@ -666,7 +722,7 @@ function renderShopList(keep) {
 function updSummary() { const n = S.shops.size; $("#selSummary").textContent = `· ${n} shop${n === 1 ? "" : "s"} selected`; const b = $("#goBtn"); if (b) b.disabled = !n || S.running; }
 
 /* ============================================================ identify → confirm */
-const currentSpec = () => ({ name: S.cand.name, brand: S.cand.brand || "", aliases: [...S.aliases], models: [...S.models], allow: S.cand.allow || [], storage: S.storage || null, refurb: $("#optRefurb").checked });
+const currentSpec = () => ({ loose: S.cand.kind === "custom", name: S.cand.name, brand: S.cand.brand || "", aliases: [...S.aliases], models: [...S.models], allow: S.cand.allow || [], storage: S.storage || null, refurb: $("#optRefurb").checked });
 async function onIdentify(e) {
   e.preventDefault();
   const q = $("#q").value.trim(); if (!q) return;
@@ -685,7 +741,14 @@ function drawCands() {
     <span class="conf">${x.kind === "custom" ? "exactly as typed" : x.kind === "ai" ? "AI" : Math.round(x.confidence * 100) + "% match"}</span></button>`).join("");
   $$("#candList .cand").forEach(el => el.onclick = () => pickCand(+el.dataset.i));
 }
-function pickCand(i) { S.cand = S.cands[i]; S.storage = null; S.aliases = [...(S.cand.aliases || [])]; S.models = [...(S.cand.models || [])]; drawCands(); renderConfirm(); }
+function pickCand(i) {
+  S.cand = S.cands[i]; S.storage = null; S.aliases = [...(S.cand.aliases || [])]; S.models = [...(S.cand.models || [])];
+  if (S.cand.kind === "custom") {                              // "oppo x10 512 gb" -> name "oppo x10" + a 512 GB filter; the full text stays as an alternate search string
+    const sp = splitStorage(S.cand.name);
+    if (sp.storage) { S.storage = sp.storage; S.aliases = [S.cand.name]; S.cand = { ...S.cand, name: sp.name, storage: [] }; }
+  }
+  drawCands(); renderConfirm();
+}
 async function askClaude() {
   const b = $("#askClaude"), note = $("#askNote"); b.disabled = true; note.textContent = "asking…";
   try {
@@ -699,7 +762,9 @@ function previewQueries() { return searchQueries({ name: S.cand.name, brand: S.c
 function renderConfirm() {
   const c = S.cand, box = $("#confirm"); box.hidden = false; box.className = "confirm";
   box.innerHTML = `<h3>Confirm: ${esc(c.display)}</h3>
-    <p class="hint">I search this exact model, not its Pro / Max / Plus / Ultra siblings, and not cases or accessories.</p>
+    ${c.kind === "custom"
+      ? `<p class="hint">This name is not in my catalog, so I keep every listing that contains all your words${S.storage ? ` and ${S.storage >= 1024 ? S.storage / 1024 + " TB" : S.storage + " GB"} of storage` : ""} (so “${esc(c.name)}” also finds “Oppo Find X10 Pro Max”). Cases and accessories are still left out. Check the product name in each row.</p>`
+      : `<p class="hint">I search this exact model, not its Pro / Max / Plus / Ultra siblings, and not cases or accessories.</p>`}
     ${c.storage?.length ? `<div><b>Storage</b> <span class="hint">(optional)</span><div class="row" id="stor" style="margin:6px 0"><button type="button" class="pick" aria-pressed="true" data-s="">Any</button>${c.storage.map(s => `<button type="button" class="pick" aria-pressed="false" data-s="${s}">${s >= 1024 ? s / 1024 + " TB" : s + " GB"}</button>`).join("")}</div></div>` : ""}
     <div><b>Alternate names I will also search</b><div class="chips" id="aliasChips"></div>
       <form class="row" id="aliasForm"><input type="text" id="aliasIn" placeholder="add an alternate name or model number…" aria-label="Alternate name"><button class="sm">Add</button></form></div>
@@ -743,19 +808,23 @@ async function runShop(r, tab, spec, queries, opts) {
     for (const tpl of (working ? [working] : guesses)) {
       if (S.cancel) return finish("skipped", "stopped");
       const url = expandTemplate(tpl, q);
-      try { await tab.open(url); } catch (e) { if (e?.pageChanged) return finish("error", "the page kept redirecting or reloading (often a cookie banner or bot check)"); if (e?.code === "cancelled") throw new Declined(e, url); return finish("error", `browser could not open the page (${e?.code || "error"})`); }
+      try { await tab.open(url); } catch (e) { if (e?.pageChanged) return finish("error", "the page kept redirecting or reloading (often a cookie banner or bot check)"); if (e?.code === "cancelled") throw new Declined(e, url); return finish("error", `the browser could not open the page (${e?.code || "error"}: ${String(e?.message || "").slice(0, 110)})`); }
       let text; try { text = await tab.text(); } catch (e) { if (e?.pageChanged) return finish("error", "the page kept redirecting or reloading (often a cookie banner or bot check)"); if (e?.code === "cancelled") throw new Declined(e, url); return finish("error", `could not read the page (${e?.code || "error"})`); }
       if (opts.cookies && !looksBlocked(text)) text = await consent(tab, url, text);
       if (looksBlocked(text)) { blocked = true; if (working) break; continue; }
-      if (text.length < 200) continue;
+      // get_page_text can return only a thin header for JavaScript shops, so also read the page structure before judging the page empty
+      const rc = r.cond === "refurbished" ? "refurbished" : "new";
+      let list = listingsFromText(text, spec, rc), struct = "";
+      if (!list.length || text.length < 600) { struct = await tab.structure(); if (struct && !list.length) list = listingsFromText(cleanStructure(struct), spec, rc); }
+      const body = text + "\n" + cleanStructure(struct);
+      if (body.trim().length < 80) continue;
       if (!working) {                                       // a guessed pattern counts only if the page echoes the search term back
-        if (!echoes(text, q)) continue;
+        if (!echoes(body, q)) continue;
         working = tpl; S.discovered[r.id] = tpl; lsSet("pt.discovered", S.discovered);
       }
       sawPage = true;
-      let list = listingsFromText(text, spec, r.cond === "refurbished" ? "refurbished" : "new");
       if (!list.length && opts.claude && tokens(text).join(" ").includes(tokens(spec.name)[0] || "~")) list = await readByClaude(text, spec, r);
-      if (list.length) { found = list; usedUrl = url; rawStruct = await tab.structure(); if (!opts.all) break outer; }
+      if (list.length) { found = list; usedUrl = url; rawStruct = struct || await tab.structure(); if (!opts.all) break outer; }
     }
     if (!working) break;                                     // guessed patterns are tried once, not once per alias
   }
@@ -801,7 +870,9 @@ function emit(ev) {
 
 async function startSearch() {
   if (!S.cand || !S.shops.size || S.running) return;
-  const spec = currentSpec(), queries = previewQueries(), shops = [...S.shops].map(id => shopsById[id]);
+  const spec = currentSpec(), queries = previewQueries(), all = [...S.shops].map(id => shopsById[id]);
+  const wantBrand = (spec.brand || "").toLowerCase(), isOther = r => wantBrand && shopBrand(r) && shopBrand(r) !== wantBrand;
+  const shops = all.filter(r => !isOther(r)), skipped = all.filter(isOther);
   S.spec = spec; S.opts = { claude: !!S.sample && $("#optClaude").checked, all: $("#optAll").checked, cookies: $("#optCookies").checked };
   S.results.clear(); S.reports.clear(); S.declined = []; S.tabs = 0; S.done = 0; S.total = shops.length; S.cancel = false; S.running = true;
   $("#resultsCard").hidden = false; $("#resultsCard").scrollIntoView({ behavior: "smooth", block: "start" });
@@ -810,6 +881,8 @@ async function startSearch() {
   renderManual(shops, queries[0]); setProgress();
   if (Bridge.state !== "ready") { S.running = false; $("#stopBtn").hidden = true; $("#goBtn").disabled = false; finishUi(true); return; }
   S.queue = [...shops]; S.queries = queries;
+  skipped.forEach(r => { S.reports.set(r.id, { id: r.id, status: "skipped", message: `brand store of ${shopBrand(r)}, not ${spec.brand}: not searched`, queries: [], ms: 0 }); S.done++; });
+  S.total = all.length; setProgress(); renderLog();
   await runQueue();
 }
 /** One shop at a time in one browser tab. A refused browser action marks that shop "not approved" and moves on;
@@ -930,7 +1003,7 @@ async function recheck(btn) {
   finally { S.running = false; renderResults(); setProgress(); }
 }
 
-const ST = { declined: "not approved", unconfirmed: "unconfirmed", ok: "price confirmed", no_match: "no exact match", blocked: "bot check", timeout: "timed out", error: "error", skipped: "stopped", nosearch: "no search URL" };
+const ST = { declined: "not approved", unconfirmed: "unconfirmed", ok: "price confirmed", no_match: "no exact match", blocked: "bot check", timeout: "timed out", error: "error", skipped: "not searched", nosearch: "no search URL" };
 function renderLog() {
   const rows = [...S.reports.values()].sort((a, b) => (a.status === "ok" ? 0 : 1) - (b.status === "ok" ? 0 : 1) || shopsById[a.id].name.localeCompare(shopsById[b.id].name));
   $("#logTable tbody").innerHTML = rows.map(rep => { const r = shopsById[rep.id], u = searchUrl(r, S.spec.name) || r.web;

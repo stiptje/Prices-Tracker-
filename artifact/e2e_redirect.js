@@ -2,8 +2,7 @@
 //  * `navigate` is refused ("The Artifact can't navigate that tab ... use preview_start") and reported as code "cancelled";
 //  * an Alternate-like shop answers every load with "The page changed; retry." although the page does open.
 const { chromium } = require("playwright"); const fs = require("fs"); const path = require("path");
-const src = fs.readFileSync(path.join(__dirname, "e2e_mock.js"), "utf8");
-const MOCK = src.slice(src.indexOf("const MOCK = () => {") + "const MOCK = ".length, src.indexOf("(async () => {")).trim().replace(/;$/, "");
+const { MOCK } = require("./mock_bridge");
 const ok = (c, m) => { console.log((c ? "PASS " : "FAIL ") + m); if (!c) process.exitCode = 1; };
 (async () => {
   const b = await chromium.launch(), p = await b.newPage({ viewport: { width: 1200, height: 900 } }), errs = []; p.on("pageerror", e => errs.push(e.message));
