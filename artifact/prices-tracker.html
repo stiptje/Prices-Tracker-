@@ -163,7 +163,7 @@ footer{padding-block:10px 40px}
       <div class="row"><span id="progress" class="muted small"></span><button id="stopBtn" class="sm" hidden>Stop</button></div></div>
     <div class="meter"><div id="bar"></div></div>
     <div id="haltBox" hidden></div>
-    <p class="hint">Each price was read from the shop's own page in your built-in browser at the time shown. Nothing is stored or reused between searches.</p>
+    <p class="hint">Each price was read from the shop's own page in your built-in browser at the time shown. Nothing is stored or reused between searches. Every page opens in its own tab of that browser, which you can close afterwards.</p>
     <div id="resFilters" class="rf" hidden>
       <div class="row"><span class="lab">Country</span><span id="rfCountry" class="row"></span></div>
       <div class="rfgrid">
@@ -507,14 +507,14 @@ function logDiag(tool, input, outcome) {
   diag.unshift(`${new Date().toLocaleTimeString()}  ${tool} ${JSON.stringify(input).slice(0, 140)}\n   → ${outcome}`); diag.length = Math.min(diag.length, 30);
   const el = $("#diag"); if (el) el.textContent = diag.join("\n");
 }
-const OPEN_TOOLS = new Set(["preview_start", "navigate"]);
+const OPEN_TOOLS = new Set(["preview_start"]);          // the app only lets an artifact open pages with preview_start (navigate is refused)
 class Declined extends Error {
   constructor(e, url) { super("browser action not approved"); this.name = "Declined"; this.code = e?.code || "cancelled"; this.detail = String(e?.message || "").slice(0, 160); this.url = url || ""; }
 }
 const hostOf = u => { try { return new URL(u).hostname; } catch { return u || "the page"; } };
 /** The Claude app reports "cancelled · The page changed; retry." when a shop redirects or reloads mid-load
     (cookie banners, bot checks). That is not a refusal: wait a moment and repeat the call. */
-const isPageChanged = e => e?.code === "cancelled" && /page changed|retry|redirect|navigat|reload/i.test(String(e?.message || ""));
+const isPageChanged = e => e?.code === "cancelled" && /the page changed/i.test(String(e?.message || ""));
 const Bridge = {
   mcp: null, state: "checking", tools: [], schema: {},
   async init() {
@@ -609,7 +609,7 @@ async function clickEssential(tab) {
   }
   if (!ref) { logDiag("cookies", {}, "no essential-only cookie button found"); return false; }
   try { await Bridge.call("computer", Bridge.argsFor("computer", { action: "left_click", ref, ...idArg })); logDiag("cookies", { ref }, "clicked essential-only"); return true; }
-  catch (e) { logDiag("cookies", { ref }, "click failed: " + (e?.code || e)); return false; }
+  catch (e) { if (e?.pageChanged) { logDiag("cookies", { ref }, "clicked (the page reloaded, as expected)"); return true; } logDiag("cookies", { ref }, "click failed: " + (e?.code || e)); return false; }
 }
 const S_consent = {};
 async function consent(tab, url, text) {
@@ -620,21 +620,27 @@ async function consent(tab, url, text) {
   S_consent[dom] = "done"; await sleep(1200);
   try { const t2 = await tab.text(); return t2.length > 200 ? t2 : text; } catch { return text; }
 }
+/** Every page is opened with preview_start (a new tab each time, which returns its tabId). The built-in browser
+    refuses `navigate` from an artifact, so tabs cannot be reused; they stay open until you close them. */
 class Tab {
   constructor() { this.id = null; }
   async open(url) {
-    if (this.id == null) { const r = await Bridge.call("preview_start", { url }); this.id = findTabId(r); return; }
-    try { await Bridge.call("navigate", { url, tabId: this.id }); }
-    catch (e) { if (e?.code === "tool_error" || e?.code === "bad_request") { const r = await Bridge.call("preview_start", { url }); const id = findTabId(r); if (id != null) this.id = id; } else throw e; }
+    S.tabs = (S.tabs || 0) + 1; this.id = null;
+    try { this.id = findTabId(await Bridge.call("preview_start", { url })); }
+    catch (e) { if (!e?.pageChanged) throw e; logDiag("preview_start", { url }, "page kept changing (redirects); reading it once it settles"); await sleep(2500); }
   }
   async text() {
-    let t = "";
-    for (let i = 0; i < 4; i++) {
-      t = resText(await Bridge.call("get_page_text", this.id != null ? { tabId: this.id } : {}));
-      if (t.length > 600 || looksBlocked(t)) break;
-      await sleep(1500);                                              // JavaScript-rendered results need a moment
+    for (let round = 0; ; round++) {
+      try {
+        let t = "";
+        for (let i = 0; i < 4; i++) {
+          t = resText(await Bridge.call("get_page_text", this.id != null ? { tabId: this.id } : {}));
+          if (t.length > 600 || looksBlocked(t)) break;
+          await sleep(1500);                                          // JavaScript-rendered results need a moment
+        }
+        return t;
+      } catch (e) { if (e?.pageChanged && round < 2) { await sleep(3000); continue; } throw e; }
     }
-    return t;
   }
   async structure() { try { return resText(await Bridge.call("read_page", this.id != null ? { tabId: this.id } : {})); } catch { return ""; } }
 }
@@ -762,7 +768,7 @@ async function runShop(r, tab, spec, queries, opts) {
   // Take the cheapest few listings and try to confirm each one on its own product page.
   // Only a price read on the product page, for the right storage size, counts as confirmed.
   found.sort((a, b) => a.price - b.price);
-  const picks = found.slice(0, 4), origin2 = new URL(r.web).origin;
+  const picks = found.slice(0, 2), origin2 = new URL(r.web).origin;
   for (const l of picks) {
     if (S.cancel) break;
     let price = l.price, url = usedUrl, evidence = l.evidence, readAt = Date.now(), note = "", confirmed = false, why = "";
@@ -797,7 +803,7 @@ async function startSearch() {
   if (!S.cand || !S.shops.size || S.running) return;
   const spec = currentSpec(), queries = previewQueries(), shops = [...S.shops].map(id => shopsById[id]);
   S.spec = spec; S.opts = { claude: !!S.sample && $("#optClaude").checked, all: $("#optAll").checked, cookies: $("#optCookies").checked };
-  S.results.clear(); S.reports.clear(); S.declined = []; S.done = 0; S.total = shops.length; S.cancel = false; S.running = true;
+  S.results.clear(); S.reports.clear(); S.declined = []; S.tabs = 0; S.done = 0; S.total = shops.length; S.cancel = false; S.running = true;
   $("#resultsCard").hidden = false; $("#resultsCard").scrollIntoView({ behavior: "smooth", block: "start" });
   $("#resTitle").textContent = `· ${S.cand.display}${S.storage ? " " + (S.storage >= 1024 ? S.storage / 1024 + " TB" : S.storage + " GB") : ""}`;
   $("#noRes").hidden = true; $("#logTable tbody").innerHTML = ""; $("#resTable tbody").innerHTML = ""; $("#manual").hidden = true; $("#stopBtn").hidden = false; $("#goBtn").disabled = true;
@@ -843,7 +849,7 @@ function showHalt() {
   $("#dropBtn").onclick = () => { if (S.halted) S.queue = []; S.declined = []; box.hidden = true; finishUi(false); };
   $("#manual").hidden = false;
 }
-function setProgress() { $("#progress").textContent = `${S.done}/${S.total} shops read · ${S.results.size} price${S.results.size === 1 ? "" : "s"}`; $("#bar").style.width = (S.total ? 100 * S.done / S.total : 0) + "%"; }
+function setProgress() { $("#progress").textContent = `${S.done}/${S.total} shops read · ${S.results.size} price${S.results.size === 1 ? "" : "s"}${S.tabs ? ` · ${S.tabs} tab${S.tabs === 1 ? "" : "s"} opened` : ""}`; $("#bar").style.width = (S.total ? 100 * S.done / S.total : 0) + "%"; }
 function finishUi(noBridge) {
   setProgress();
   if (noBridge) { $("#noRes").hidden = false; $("#noRes").textContent = "Live reading is not available in this view (see the note at the top). Use the direct search links below to check the shops yourself."; $("#manual").hidden = false; return; }

@@ -16,7 +16,7 @@ const settled = p => p.waitForFunction(() => /^(\d+)\/\1 shops read/.test(docume
   ok(/unconfirmed hidden/.test(await p.$eval("#rfCount", e => e.textContent)), "count line says unconfirmed prices are hidden");
   await p.selectOption("#rfConf", "all");
   rows = await p.$$eval("#resTable tbody tr", t => t.map(r => r.innerText.replace(/\s+/g, " ")));
-  ok(rows.length === 3 && rows.filter(x => /Not confirmed: no product-page link/.test(x)).length === 2, "include-unconfirmed shows Amazon and Cdiscount, each with the reason (" + rows.length + " rows)");
+  ok(rows.length === 4 && rows.filter(x => /Not confirmed: no product-page link/.test(x)).length === 3, "include-unconfirmed shows Amazon, Cdiscount and Alternate, each with the reason (" + rows.length + " rows)");
   await p.click('#rfCountry [data-c="NL"]');
   ok((await p.$$eval("#resTable tbody tr", t => t.length)) === 1, "deselecting NL leaves only the French shop");
   for (const c of ["BE", "FR", "DE"]) await p.click(`#rfCountry [data-c="${c}"]`);
@@ -26,7 +26,7 @@ const settled = p => p.waitForFunction(() => /^(\d+)\/\1 shops read/.test(docume
   await p.fill("#rfMin", "1100"); ok((await p.$$eval("#resTable tbody tr", t => t.length)) === 0, "min price 1100 hides the 1,089 offer"); await p.fill("#rfMin", "");
   await p.selectOption("#rfConf", "all"); await p.fill("#rfText", "amazon"); ok((await p.$$eval("#resTable tbody tr", t => t.length)) === 1, "text filter 'amazon' leaves one row"); await p.fill("#rfText", "");
   await p.click("#rfCsv"); await p.waitForTimeout(200);
-  const saved = await p.evaluate(() => window.__saved); ok(saved && /^prices-.*\.csv$/.test(saved.filename) && saved.data.split("\n").length === 4, "export of shown prices: " + saved?.filename + ", " + saved?.data.split("\n").length + " lines");
+  const saved = await p.evaluate(() => window.__saved); ok(saved && /^prices-.*\.csv$/.test(saved.filename) && saved.data.split("\n").length === 5, "export of shown prices: " + saved?.filename + ", " + saved?.data.split("\n").length + " lines");
   ok(p.errs.length === 0, "no page errors " + JSON.stringify(p.errs));
   await p.screenshot({ path: process.argv[2] || "shot-filters.png", fullPage: true }); await p.close();
 

@@ -11,6 +11,7 @@ const MOCK = () => {
     if (h === "cdiscount.com") return window.__cd.consent
       ? `Cdiscount\nRésultats pour iphone 15 pro\n${filler}\nApple iPhone 15 Pro 256 Go\n1 079,00 €\nLivraison offerte`
       : `Cdiscount ${filler}\nCookies et traceurs\nNous utilisons des cookies pour personnaliser votre expérience. Tout accepter / Continuer sans accepter ${filler}`;
+    if (h === "alternate.nl") return `Alternate\nZoekresultaten\n${filler}\nApple iPhone 15 Pro 256GB Zwart\n€ 1.049,-\nOp voorraad`;
     if (h === "mediamarkt.nl") return "Please complete the captcha to continue";
     if (h === "bol.com") return `bol\nZoekresultaten voor ${url.searchParams.get("searchtext")}\n${filler}\nSamsung Galaxy S24 Ultra 256GB\n€ 899,00`;
     if (h === "amazon.nl") return `Amazon.nl Resultaten voor ${url.searchParams.get("k")}\n${filler}\nApple iPhone 15 Pro (256 GB) - Titanium Blauw\n€1.075,00\nGratis bezorging`;
@@ -29,14 +30,17 @@ const MOCK = () => {
         try { await new Promise(r => setTimeout(r, 5));
         if ((tool === "navigate" || tool === "preview_start") && /cdiscount/.test(input.url)) window.__cdNav = (window.__cdNav || 0) + 1;
         if ((tool === "navigate" || tool === "preview_start") && /cdiscount/.test(input.url) && window.__cd.pcOnce) { window.__cd.pcOnce = false; throw Object.assign(new Error("The page changed; retry."), { code: "cancelled" }); }
-        if (tool === "navigate" || tool === "preview_start") { window.__opens = (window.__opens || 0) + 1;
+        if (tool === "navigate" || tool === "preview_start") { window.__navCalls = (window.__navCalls || 0) + (tool === "navigate" ? 1 : 0); window.__opens = (window.__opens || 0) + 1;
           const d = window.__decline || {};
           if ((d.at && d.at.includes(window.__opens)) || (d.from && window.__opens >= d.from && !d.off)) throw Object.assign(new Error("user declined"), { code: "cancelled" }); }
-        if (tool === "preview_start") { const id = nextTab++; cur[id] = input.url; return { payload: { tabId: id, url: input.url }, content: [{ type: "text", text: "opened" }] }; }
-        if (tool === "navigate") { cur[input.tabId] = input.url; return text("navigated"); }
-        if (tool === "get_page_text") return text(pages(cur[input.tabId]));
+        if (tool === "preview_start") { const id = nextTab++; cur[id] = input.url; window.__active = id;
+          if (/alternate/.test(input.url)) throw Object.assign(new Error("The page changed; retry."), { code: "cancelled" });     // redirecting shop: the tab still opens
+          return { payload: { tabId: id, url: input.url }, content: [{ type: "text", text: "opened" }] }; }
+        if (tool === "navigate") throw Object.assign(new Error("The Artifact can't navigate that tab (the active one if none was named); open the site with preview_start instead."), { code: "cancelled" });
+        if (tool === "get_page_text") { input = { tabId: window.__active, ...input }; if (/alternate/.test(cur[input.tabId]) && (window.__altReads = (window.__altReads || 0) + 1) <= 3) throw Object.assign(new Error("The page changed; retry."), { code: "cancelled" }); return text(pages(cur[input.tabId])); }
         if (tool === "computer") { window.__clicks.push(input); if (input.ref === "ref_9") window.__cd.consent = true; return text("clicked"); }
         if (tool === "find") return text("");
+        if (tool === "read_page") input = { tabId: window.__active, ...input };
         if (tool === "read_page" && /cdiscount/.test(cur[input.tabId]) && !window.__cd.consent) return text(`button "Tout accepter" [ref_8]\nbutton "Continuer sans accepter" [ref_9]\nlink "Mentions légales" [ref_3]`);
         if (tool === "read_page") return text(cur[input.tabId].includes("/zoeken") && cur[input.tabId].includes("coolblue") ? `link "Apple iPhone 15 Pro 256GB Zwart" https://www.coolblue.nl/product/123/apple-iphone-15-pro.html\nlink "Apple iPhone 15 Pro Max 256GB" https://www.coolblue.nl/product/999/max.html` : "");
         throw Object.assign(new Error("unknown tool"), { code: "bad_request" });
