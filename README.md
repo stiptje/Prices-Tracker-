@@ -62,4 +62,4 @@ An artifact page cannot fetch other websites itself, so it reads each shop throu
 (`host:claude_browser`, owner only). It opens the shop's search page, reads the page text, applies the same strict model matcher,
 then tries to confirm the price on the product page. Prices must literally appear on the page; Claude is only a fallback reader and
 its numbers are re-checked against the page text. Outside the desktop app it falls back to direct search links per shop.
-Tests: `node artifact/test_core.js` (42) and `node artifact/e2e_mock_main.js` (17 UI checks against a *mocked* browser bridge: filters, refused approvals, pause/continue).
+Tests: `node artifact/test_core.js` (42) and `node artifact/e2e_mock_main.js` and `node artifact/e2e_cookies.js` (26 UI checks against a *mocked* browser bridge: filters, refused approvals, pause/continue, page-changed retries, essential-only cookies).

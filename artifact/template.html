@@ -137,6 +137,8 @@ footer{padding-block:10px 40px}
             <span class="hint">Off = new devices only; refurbished-only shops are skipped.</span></label>
           <label class="chk"><input type="checkbox" id="optNoUrl"> Include shops without a known search URL
             <span class="hint">The page has to guess their search address: slower and more browser prompts. Off = only shops with a known one.</span></label>
+          <label class="chk"><input type="checkbox" id="optCookies" checked> Accept only essential cookies automatically
+            <span class="hint">Clicks “only necessary” or “reject all” on cookie banners, never “accept all”. The browser remembers the choice per shop.</span></label>
           <label class="chk"><input type="checkbox" id="optClaude" checked> Let Claude read pages my pattern matching cannot
             <span class="hint">Only prices literally present on the page are accepted.</span></label>
           <label class="chk"><input type="checkbox" id="optAll"> Try every alternate name at every shop
@@ -241,8 +243,11 @@ class Declined extends Error {
   constructor(e, url) { super("browser action not approved"); this.name = "Declined"; this.code = e?.code || "cancelled"; this.detail = String(e?.message || "").slice(0, 160); this.url = url || ""; }
 }
 const hostOf = u => { try { return new URL(u).hostname; } catch { return u || "the page"; } };
+/** The Claude app reports "cancelled · The page changed; retry." when a shop redirects or reloads mid-load
+    (cookie banners, bot checks). That is not a refusal: wait a moment and repeat the call. */
+const isPageChanged = e => e?.code === "cancelled" && /page changed|retry|redirect|navigat|reload/i.test(String(e?.message || ""));
 const Bridge = {
-  mcp: null, state: "checking", tools: [],
+  mcp: null, state: "checking", tools: [], schema: {},
   async init() {
     try { this.mcp = await window.claude?.use?.("mcp"); } catch { this.mcp = null; }
     if (!this.mcp) { this.state = "none"; return; }
@@ -251,18 +256,38 @@ const Bridge = {
       const s = (l.servers || []).find(x => x.server === SERVER);
       if (!s || !s.tools?.length) { this.state = "nohost"; return; }
       this.tools = s.tools.map(t => t.name); this.state = "ready";
-    } catch (e) { this.state = e?.code === "server_not_connected" ? "nohost" : "error"; this.err = e; }
+    } catch (e) { this.state = e?.code === "server_not_connected" ? "nohost" : "error"; this.err = e; return; }
+    for (const t of ["find", "computer"]) if (this.tools.includes(t)) {            // learn the real argument names instead of guessing
+      try { this.schema[t] = (await this.mcp.describeTool(SERVER, t))?.inputSchema || null; logDiag("describeTool", { t }, "ok · " + Object.keys(this.schema[t]?.properties || {}).join(", ")); }
+      catch (e) { logDiag("describeTool", { t }, `no schema (${e?.code || "error"})`); }
+    }
+  },
+  argsFor(tool, want) {
+    const props = this.schema[tool]?.properties;
+    if (!props) return { ...want };
+    const names = Object.keys(props), out = {};
+    const alias = { query: ["query", "description", "text", "prompt", "element", "target"], ref: ["ref", "reference", "element_ref", "elementRef"], tabId: ["tabId", "tab_id"], action: ["action"] };
+    for (const [k, v] of Object.entries(want)) { const key = (alias[k] || [k]).find(n => names.includes(n)); if (key) out[key] = v; }
+    const en = props.action?.enum;
+    if (out.action && Array.isArray(en) && !en.includes(out.action)) out.action = en.find(x => /^(left_)?click$/.test(x)) || en.find(x => /click/.test(x) && !/double|right|triple|middle/.test(x)) || out.action;
+    return out;
   },
   async call(tool, input) {
-    try {
-      // Opening a page may wait for the viewer to approve it in the Claude app, so it gets no deadline.
-      // Reads get one of our own (not an AbortSignal: an aborted call is reported as "cancelled", which
-      // is also what a refused approval looks like).
-      const p = this.mcp.callTool(SERVER, tool, input, { cache: false });
-      const r = OPEN_TOOLS.has(tool) ? await p : await Promise.race([p, new Promise((_, rej) => setTimeout(() => rej({ code: "timeout", message: "no answer in 90 s" }), 90000))]);
-      logDiag(tool, input, `ok · ${resText(r).length} chars · ${resText(r).slice(0, 90).replace(/\s+/g, " ")}`);
-      return r;
-    } catch (e) { logDiag(tool, input, `ERROR ${e?.code || ""} ${String(e?.message || e).slice(0, 160)}`); throw e; }
+    for (let attempt = 0; ; attempt++) {
+      try {
+        // Opening a page may wait for the viewer to approve it in the Claude app, so it gets no deadline.
+        // Reads get one of our own (not an AbortSignal: an aborted call is reported as "cancelled").
+        const p = this.mcp.callTool(SERVER, tool, input, { cache: false });
+        const r = OPEN_TOOLS.has(tool) ? await p : await Promise.race([p, new Promise((_, rej) => setTimeout(() => rej({ code: "timeout", message: "no answer in 90 s" }), 90000))]);
+        logDiag(tool, input, `ok · ${resText(r).length} chars · ${resText(r).slice(0, 90).replace(/\s+/g, " ")}`);
+        return r;
+      } catch (e) {
+        if (isPageChanged(e) && attempt < 2) { logDiag(tool, input, `page changed, retrying (${attempt + 1}/2)`); await sleep(1200 * (attempt + 1)); continue; }
+        logDiag(tool, input, `ERROR ${e?.code || ""} ${String(e?.message || e).slice(0, 160)}`);
+        if (isPageChanged(e)) e.pageChanged = true;
+        throw e;
+      }
+    }
   },
 };
 function resText(r) {
@@ -284,6 +309,47 @@ function findTabId(r) {
     for (const [k, v] of Object.entries(o)) { if (/^tab_?id$/i.test(k) && (typeof v === "number" || typeof v === "string")) { found = v; return; } walk(v); } })(r?.payload ?? r?.structuredContent);
   if (found != null) return found;
   const m = /tab[\s_-]?id\D{0,6}(\d+)/i.exec(resText(r)); return m ? +m[1] : null;
+}
+/* ---- cookie banners: accept ONLY essential cookies (or reject all); never "accept all" ---- */
+const CONSENT_HINT = /cookie|consent|toestemming|einwilligung|datenschutz|consentement|privacy/i;
+const ESSENTIAL = [
+  /alleen (de )?(strikt )?(noodzakelijke|essenti[eë]le|functionele|vereiste)/i, /(noodzakelijke|essenti[eë]le|functionele) cookies? (alleen|accepteren)/i,
+  /uniquement (les )?cookies? (essentiels|n[eé]cessaires|strictement)/i, /cookies? (essentiels|n[eé]cessaires) uniquement/i, /continuer sans accepter/i, /seulement les cookies/i,
+  /nur (technisch |die )?(notwendige|erforderliche|essenzielle|essentielle|notwendigen)/i, /(notwendige|erforderliche|essenzielle) (cookies )?(akzeptieren|erlauben)?\s*$/i,
+  /(necessary|essential|required|functional|strictly necessary) (cookies )?only/i, /only (necessary|essential|required)/i, /(reject|decline|refuse|deny) (all|optional|non-essential)/i,
+  /(alles|alle|tout|toutes?) (cookies )?(weigeren|ablehnen|refuser)/i, /^\W*(weigeren|ablehnen|refuser|decline|reject)\W*$/i,
+];
+const isEssentialLabel = l => l.length < 90 && ESSENTIAL.some(re => re.test(l));
+const REF_RE = /\bref_\d+\b|\[(\d{1,6})\]/;
+const firstRef = t => { const m = REF_RE.exec(t || ""); return m ? (m[0].startsWith("[") ? m[1] : m[0]) : null; };
+function pickConsentRef(structure) {
+  for (const line of String(structure || "").split(/\r?\n/)) {
+    if (!REF_RE.test(line)) continue;
+    const quoted = /"([^"]{2,90})"/.exec(line), label = quoted ? quoted[1] : line.replace(REF_RE, "").trim();
+    if (/button|link|role|clickable|^\s*[-*]/i.test(line) || quoted) if (isEssentialLabel(label)) return firstRef(line);
+  }
+  return null;
+}
+async function clickEssential(tab) {
+  if (!Bridge.tools.includes("computer")) { logDiag("cookies", {}, "skipped: the click tool is not available"); return false; }
+  const idArg = tab.id != null ? { tabId: tab.id } : {};
+  let ref = pickConsentRef(await tab.structure());
+  if (!ref && Bridge.tools.includes("find")) {
+    try { ref = firstRef(resText(await Bridge.call("find", Bridge.argsFor("find", { query: "the button that accepts ONLY essential / necessary cookies, or rejects all cookies (never the accept-all button)", ...idArg })))); }
+    catch (e) { logDiag("cookies", {}, "find failed: " + (e?.code || e)); }
+  }
+  if (!ref) { logDiag("cookies", {}, "no essential-only cookie button found"); return false; }
+  try { await Bridge.call("computer", Bridge.argsFor("computer", { action: "left_click", ref, ...idArg })); logDiag("cookies", { ref }, "clicked essential-only"); return true; }
+  catch (e) { logDiag("cookies", { ref }, "click failed: " + (e?.code || e)); return false; }
+}
+const S_consent = {};
+async function consent(tab, url, text) {
+  const dom = hostOf(url).replace(/^www\./, "");
+  if (S_consent[dom] === "done" || (S_consent[dom] || 0) >= 2 || !CONSENT_HINT.test(text.slice(0, 6000))) return text;
+  S_consent[dom] = (S_consent[dom] || 0) + 1;
+  if (!(await clickEssential(tab))) return text;
+  S_consent[dom] = "done"; await sleep(1200);
+  try { const t2 = await tab.text(); return t2.length > 200 ? t2 : text; } catch { return text; }
 }
 class Tab {
   constructor() { this.id = null; }
@@ -402,8 +468,9 @@ async function runShop(r, tab, spec, queries, opts) {
     for (const tpl of (working ? [working] : guesses)) {
       if (S.cancel) return finish("skipped", "stopped");
       const url = expandTemplate(tpl, q);
-      try { await tab.open(url); } catch (e) { if (e?.code === "cancelled") throw new Declined(e, url); return finish("error", `browser could not open the page (${e?.code || "error"})`); }
-      let text; try { text = await tab.text(); } catch (e) { if (e?.code === "cancelled") throw new Declined(e, url); return finish("error", `could not read the page (${e?.code || "error"})`); }
+      try { await tab.open(url); } catch (e) { if (e?.pageChanged) return finish("error", "the page kept redirecting or reloading (often a cookie banner or bot check)"); if (e?.code === "cancelled") throw new Declined(e, url); return finish("error", `browser could not open the page (${e?.code || "error"})`); }
+      let text; try { text = await tab.text(); } catch (e) { if (e?.pageChanged) return finish("error", "the page kept redirecting or reloading (often a cookie banner or bot check)"); if (e?.code === "cancelled") throw new Declined(e, url); return finish("error", `could not read the page (${e?.code || "error"})`); }
+      if (opts.cookies && !looksBlocked(text)) text = await consent(tab, url, text);
       if (looksBlocked(text)) { blocked = true; if (working) break; continue; }
       if (text.length < 200) continue;
       if (!working) {                                       // a guessed pattern counts only if the page echoes the search term back
@@ -434,7 +501,7 @@ async function runShop(r, tab, spec, queries, opts) {
     if (!purl) why = "no product-page link found to confirm the price";
     else {
       try {
-        await tab.open(purl); const pt = await tab.text(); const pp = priceFromProductText(pt, spec);
+        await tab.open(purl); let pt = await tab.text(); if (opts.cookies && !looksBlocked(pt)) pt = await consent(tab, purl, pt); const pp = priceFromProductText(pt, spec);
         url = purl; readAt = Date.now();
         if (!pp) why = "price not found on the product page";
         else {
@@ -460,7 +527,7 @@ function emit(ev) {
 async function startSearch() {
   if (!S.cand || !S.shops.size || S.running) return;
   const spec = currentSpec(), queries = previewQueries(), shops = [...S.shops].map(id => shopsById[id]);
-  S.spec = spec; S.opts = { claude: !!S.sample && $("#optClaude").checked, all: $("#optAll").checked };
+  S.spec = spec; S.opts = { claude: !!S.sample && $("#optClaude").checked, all: $("#optAll").checked, cookies: $("#optCookies").checked };
   S.results.clear(); S.reports.clear(); S.declined = []; S.done = 0; S.total = shops.length; S.cancel = false; S.running = true;
   $("#resultsCard").hidden = false; $("#resultsCard").scrollIntoView({ behavior: "smooth", block: "start" });
   $("#resTitle").textContent = `· ${S.cand.display}${S.storage ? " " + (S.storage >= 1024 ? S.storage / 1024 + " TB" : S.storage + " GB") : ""}`;

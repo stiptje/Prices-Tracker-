@@ -8,6 +8,9 @@ const MOCK = () => {
     const filler = "Navigatie Winkelwagen Klantenservice Over ons Contact Algemene voorwaarden Privacy Cookies ".repeat(12);
     if (h === "coolblue.nl" && p.startsWith("/zoeken")) return `Coolblue\nZoekresultaten voor ${url.searchParams.get("query")}\n${filler}\nApple iPhone 15 Pro 256GB Zwart\nVandaag nog in huis\n€ 1.199,00\n1.099,-\nGratis verzending\nApple iPhone 15 Pro Max 256GB\n1.299,-\nHoesje voor Apple iPhone 15 Pro\n€ 19,95\nApple iPhone 15 Pro 128GB\n€ 999,00\nApple iPhone 15 Pro 256GB Refurbished\n€ 899,00`;
     if (h === "coolblue.nl" && p.startsWith("/product/")) return `${filler}\nApple iPhone 15 Pro 256GB Zwart\n★★★★★ 4,8 (212)\n€ 1.199,00\n€ 1.089,00\nVandaag besteld, morgen in huis`;
+    if (h === "cdiscount.com") return window.__cd.consent
+      ? `Cdiscount\nRésultats pour iphone 15 pro\n${filler}\nApple iPhone 15 Pro 256 Go\n1 079,00 €\nLivraison offerte`
+      : `Cdiscount ${filler}\nCookies et traceurs\nNous utilisons des cookies pour personnaliser votre expérience. Tout accepter / Continuer sans accepter ${filler}`;
     if (h === "mediamarkt.nl") return "Please complete the captcha to continue";
     if (h === "bol.com") return `bol\nZoekresultaten voor ${url.searchParams.get("searchtext")}\n${filler}\nSamsung Galaxy S24 Ultra 256GB\n€ 899,00`;
     if (h === "amazon.nl") return `Amazon.nl Resultaten voor ${url.searchParams.get("k")}\n${filler}\nApple iPhone 15 Pro (256 GB) - Titanium Blauw\n€1.075,00\nGratis bezorging`;
@@ -15,20 +18,26 @@ const MOCK = () => {
   };
   const cur = {}; let nextTab = 7;
   const text = t => ({ content: [{ type: "text", text: t }] });
-  window.__calls = [];
+  window.__calls = []; window.__clicks = []; window.__cd = { consent: false, pcOnce: true };
   window.claude = { use: async (n) => {
     if (n === "mcp") return {
-      listTools: async () => ({ servers: [{ server: "host:claude_browser", tools: ["preview_start", "navigate", "get_page_text", "read_page", "tabs_context"].map(name => ({ name })) }] }),
+      listTools: async () => ({ servers: [{ server: "host:claude_browser", tools: ["preview_start", "navigate", "get_page_text", "read_page", "find", "computer"].map(name => ({ name })) }] }),
+      describeTool: async (s, t) => ({ inputSchema: t === "computer" ? { properties: { action: { enum: ["left_click", "screenshot"] }, ref: {}, tabId: {} } } : { properties: { query: {}, tabId: {} } } }),
       callTool: async (srv, tool, input) => {
         window.__calls.push(tool);
         window.__conc = (window.__conc || 0) + 1; window.__maxConc = Math.max(window.__maxConc || 0, window.__conc);
         try { await new Promise(r => setTimeout(r, 5));
+        if ((tool === "navigate" || tool === "preview_start") && /cdiscount/.test(input.url)) window.__cdNav = (window.__cdNav || 0) + 1;
+        if ((tool === "navigate" || tool === "preview_start") && /cdiscount/.test(input.url) && window.__cd.pcOnce) { window.__cd.pcOnce = false; throw Object.assign(new Error("The page changed; retry."), { code: "cancelled" }); }
         if (tool === "navigate" || tool === "preview_start") { window.__opens = (window.__opens || 0) + 1;
           const d = window.__decline || {};
           if ((d.at && d.at.includes(window.__opens)) || (d.from && window.__opens >= d.from && !d.off)) throw Object.assign(new Error("user declined"), { code: "cancelled" }); }
         if (tool === "preview_start") { const id = nextTab++; cur[id] = input.url; return { payload: { tabId: id, url: input.url }, content: [{ type: "text", text: "opened" }] }; }
         if (tool === "navigate") { cur[input.tabId] = input.url; return text("navigated"); }
         if (tool === "get_page_text") return text(pages(cur[input.tabId]));
+        if (tool === "computer") { window.__clicks.push(input); if (input.ref === "ref_9") window.__cd.consent = true; return text("clicked"); }
+        if (tool === "find") return text("");
+        if (tool === "read_page" && /cdiscount/.test(cur[input.tabId]) && !window.__cd.consent) return text(`button "Tout accepter" [ref_8]\nbutton "Continuer sans accepter" [ref_9]\nlink "Mentions légales" [ref_3]`);
         if (tool === "read_page") return text(cur[input.tabId].includes("/zoeken") && cur[input.tabId].includes("coolblue") ? `link "Apple iPhone 15 Pro 256GB Zwart" https://www.coolblue.nl/product/123/apple-iphone-15-pro.html\nlink "Apple iPhone 15 Pro Max 256GB" https://www.coolblue.nl/product/999/max.html` : "");
         throw Object.assign(new Error("unknown tool"), { code: "bad_request" });
         } finally { window.__conc--; }
